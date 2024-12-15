@@ -1,0 +1,19 @@
+# Python virtual environment
+myenv/
+venv/
+env/
+.env/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# VS Code settings
+.vscode/
+
+# macOS system files
+.DS_Store
+
+# Additional folders
+Co-DETR/

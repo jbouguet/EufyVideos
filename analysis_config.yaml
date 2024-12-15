@@ -1,0 +1,774 @@
+video_database_list:
+
+- force_video_directories_scanning: false
+  video_metadata_file: '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/videos_in_batches.csv'
+  video_directories:
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch001'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch002'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch003'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch004'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch005'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch006'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch007'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch008'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch009'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch010'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch011'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch012'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch013'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch014'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch015'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch016'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch017'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch018'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch019'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch020'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch021'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch022'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch023'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch024'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch025'
+
+- force_video_directories_scanning: true
+  video_metadata_file: '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/videos_in_backup.csv'
+  video_directories: '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/backup'
+
+tag_database_files:
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/2024-11-18 - Backyard Planning_Yolo11x_Track_7fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/2024-11-18 - Backyard Planning_Yolo11x_Track_3fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/2024-11-18 - Backyard Planning_Yolo11x_Track_1.5fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/2024-11-18 - Backyard Planning_Yolo11x_Track_0.6fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/2024-11-18 - Backyard Planning_Yolo11x_Track_0.3fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/2024-11-18 - Backyard Planning_Yolo11x_Track_0.15fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_15.0fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_7.5fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_3.0fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_1.5fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_1.0fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_0.6fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_0.3fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_0.15fps_tags.json'
+
+output_directory: '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories'
+process_stories: true
+
+stories:
+  - name: '2024-12-12 - 2024-12-13'
+    skip: false
+    selectors:
+      - date_range:
+          start: '2024-12-12'
+          end: '2024-12-13'
+
+  - name: '2024-12-12'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-12-12'
+          end: '2024-12-12'
+
+  - name: '2024-12-11 Backyard'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-12-11'
+          end: '2024-12-11'
+        devices: ['Backyard']
+
+  - name: '2024-11-27'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-11-27'
+          end: '2024-11-27'
+        devices: ['Front Entrance']
+
+
+  - name: 'tracks'
+    skip: true
+    selectors:
+      - filenames: ['T8600P1024260D5E_20241118084615.mp4', 'T8600P1024260D5E_20241118084819.mp4', 'T8600P1024260D5E_20241118084902.mp4', 'T8600P1024260D5E_20241118085102.mp4']
+    generate_tags_video: true
+
+  - name: '2024-11-20'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-11-20'
+          end: '2024-11-20'
+    process_tags: false
+    tagger_config:
+      model: "Yolo11x"
+      task: "Track"
+      num_frames_per_second: 0.05
+      conf_threshold: 0.2
+    generate_tags_video: false
+    tag_visualizer_config:
+      output_size:
+        width: 1600
+        height: 900
+    generate_video: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 1
+        offset_in_seconds: 1
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 800
+
+  # TAGS DATABASE - START
+  - name: '2024-11-18 - Backyard Planning'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-11-18'
+          end: '2024-11-18'
+        time_range:
+          start: '08:40:00'
+          end: '09:10:00'
+        devices: ['Backyard']
+    process_tags: true
+    tagger_config:
+      model: "Yolo11x"
+      task: "Track"
+      num_frames_per_second: 0.15
+      conf_threshold: 0.2
+    generate_tags_video: false
+    tag_visualizer_config:
+      output_size:
+        width: 1600
+        height: 900
+
+
+  - name: 'T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809'
+    skip: true
+    selectors:
+      - filenames: [ 'T8600P102338033E_20240930085536.mp4' , 'T8600P1024260D5E_20241119181809.mp4']
+    process_tags: false
+    tagger_config:
+      model: "Yolo11x"
+      task: "Track"
+      num_frames_per_second: 15
+      conf_threshold: 0.2
+    generate_tags_video: true
+    tag_visualizer_config:
+      output_size:
+        width: 1600
+        height: 900
+
+  # TAGS DATABASE - END
+
+
+  - name: '2024-11-18_to_2024-11-20 - Outdoor Shower'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-11-18'
+          end: '2024-11-20'
+        time_range:
+          start: '07:00:00'
+          end: '18:00:00'
+        devices: ['Back Alleyway']
+    process_tags: false
+    tagger_config:
+      model: "Yolo11x"
+      task: "Track"
+      num_frames_per_second: 0.1
+      conf_threshold: 0.2
+    generate_tags_video: true
+    tag_visualizer_config:
+      output_size:
+        width: 1600
+        height: 900
+    generate_video: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 2
+        offset_in_seconds: 0
+        enforce_16_9_aspect_ratio: true
+        normalized_crop_roi: [0.5, 0.1, 1, 1]
+      output_video:
+        width: 600
+
+
+  - name: 'Audio Failures'
+    skip: true
+    selectors:
+      - filenames: ["T8160T1224250195_20241118111259.mp4", "T8600P1024260D5E_20241118112043.mp4", "T8160P1123332B02_20241118140843.mp4", "T8160P1123332B02_20241118145352.mp4", "T8160P1123332B02_20241118150336.mp4", "T8160T1224250195_20241118150422.mp4"]
+    process_tags: false
+    tagger_config:
+      model: "Yolo11x"
+      task: "Track"
+      num_frames_per_second: 0.05
+      conf_threshold: 0.2
+    generate_tags_video: false
+    tag_visualizer_config:
+      output_size:
+        width: 1600
+        height: 900
+    generate_video: true
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 4
+        offset_in_seconds: 0
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 1600
+
+  - name: 'test_selector'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-11-10'
+          end: '2024-11-20'
+        time_range:
+          start: '08:00:00'
+          end: '13:00:00'
+        devices: ['Backyard', 'Back Alleyway', 'Front Yard']
+      - date_range:
+          start: '2024-06-10'
+          end: '2024-06-20'
+        time_range:
+          start: '18:00:00'
+          end: '09:00:00'
+        devices: ['Garage', 'Front Door', 'Backyard']
+      - filenames: ['T8600P1023450AFB_20240831130618.mp4','T8600P1023450AFB_20240831124041.mp4']
+    generate_tags_video: true
+
+  - name: 'test_selector2'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-11-10'
+          end: '2024-11-20'
+        devices: ['Backyard', 'Back Alleyway', 'Front Yard']
+      - date_range:
+          start: '2024-06-10'
+          end: '2024-06-20'
+        devices: ['Garage', 'Front Door', 'Backyard']
+      - filenames: ['T8600P1023450AFB_20240831130618.mp4','T8600P1023450AFB_20240831124041.mp4']
+    generate_tags_video: true
+
+
+  - name: '2024-11-20 1pm-8am'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-11-20'
+          end: '2024-11-20'
+        time_range:
+          start: '13:00:00'
+          end: '08:00:00'
+        devices: ['Backyard', 'Back Alleyway']
+
+  - name: '2024-11-20 8am-1m'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-11-20'
+          end: '2024-11-20'
+        time_range:
+          start: '08:00:00'
+          end: '13:00:00'
+        devices: ['Backyard', 'Back Alleyway']
+
+  - name: '2024-11-20'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-11-20'
+          end: '2024-11-20'
+
+  - name: '2024-11-19'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-11-19'
+          end: '2024-11-19'
+
+  - name: '2024-11-18'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-11-18'
+          end: '2024-11-18'
+
+  - name: 'Front Yard Cleaning - 2024-11-17'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-11-17'
+          end: '2024-11-17'
+        time_range:
+          start: '11:00:00'
+          end: '14:00:00'
+        devices: ['Front Yard']
+
+  - name: 'Backyard Cleaning - 2024-11-17'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-11-17'
+          end: '2024-11-17'
+        time_range:
+          start: '08:41:00'
+          end: '15:05:00'
+        devices: ['Backyard']
+
+  - name: '2024-11-17'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-11-17'
+          end: '2024-11-17'
+
+  - name: 'Stolen Moped '
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-11-14'
+          end: '2024-11-15'
+        devices: ['Back Alleyway', 'Garage']
+
+  - name: 'New Backyard Camera'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-11-16'
+          end: '2024-11-16'
+
+  - name: 'New Patio Cover Installation - Gateway'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-10-09'
+          end: '2024-10-09'
+        devices: ['Gateway']
+        time_range:
+          start: '11:45:00'
+          end: '14:45:00'
+      - date_range:
+          start: '2024-10-10'
+          end: '2024-10-10'
+        devices: ['Gateway']
+        time_range:
+          start: '07:50:00'
+          end: '18:16:00'
+      - date_range:
+          start: '2024-10-11'
+          end: '2024-10-11'
+        devices: ['Gateway']
+        time_range:
+          start: '07:49:00'
+          end: '15:00:00'
+    process_tags: false
+    generate_tags_video: false
+    tagger_config:
+      model: "Yolo11x"
+      task: "Track"
+      num_frames_per_second: 1
+      conf_threshold: 0.2
+    generate_video: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 7
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 800
+
+  - name: 'Tracking Tests'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-10-09'
+          end: '2024-10-09'
+        devices: ['Backyard']
+        time_range:
+          start: '13:03:00'
+          end: '13:15:00'
+    process_tags: true
+    generate_tags_video: true
+    tagger_config:
+      model: "Yolo11x"
+      task: "Track"
+      num_frames_per_second: 4
+      conf_threshold: 0.2
+    generate_video: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 6
+        enforce_16_9_aspect_ratio: true
+
+  - name: 'New Patio Cover Installation - Small'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-10-11'
+          end: '2024-10-11'
+        devices: ['Backyard', 'Back Entrance']
+        time_range:
+          start: '08:00:00'
+          end: '08:30:00'
+    process_tags: true
+    generate_tags_video: true
+    tagger_config:
+      model: "Yolo11x"
+      task: "Track"
+      num_frames_per_second: 2
+      conf_threshold: 0.2
+    generate_video: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 6
+        enforce_16_9_aspect_ratio: true
+
+  - name: 'New Patio Cover Installation - Track Failures 4 '
+    skip: true
+    selectors:
+      - filenames: ['T8600P102338033E_20241011082403.mp4','T8600P102338033E_20241011082613.mp4']
+    process_tags: true
+    generate_tags_video: true
+    tagger_config:
+      model: "Yolo11x"
+      task: "Track"
+      num_frames_per_second: 2
+      conf_threshold: 0.2
+
+  - name: 'New Patio Cover Installation - Track Failures 3 '
+    skip: true
+    selectors:
+      - filenames: ['T8600P102338033E_20241011081844.mp4','T8600P102338033E_20241011081920.mp4']
+    process_tags: true
+    generate_tags_video: true
+    tagger_config:
+      model: "Yolo11x"
+      task: "Track"
+      num_frames_per_second: 2
+      conf_threshold: 0.2
+
+  - name: 'New Patio Cover Installation - Track Failures 2 '
+    skip: true
+    selectors:
+      - filenames: ['T8600P102338033E_20241011081030.mp4','T8600P102338033E_20241011081127.mp4']
+    process_tags: true
+    generate_tags_video: true
+    tagger_config:
+      model: "Yolo11x"
+      task: "Track"
+      num_frames_per_second: 2
+      conf_threshold: 0.2
+
+  - name: 'New Patio Cover Installation - Track Failures 1 '
+    skip: true
+    selectors:
+      - filenames: ['T8600P102338033E_20241011080507.mp4','T8600P102338033E_20241011080633.mp4']
+    process_tags: true
+    generate_tags_video: true
+    tagger_config:
+      model: "Yolo11x"
+      task: "Track"
+      num_frames_per_second: 2
+      conf_threshold: 0.2
+
+  - name: 'T8600P102338033E_20240930085536'
+    skip: true
+    process_tags: true
+    generate_tags_video: true
+    tagger_config:
+      model: "Yolo11x"
+      task: "Track"
+      num_frames_per_second: 15
+      conf_threshold: 0.2
+    selectors:
+      - filenames: ['T8600P102338033E_20240930085536.mp4']
+
+  - name: 'T8410P4224140C2E_20241010140425'
+    skip: true
+    process_tags: true
+    generate_tags_video: true
+    tagger_config:
+      model: "Yolo11x"
+      task: "Detect"
+      num_frames_per_second: 4
+      conf_threshold: 0.2
+    selectors:
+      - filenames: ['T8410P4224140C2E_20241010140425.mp4']
+
+  - name: 'New Patio Cover Installation'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-10-09'
+          end: '2024-10-09'
+        devices: ['Backyard', 'Back Entrance']
+        time_range:
+          start: '11:45:00'
+          end: '14:45:00'
+      - date_range:
+          start: '2024-10-10'
+          end: '2024-10-10'
+        devices: ['Backyard', 'Back Entrance']
+        time_range:
+          start: '07:50:00'
+          end: '18:16:00'
+      - date_range:
+          start: '2024-10-11'
+          end: '2024-10-11'
+        devices: ['Backyard', 'Back Entrance']
+        time_range:
+          start: '07:49:00'
+          end: '15:00:00'
+    process_tags: false
+    generate_tags_video: false
+    tagger_config:
+      model: "Yolo11x"
+      task: "Detect"
+      num_frames_per_second: 0.1
+      conf_threshold: 0.2
+
+  - name: 'Stupid Mailman - 2024-10-07'
+    skip: true
+    selectors:
+      - devices: ['Front Yard', 'Walkway', 'Front Door']
+        date_range:
+          start: '2024-10-07'
+          end: '2024-10-07'
+        time_range:
+          start: '15:00:00'
+          end: '15:10:00'
+    process_tags: true
+    generate_tags_video: true
+    tagger_config:
+      model: "Yolo11x"
+      task: "Detect"
+      num_frames_per_second: 15
+      conf_threshold: 0.2
+    generate_video: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 20
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 800
+
+  - name: '2024-10-12 - Grandparents'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-10-12'
+          end: '2024-10-12'
+        time_range:
+          start: '10:05:00'
+          end: '10:15:00'
+    process_tags: true
+    generate_tags_video: true
+    tagger_config:
+      model: "Yolo11x"
+      task: "Detect"
+      num_frames_per_second: 2
+      conf_threshold: 0.2
+    generate_video: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 6
+        enforce_16_9_aspect_ratio: true
+
+  - name: 'To Donate'
+    skip: true
+    process_tags: false
+    generate_tags_video: false
+    selectors:
+      - date_range:
+          start: '2024-09-05'
+          end: '2024-12-31'
+
+  - name: 'corrupted_files'
+    skip: true
+    process_tags: false
+    generate_tags_video: false
+    selectors:
+      - filenames: ['T8600P10233811B3_20240714141009.mp4',
+                    'T8410P4224024456_20240831132933.mp4',
+                    'T8410P4224140C2E_20240922103633.mp4',
+                    'T8410P4224140C2E_20241010161332.mp4',
+                    'T8410P4224140C2E_20241010174517.mp4',
+                    'T8410P4224140C2E_20241010173348.mp4',
+                    'T8600P1023450AFB_20241011155511.mp4'
+                    ]
+
+  - name: 'Raccoon'
+    skip: true
+    process_tags: true
+    generate_tags_video: true
+    tagger_config:
+      model: "Yolo11x"
+      task: "Detect"
+      num_frames_per_second: 1
+      conf_threshold: 0.2
+    selectors:
+      - devices: ['Gateway', 'Walkway', 'Back Alleyway']
+        date_range:
+          start: '2024-10-07'
+          end: '2024-10-07'
+        time_range:
+          start: '03:00:00'
+          end: '05:00:00'
+    generate_video: true
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 20
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 800
+
+  - name: 'Rat'
+    skip: true
+    process_tags: false
+    generate_tags_video: false
+    selectors:
+      - devices: ['Gateway']
+        date_range:
+          start: '2024-09-16'
+          end: '2024-09-16'
+        time_range:
+          start: '03:00:00'
+          end: '06:00:00'
+    generate_video: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 10
+        normalized_crop_roi: [0.75, 0.4, 1, 0.75]
+
+  - name: 'Suspicious Trash Guy - 2024-09-26'
+    skip: true
+    process_tags: false
+    generate_tags_video: false
+    selectors:
+      - date_range:
+          start: '2024-09-26'
+          end: '2024-09-26'
+        time_range:
+          start: '10:50:00'
+          end: '11:00:00'
+        devices: ['Garage']
+    generate_video: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 16
+        enforce_16_9_aspect_ratio: false
+        normalized_crop_roi: [0.0, 0.2, 0.9, 1.0]
+
+  - name: 'Neighbor Umbrella'
+    skip: true
+    process_tags: false
+    generate_tags_video: false
+    selectors:
+      - devices: ['Back Alleyway']
+        time_range:
+          start: '18:04:00'
+          end: '21:07:00'
+        date_range:
+          start: '2024-09-07'
+          end: '2024-09-07'
+
+  - name: 'Patio cover installation and removal'
+    skip: true
+    process_tags: false
+    generate_tags_video: false
+    selectors:
+      # Installation
+      - devices: ['Backyard', 'Garage']
+        date_range:
+          start: '2024-05-02'
+          end: '2024-05-02'
+        time_range:
+          start: '07:25:00'
+          end: '12:55:00'
+      # Removal
+      - devices: ['Backyard', 'Walkway', 'Front Yard', 'Front Door']
+        date_range:
+          start: '2024-06-25'
+          end: '2024-06-25'
+        time_range:
+          start: '10:10:00'
+          end: '12:05:00'
+    generate_video: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 7
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 1600
+
+  - name: 'Plant Flowering Timelapse'
+    skip: true
+    process_tags: false
+    generate_tags_video: false
+    selectors:
+      - devices: ['Front Yard']
+        date_range:
+          start: '2024-04-01'
+          end: '2024-05-11'
+        time_range:
+          start: '05:00:00'
+          end: '19:30:00'
+    generate_video: false
+    video_generation_config:
+      input_fragments:
+        normalized_crop_roi: [0.0458, 0.4856, 0.3841, 0.9764]
+
+  - name: 'Plant Growth Timelapse'
+    skip: true
+    process_tags: false
+    generate_tags_video: false
+    selectors:
+      - devices: ['Front Yard']
+        date_range:
+          start: '2024-04-01'
+          end: '2024-08-02'
+        time_range:
+          start: '05:00:00'
+          end: '19:30:00'
+    generate_video: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 1
+        enforce_16_9_aspect_ratio: false
+        normalized_crop_roi: [0.23802, 0.3037, 0.8589, 1.0]
+
+  - name: 'Suspicious Trash Dump From Neighbor on 2024-05-26'
+    skip: true
+    process_tags: false
+    generate_tags_video: false
+    selectors:
+      - devices: ['Garage']
+        date_range:
+          start: '2024-05-26'
+          end: '2024-05-26'
+        time_range:
+          start: '22:35:00'
+          end: '22:45:00'
+    generate_video: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 13.33
+        enforce_16_9_aspect_ratio: false
+
+  - name: 'Test'
+    skip: true
+    process_tags: false
+    generate_tags_video: false
+    selectors:
+      - devices: ['Back Alleyway']
+        date_range:
+          start: '2024-07-22'
+          end: '2024-07-22'
+    generate_video: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 6
+        enforce_16_9_aspect_ratio: false
+        normalized_crop_roi: [0, 0.11, 0.282, 0.61]
+      output_video:
+        width: 1082
+        output_video_codec: h264
