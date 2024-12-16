@@ -196,14 +196,13 @@ if __name__ == "__main__":
 
     logger.info(f"Tags Databse: {video_tags_database.stats}")
 
-    # Sub select tags that are "person"
+    # Subselect tags that are "person"
     video_tags_database.tags = filter_by_value(video_tags_database.tags, "person")
 
     logger.info(f"Tags Databse post filtering: {video_tags_database.stats}")
 
     # Export tags to Videos to keep onlt the relevant tags present in the videos
-    video_tags_database.to_videos(videos)
-    video_tags = video_tags_database.from_videos(videos)
+    video_tags = VideoTags.from_videos(video_tags_database.to_videos(videos))
 
     logger.info(f"Video Tags: {video_tags.stats}")
 
@@ -267,20 +266,5 @@ if __name__ == "__main__":
     # Keep the elemement in each cluster that is associated to the longest track.
     # Remove all the other elements.
     # Populate a list of [filename][frame] -> list of hashs to keep and a list of hashes to remove
-
-    # Report pair-wise distance of every tag to every other tag:
-    for tag1 in tags_to_dedup:
-        box1 = tag1["bbox"]
-        hash1 = tag1["hash"]
-        track_len1 = tag1["track_len"]
-        for tag2 in tags_to_dedup:
-            box2 = tag2["bbox"]
-            hash2 = tag2["hash"]
-            track_len2 = tag2["track_len"]
-            similarity = compute_iou(box1, box2)
-            if (similarity > 0.75) and (hash1 != hash2):
-                logger.info(
-                    f"Similar tags: iou({hash1},{hash2}) = {similarity}    [len1 = {track_len1} , len2 = {track_len2}]"
-                )
 
     sys.exit()

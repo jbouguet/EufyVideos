@@ -763,6 +763,8 @@ if __name__ == "__main__":
     videos_crops = []
     current_offset = 0.0
 
+    logger.info(f"Cropping source video {video_file}")
+
     # Generate crops
     for i, config in enumerate(crop_configs, 1):
         crop_config = VideoGenerationConfig(
@@ -777,7 +779,7 @@ if __name__ == "__main__":
         crop_output = os.path.join(
             out_dir, f"T8600P102338033E_20240930085536_crop{i}.mp4"
         )
-
+        logger.info(f"Creating cropped video {crop_output}")
         VideoGenerator(crop_config).run(
             [VideoMetadata.from_video_file(video_file)], crop_output
         )
@@ -786,23 +788,21 @@ if __name__ == "__main__":
         # Update offset for the next crop
         current_offset += config["duration"]
 
-    tracker_config = TaggerConfig(
-        model="Yolo11x",
-        task="Track",
-        num_frames_per_second=1,
-        conf_threshold=0.2,
+    logger.info(
+        f"Generating video {tag_video} showing extracted tags in the cropped videos."
     )
-    video_tags = TagProcessor(tracker_config).run(videos_crops)
-
-    logger.info(f"Computed tags: {video_tags.stats}")
-    video_tags_from_videos_1 = VideoTags.from_videos(
-        video_tags.to_videos(videos_crops), tracker_config
+    TagVisualizer(TagVisualizerConfig(output_size={"width": 1600, "height": 900})).run(
+        TagProcessor(
+            TaggerConfig(
+                model="Yolo11x",
+                task="Track",
+                num_frames_per_second=1,
+                conf_threshold=0.2,
+            )
+        )
+        .run(videos_crops)
+        .to_videos(videos_crops),
+        tag_video,
     )
-    logger.info(f"Post export: stats = {video_tags_from_videos_1.stats}")
-
-    tag_visualizer_config = TagVisualizerConfig(
-        output_size={"width": 1600, "height": 900}
-    )
-    TagVisualizer(tag_visualizer_config).run(videos_crops, tag_video)
 
     sys.exit()
