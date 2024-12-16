@@ -54,19 +54,9 @@ Support management, visualization, processing and analytics of collections of ho
    - Choose the interpreter from myenv (should end with '/myenv/bin/python')
 
 ### 4. Git workflow
-1. Add changed files, either all of them
+
    ```bash
-   git add changed_files
-   ```
-   or a specified subset:
-   ```bash
-   git add changed_files
-   ```
-2. Commit the change locally with a message
-   ```bash
+   git add .
    git commit -m "message"
-   ```
-3. Push the change to the repository
-   ```bash
    git push origin main
    ```
