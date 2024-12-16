@@ -29,6 +29,10 @@ Support management, visualization, processing and analytics of collections of ho
 4. Enter repository URL: https://github.com/jbouguet/EufyVideos.git
 5. Choose a local folder to clone into
 6. Click "Open" when prompted to open the cloned repository
+7. Set VS Code your default Git editor
+   ```bash
+   git config --global core.editor "code --wait"
+   ```
 
 ### 3. Set Up Python Environment
 1. Open VS Code's integrated terminal (View > Terminal or Cmd+`)
@@ -49,3 +53,20 @@ Support management, visualization, processing and analytics of collections of ho
    - Type "Python: Select Interpreter"
    - Choose the interpreter from myenv (should end with '/myenv/bin/python')
 
+### 4. Git workflow
+1. Add changed files, either all of them
+   ```bash
+   git add changed_files
+   ```
+   or a specified subset:
+   ```bash
+   git add changed_files
+   ```
+2. Commit the change locally with a message
+   ```bash
+   git commit -m "message"
+   ```
+3. Push the change to the repository
+   ```bash
+   git push origin main
+   ```
