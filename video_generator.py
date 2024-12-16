@@ -737,7 +737,6 @@ def compute_default_fps_and_width(
 
 
 if __name__ == "__main__":
-
     # Testing code for the module.
     import sys
 

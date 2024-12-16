@@ -438,7 +438,6 @@ class TagVisualizer:
 
 
 if __name__ == "__main__":
-
     # Testing code for the module.
     from tag_processor import TaggerConfig, TagProcessor
 

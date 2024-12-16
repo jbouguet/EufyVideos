@@ -176,6 +176,7 @@ class VideoTags:
         )
 
     def merge(self, other: "VideoTags") -> "VideoTags":
+        # Merge other in self, and output the merged self.
         if self.timestamp is None and other.timestamp is not None:
             self.timestamp = other.timestamp
         if not other.tags:
