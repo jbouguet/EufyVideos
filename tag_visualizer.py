@@ -454,5 +454,6 @@ if __name__ == "__main__":
         output_size={"width": 1600, "height": 900}
     )
     videos = [VideoMetadata.from_video_file(video_file)]
-    TagProcessor(tracker_config).run(videos).to_videos(videos)
-    TagVisualizer(tag_visualizer_config).run(videos, tag_video)
+    TagVisualizer(tag_visualizer_config).run(
+        TagProcessor(tracker_config).run(videos).to_videos(videos), tag_video
+    )

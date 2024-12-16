@@ -199,16 +199,17 @@ class VideoTags:
                 }
         return self
 
-    def to_videos(self, videos: Union[VideoMetadata, List[VideoMetadata]]) -> int:
+    def to_videos(
+        self, videos: Union[VideoMetadata, List[VideoMetadata]]
+    ) -> List[VideoMetadata]:
         """Export tags to VideoMetadata objects."""
         if not self.timestamp or not self.tags:
             return 0
         videos = [videos] if isinstance(videos, VideoMetadata) else videos
-        return sum(
-            video.merge_new_tags(self.tags[video.filename])
-            for video in videos
-            if video.filename in self.tags
-        )
+        for video in videos:
+            if video.filename in self.tags:
+                video.merge_new_tags(self.tags[video.filename])
+        return videos
 
     @classmethod
     def from_videos(
@@ -228,38 +229,6 @@ class VideoTags:
                     )
                 }
         return cls.from_tags(tags=tags, tagger_config=tagger_config)
-
-    @staticmethod
-    def export_video_tags_to_videos(
-        video_tags_list: Union["VideoTags", List["VideoTags"]],
-        videos: Union[VideoMetadata, List[VideoMetadata]],
-    ) -> int:
-        """Export tags from multiple VideoTags objects into videos."""
-        video_tags_list = (
-            [video_tags_list]
-            if isinstance(video_tags_list, VideoTags)
-            else video_tags_list
-        )
-        videos = [videos] if isinstance(videos, VideoMetadata) else videos
-        num_tags_exported = 0
-        for video_tags in video_tags_list:
-            more_tags = video_tags.to_videos(videos)
-            num_tags_exported += more_tags
-        return num_tags_exported
-
-    @staticmethod
-    def export_tag_files_to_videos(
-        tag_files: Union[str, List[str]],
-        videos: Union[VideoMetadata, List[VideoMetadata]],
-    ) -> int:
-        """Export tags from multiple files into videos."""
-        num_tags_exported = 0
-        tag_files = [tag_files] if isinstance(tag_files, str) else tag_files
-        videos = [videos] if isinstance(videos, VideoMetadata) else videos
-        for tag_file in tag_files:
-            more_tags = VideoTags.from_file(tag_file).to_videos(videos)
-            num_tags_exported += more_tags
-        return num_tags_exported
 
     @staticmethod
     def compute_tag_hash(filename: str, tag: Dict[str, Any]) -> int:
@@ -405,7 +374,7 @@ if __name__ == "__main__":
     ]
 
     # Process tags
-    force_recompute: bool = False
+    force_recompute: bool = True
     for config, tag_file in zip(tracker_configs, tag_files):
         logger.info(f"Processing tag file {tag_file}")
         if not os.path.exists(tag_file) or force_recompute:
@@ -420,9 +389,10 @@ if __name__ == "__main__":
     logger.info(f"Initial forward merge tags: {merged_tags.stats}")
     for tag_file in tag_files:
         merged_tags.merge(VideoTags.from_file(tag_file))
-    merged_tags.to_videos(videos)
+
     tag_video_file = os.path.join(out_dir, "merged_tags.mp4")
     logger.info(f"Generating video tag file {tag_video_file}")
-    tag_visualizer.run(videos, tag_video_file)
+
+    tag_visualizer.run(merged_tags.to_videos(videos), tag_video_file)
 
     sys.exit()

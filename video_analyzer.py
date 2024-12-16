@@ -98,9 +98,7 @@ class VideoAnalyzer:
         self.merged_tags_database = VideoTags.from_tags(tags={})
         for video_tags in self.tags_database:
             self.merged_tags_database.merge(video_tags)
-        VideoTags.export_video_tags_to_videos(
-            self.merged_tags_database, self.videos_database
-        )
+        self.merged_tags_database.to_videos(self.videos_database)
         logger.info(
             f"Unique tags exported to videos: {self.merged_tags_database.stats}  out of a total of {num_tags_loaded} tags loaded from files"
         )

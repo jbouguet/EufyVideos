@@ -374,15 +374,7 @@ class Story:
 
         if video_tags.stats["num_tags"] > 0:
             # Export tags to videos
-            num_tags_exported = VideoTags.export_video_tags_to_videos(
-                video_tags, videos
-            )
-            logger.info(
-                f"{num_tags_exported} new tags exported to videos (out of {video_tags.stats["num_tags"]})"
-            )
-
-            # Final tag accounting
-            tags_stats = VideoTags.from_videos(videos).stats
+            tags_stats = VideoTags.from_videos(video_tags.to_videos(videos)).stats
             logger.info("Final tags statistics:")
             logger.info(
                 f"  - Number of tagged videos = {tags_stats["num_tagged_videos"]}"

@@ -793,12 +793,12 @@ if __name__ == "__main__":
         conf_threshold=0.2,
     )
     video_tags = TagProcessor(tracker_config).run(videos_crops)
-    logger.info(f"Computed tags: {video_tags.stats}")
-    total_tags = VideoTags.export_video_tags_to_videos(video_tags, videos_crops)
-    logger.info(f"Tags export: total_tags={total_tags}")
 
-    video_tags_from_videos_1 = VideoTags.from_videos(videos_crops, tracker_config)
-    logger.info(f"Post one export: stats = {video_tags_from_videos_1.stats}")
+    logger.info(f"Computed tags: {video_tags.stats}")
+    video_tags_from_videos_1 = VideoTags.from_videos(
+        video_tags.to_videos(videos_crops), tracker_config
+    )
+    logger.info(f"Post export: stats = {video_tags_from_videos_1.stats}")
 
     tag_visualizer_config = TagVisualizerConfig(
         output_size={"width": 1600, "height": 900}
