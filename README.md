@@ -1,6 +1,8 @@
 # EufyVideos
 
-Support management, visualization, processing and analytics of collections of home security videos cpatured by a network of Eufy security cameras.
+Python library providing tools for managing, visualizing, processing and running
+analytics on collections of home security videos captured by a network of Eufy
+security cameras.
 
 ## Setup
 
