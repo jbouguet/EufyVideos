@@ -1,8 +1,8 @@
 """
-Track Processor Library
+Tag Filtering Library
 
-This module provides a set of tools to process tracks of tags in videos.
-Built on top of tag_processor, it offers functions to 
+This module provides a set of tools to filter tags in videos.
+Built on top of tag_processor.
 """
 
 from collections import defaultdict
