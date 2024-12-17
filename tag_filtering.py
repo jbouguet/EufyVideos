@@ -6,19 +6,9 @@ Built on top of tag_processor.
 """
 
 from collections import defaultdict
-from typing import Any, Dict, List, Set
-
-import numpy as np
+from typing import Any, Dict, List
 
 from tag_processor import VideoTags
-
-# tags are:
-#  filename  -> frame -> hash -> tag
-# Dict[str, Dict[int, Dict[int, Dict[str, Any]]]]
-#
-# tracks are:
-#  filename  -> track_id -> frame -> tag
-# Dict[str, Dict[int, Dict[int, Dict[str, Any]]]]
 
 
 def filter_by_value(
@@ -156,9 +146,6 @@ if __name__ == "__main__":
         "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch010/T8600P1024260D5E_20241118085306.mp4",
     ]
     out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
-    videos = VideoMetadata.clean_and_sort(
-        [VideoMetadata.from_video_file(file) for file in video_files]
-    )
 
     # Load the tag database
     tags_directory: str = (
@@ -174,46 +161,45 @@ if __name__ == "__main__":
         logger.info(f"Loading tags file {tags_file}")
         video_tags_database.merge(VideoTags.from_file(tags_file))
 
-    logger.info(f"Tags Databse (pre de-dup)     : {video_tags_database.stats}")
+    logger.info(f"Tags Database (pre de-dup)     : {video_tags_database.stats}")
 
-    # First pass at removing duplicates in the entire database:
+    # Remove duplicate tags in the entire database:
     video_tags_database = remove_duplicates(video_tags_database)
-
-    logger.info(f"Tags Databse (post de-dup 1)  : {video_tags_database.stats}")
-
+    logger.info(f"Tags Database (post de-dup 1)  : {video_tags_database.stats}")
     video_tags_database = remove_duplicates(video_tags_database)
-
-    logger.info(f"Tags Databse (post de-dup 2)  : {video_tags_database.stats}")
-
+    logger.info(f"Tags Database (post de-dup 2)  : {video_tags_database.stats}")
     video_tags_database = remove_duplicates(video_tags_database)
+    logger.info(f"Tags Database (post de-dup 3)  : {video_tags_database.stats}")
 
-    logger.info(f"Tags Databse (post de-dup 3)  : {video_tags_database.stats}")
-
-    # Export tags to Videos to keep onlt the relevant tags present in the videos
-    video_tags = VideoTags.from_videos(video_tags_database.to_videos(videos))
-
-    logger.info(f"Tags in videos                : {video_tags.stats}")
-
-    video_tags = remove_duplicates(video_tags)
-
-    logger.info(f"Tags in videos (post de-dup 1): {video_tags.stats}")
-
-    video_tags = remove_duplicates(video_tags)
-
-    logger.info(f"Tags in videos (post de-dup 2): {video_tags.stats}")
-
-    videos_new = VideoMetadata.clean_and_sort(
-        [VideoMetadata.from_video_file(file) for file in video_files]
+    # Export and import tags to and from videos of interest to retain relevant tags present in the videos
+    video_tags = VideoTags.from_videos(
+        video_tags_database.to_videos(
+            VideoMetadata.clean_and_sort(
+                [VideoMetadata.from_video_file(file) for file in video_files]
+            )
+        )
     )
-    video_tags.to_videos(videos_new)
 
-    show_tags_video: bool = False
+    # Try a new sequence of duplicate removals:
+    logger.info(f"Tags in videos (pre de-dup)    : {video_tags.stats}")
+    video_tags = remove_duplicates(video_tags)
+    logger.info(f"Tags in videos (post de-dup 1) : {video_tags.stats}")
+    video_tags = remove_duplicates(video_tags)
+    logger.info(f"Tags in videos (post de-dup 2) : {video_tags.stats}")
+
+    show_tags_video: bool = True
     if show_tags_video:
-        # Quick visualization of the tags in the videos.
-        tag_video_file = os.path.join(out_dir, f"{story_name}_deduped_0.5_2_tags.mp4")
+        tag_video_file = os.path.join(out_dir, f"{story_name}_deduped_0.5_3_tags.mp4")
         logger.info(f"Generating video tag file {tag_video_file}")
         TagVisualizer(
             TagVisualizerConfig(output_size={"width": 1600, "height": 900})
-        ).run(videos_new, tag_video_file)
+        ).run(
+            video_tags.to_videos(
+                VideoMetadata.clean_and_sort(
+                    [VideoMetadata.from_video_file(file) for file in video_files]
+                )
+            ),
+            tag_video_file,
+        )
 
     sys.exit()
