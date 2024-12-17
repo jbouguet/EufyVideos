@@ -155,40 +155,36 @@ def extract_clusters(similarity_matrix: np.ndarray) -> List[Set[int]]:
     return clusters
 
 
-def depud(video_tags: VideoTags, iou_thresh: float = 0.5) -> VideoTags:
-
-    tags1: Dict[str, Dict[int, Dict[int, Dict[str, Any]]]] = video_tags.tags
-    tracks1 = tags_to_tracks(tags1)
+def remove_duplicates(video_tags: VideoTags, iou_thresh: float = 0.5) -> VideoTags:
+    tracks = tags_to_tracks(video_tags.tags)
     tags_new = {}
 
-    for filename in tags1.keys():
+    for filename in video_tags.tags.keys():
         if filename not in tags_new:
             tags_new[filename] = {}
-        for frame_number in tags1[filename].keys():
+        for frame_number in video_tags.tags[filename].keys():
             if frame_number not in tags_new[filename]:
                 tags_new[filename][frame_number] = {}
 
-            frame_tags = tags1[filename][frame_number]
-
-            # Collect all the tags to dedup in the frame:
-            tags_to_dedup = []
-            for hash_key, tag in frame_tags.items():
+            # Collect all the tags in the frame:
+            all_tags_in_frame = []
+            for hash_key, tag in video_tags.tags[filename][frame_number].items():
                 track_id = tag["track_id"]
-                track_len = len(tracks1[filename][track_id])
-                tag_element = {
+                track_len = len(tracks[filename][track_id])
+                tag_info = {
                     "hash": hash_key,
                     "bbox": tag["bounding_box"],
                     "track_len": track_len,
                     "value": tag["value"],
                 }
-                tags_to_dedup.append(tag_element)
+                all_tags_in_frame.append(tag_info)
 
             # Build a similarity matrix between all pairs of tags in the frame.
-            sim_matrix = np.zeros((len(tags_to_dedup), len(tags_to_dedup)))
-            for i, tag1 in enumerate(tags_to_dedup):
+            sim_matrix = np.zeros((len(all_tags_in_frame), len(all_tags_in_frame)))
+            for i, tag1 in enumerate(all_tags_in_frame):
                 box1 = tag1["bbox"]
                 value1 = tag1["value"]
-                for j, tag2 in enumerate(tags_to_dedup):
+                for j, tag2 in enumerate(all_tags_in_frame):
                     box2 = tag2["bbox"]
                     value2 = tag2["value"]
                     sim_matrix[i][j] = (
@@ -203,9 +199,9 @@ def depud(video_tags: VideoTags, iou_thresh: float = 0.5) -> VideoTags:
             for cluster in tag_clusters:
                 track_lengths = []
                 for element_id in cluster:
-                    tag_element = tags_to_dedup[element_id]
-                    track_length = tag_element["track_len"]
-                    track_lengths.append(tag_element["track_len"])
+                    tag_info = all_tags_in_frame[element_id]
+                    track_length = tag_info["track_len"]
+                    track_lengths.append(tag_info["track_len"])
                 track_length_clusters.append(track_lengths)
 
             # Compute the max track len per cluster.
@@ -222,15 +218,15 @@ def depud(video_tags: VideoTags, iou_thresh: float = 0.5) -> VideoTags:
             for i, cluster in enumerate(tag_clusters):
                 max_track_length = max_track_length_per_cluster[i]
                 for element_id in cluster:
-                    tag_element = tags_to_dedup[element_id]
-                    track_length = tag_element["track_len"]
+                    tag_info = all_tags_in_frame[element_id]
+                    track_length = tag_info["track_len"]
                     if track_length == max_track_length:
                         indices_to_keep.append(element_id)
 
             # Add the tags to keep in the output tags collection.
             for index in indices_to_keep:
-                hash_key = tags_to_dedup[index]["hash"]
-                tag = frame_tags[hash_key]
+                hash_key = all_tags_in_frame[index]["hash"]
+                tag = video_tags.tags[filename][frame_number][hash_key]
                 new_tag = {k: v for k, v in tag.items()}
                 tags_new[filename][frame_number][hash_key] = new_tag
 
@@ -289,7 +285,7 @@ if __name__ == "__main__":
 
     # Remove near duplicated of tags.
     iou_thresh: float = 0.5
-    video_tags_new = depud(video_tags, iou_thresh)
+    video_tags_new = remove_duplicates(video_tags, iou_thresh)
 
     tracks_new = tags_to_tracks(video_tags_new.tags)
     logger.info(f"Post near-duplicates removal: tags_new: {video_tags_new.stats}")
