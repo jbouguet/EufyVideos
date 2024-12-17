@@ -10,6 +10,8 @@ from typing import Any, Dict, List, Set
 
 import numpy as np
 
+from tag_processor import VideoTags
+
 # tags are:
 #  filename  -> frame -> hash -> tag
 # Dict[str, Dict[int, Dict[int, Dict[str, Any]]]]
@@ -153,6 +155,88 @@ def extract_clusters(similarity_matrix: np.ndarray) -> List[Set[int]]:
     return clusters
 
 
+def depud(video_tags: VideoTags, iou_thresh: float = 0.5) -> VideoTags:
+
+    tags1: Dict[str, Dict[int, Dict[int, Dict[str, Any]]]] = video_tags.tags
+    tracks1 = tags_to_tracks(tags1)
+    tags_new = {}
+
+    for filename in tags1.keys():
+        if filename not in tags_new:
+            tags_new[filename] = {}
+        for frame_number in tags1[filename].keys():
+            if frame_number not in tags_new[filename]:
+                tags_new[filename][frame_number] = {}
+
+            frame_tags = tags1[filename][frame_number]
+
+            # Collect all the tags to dedup in the frame:
+            tags_to_dedup = []
+            for hash_key, tag in frame_tags.items():
+                track_id = tag["track_id"]
+                track_len = len(tracks1[filename][track_id])
+                tag_element = {
+                    "hash": hash_key,
+                    "bbox": tag["bounding_box"],
+                    "track_len": track_len,
+                    "value": tag["value"],
+                }
+                tags_to_dedup.append(tag_element)
+
+            # Build a similarity matrix between all pairs of tags in the frame.
+            sim_matrix = np.zeros((len(tags_to_dedup), len(tags_to_dedup)))
+            for i, tag1 in enumerate(tags_to_dedup):
+                box1 = tag1["bbox"]
+                value1 = tag1["value"]
+                for j, tag2 in enumerate(tags_to_dedup):
+                    box2 = tag2["bbox"]
+                    value2 = tag2["value"]
+                    sim_matrix[i][j] = (
+                        1
+                        if (value1 == value2) and (compute_iou(box1, box2) > iou_thresh)
+                        else 0
+                    )
+
+            # Extract clusters of near-duplicates and the associates track length.
+            tag_clusters = extract_clusters(sim_matrix)
+            track_length_clusters = []
+            for cluster in tag_clusters:
+                track_lengths = []
+                for element_id in cluster:
+                    tag_element = tags_to_dedup[element_id]
+                    track_length = tag_element["track_len"]
+                    track_lengths.append(tag_element["track_len"])
+                track_length_clusters.append(track_lengths)
+
+            # Compute the max track len per cluster.
+            max_track_length_per_cluster = []
+            for track_lengths in track_length_clusters:
+                max_track_length = 0
+                for track_length in track_lengths:
+                    if track_length > max_track_length:
+                        max_track_length = track_length
+                max_track_length_per_cluster.append(max_track_length)
+
+            # Keep the one representative tag per cluster, the one with the largest track length.
+            indices_to_keep = []
+            for i, cluster in enumerate(tag_clusters):
+                max_track_length = max_track_length_per_cluster[i]
+                for element_id in cluster:
+                    tag_element = tags_to_dedup[element_id]
+                    track_length = tag_element["track_len"]
+                    if track_length == max_track_length:
+                        indices_to_keep.append(element_id)
+
+            # Add the tags to keep in the output tags collection.
+            for index in indices_to_keep:
+                hash_key = tags_to_dedup[index]["hash"]
+                tag = frame_tags[hash_key]
+                new_tag = {k: v for k, v in tag.items()}
+                tags_new[filename][frame_number][hash_key] = new_tag
+
+    return VideoTags.from_tags(tags_new, video_tags.tagger_config)
+
+
 if __name__ == "__main__":
 
     # Testing code for the module.
@@ -161,13 +245,12 @@ if __name__ == "__main__":
     from typing import List
 
     from logging_config import setup_logger
-    from tag_processor import VideoTags
     from tag_visualizer import TagVisualizer, TagVisualizerConfig
     from video_metadata import VideoMetadata
 
     logger = setup_logger(__name__)
 
-    story_name: str = "track_testing_people"
+    story_name: str = "track_testing"
     video_files: List[str] = [
         "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch010/T8600P1024260D5E_20241118084615.mp4",
         "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch010/T8600P1024260D5E_20241118084819.mp4",
@@ -194,17 +277,28 @@ if __name__ == "__main__":
         logger.info(f"Loading tags file {tags_file}")
         video_tags_database.merge(VideoTags.from_file(tags_file))
 
-    logger.info(f"Tags Databse: {video_tags_database.stats}")
-
     # Subselect tags that are "person"
-    video_tags_database.tags = filter_by_value(video_tags_database.tags, "person")
+    # video_tags_database.tags = filter_by_value(video_tags_database.tags, "person")
 
-    logger.info(f"Tags Databse post filtering: {video_tags_database.stats}")
+    logger.info(f"Tags Databse: {video_tags_database.stats}")
 
     # Export tags to Videos to keep onlt the relevant tags present in the videos
     video_tags = VideoTags.from_videos(video_tags_database.to_videos(videos))
 
     logger.info(f"Video Tags: {video_tags.stats}")
+
+    # Remove near duplicated of tags.
+    iou_thresh: float = 0.5
+    video_tags_new = depud(video_tags, iou_thresh)
+
+    tracks_new = tags_to_tracks(video_tags_new.tags)
+    logger.info(f"Post near-duplicates removal: tags_new: {video_tags_new.stats}")
+    logger.info(f"Post near-duplicates removal: tracks_new: {track_stats(tracks_new)}")
+
+    videos_new = VideoMetadata.clean_and_sort(
+        [VideoMetadata.from_video_file(file) for file in video_files]
+    )
+    video_tags_new.to_videos(videos_new)
 
     show_tags_video: bool = False
     if show_tags_video:
@@ -215,56 +309,13 @@ if __name__ == "__main__":
             TagVisualizerConfig(output_size={"width": 1600, "height": 900})
         ).run(videos, tag_video_file)
 
-    tags1: Dict[str, Dict[int, Dict[int, Dict[str, Any]]]] = video_tags.tags
-    logger.info(f"Tags1: {tags_stats(tags1)}")
-
-    # Conversion into tracks.
-    tracks1 = tags_to_tracks(tags1)
-    logger.info(f"Tracks1: {track_stats(tracks1)}")
-
-    # Consider a frame in a video, and look ar the tags and see if they can be collapse:
-    filename = "T8600P1024260D5E_20241118084615.mp4"
-    frame_number = 688
-    frame_tags = tags1[filename][frame_number]
-
-    # Collect all the tags to dedup in the frame:
-    tags_to_dedup = []
-    for hash_key, tag in frame_tags.items():
-        track_id = tag["track_id"]
-        track_len = len(tracks1[filename][track_id])
-        tag_element = {
-            "hash": hash_key,
-            "bbox": tag["bounding_box"],
-            "track_len": track_len,
-            "value": tag["value"],
-        }
-        tags_to_dedup.append(tag_element)
-        logger.info(tag_element)
-
-    iou_thresh: float = 0.75
-
-    # Build a similarity matrix between all pairs of tags in the frame.
-    sim_matrix = np.zeros((len(tags_to_dedup), len(tags_to_dedup)))
-    for i, tag1 in enumerate(tags_to_dedup):
-        box1 = tag1["bbox"]
-        value1 = tag1["value"]
-        for j, tag2 in enumerate(tags_to_dedup):
-            box2 = tag2["bbox"]
-            value2 = tag2["value"]
-            sim_matrix[i][j] = (
-                1.0
-                if (value1 == value2) and (compute_iou(box1, box2) > iou_thresh)
-                else 0.0
-            )
-
-    logger.info(f"Sim Matrix = {sim_matrix}")
-
-    # Extract the clusters of connected elements in the matrix
-    tag_clusters = extract_clusters(sim_matrix)
-    logger.info(f"Clusters = {tag_clusters}")
-
-    # Keep the elemement in each cluster that is associated to the longest track.
-    # Remove all the other elements.
-    # Populate a list of [filename][frame] -> list of hashs to keep and a list of hashes to remove
+    show_tags_video_new: bool = True
+    if show_tags_video_new:
+        # Quick visualization of the tags in the videos.
+        tag_video_file = os.path.join(out_dir, f"{story_name}_deduped_0.5_tags.mp4")
+        logger.info(f"Generating video tag file {tag_video_file}")
+        TagVisualizer(
+            TagVisualizerConfig(output_size={"width": 1600, "height": 900})
+        ).run(videos_new, tag_video_file)
 
     sys.exit()
