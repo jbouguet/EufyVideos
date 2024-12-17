@@ -155,7 +155,7 @@ def extract_clusters(similarity_matrix: np.ndarray) -> List[Set[int]]:
     return clusters
 
 
-def remove_duplicates(video_tags: VideoTags, iou_thresh: float = 0.5) -> VideoTags:
+def remove_duplicates2(video_tags: VideoTags, iou_thresh: float = 0.5) -> VideoTags:
     tracks = tags_to_tracks(video_tags.tags)
     tags_new = {}
 
@@ -233,6 +233,47 @@ def remove_duplicates(video_tags: VideoTags, iou_thresh: float = 0.5) -> VideoTa
     return VideoTags.from_tags(tags_new, video_tags.tagger_config)
 
 
+def remove_duplicates(video_tags: VideoTags, iou_thresh: float = 0.5) -> VideoTags:
+    tags_new = defaultdict(lambda: defaultdict(dict))
+    tracks = tags_to_tracks(video_tags.tags)
+
+    for filename, file_tags in video_tags.tags.items():
+        for frame_number, frame_tags in file_tags.items():
+            # Group tags by value
+            value_groups = defaultdict(list)
+            for hash_key, tag in frame_tags.items():
+                value_groups[tag["value"]].append((hash_key, tag))
+
+            # Process each value group
+            for group in value_groups.values():
+                while group:
+                    hash_key, tag = group.pop(0)
+                    track_len = len(tracks[filename][tag["track_id"]])
+                    best_tag = (hash_key, tag, track_len)
+
+                    # Compare with remaining tags in the group
+                    i = 0
+                    while i < len(group):
+                        other_hash, other_tag = group[i]
+                        if (
+                            compute_iou(tag["bounding_box"], other_tag["bounding_box"])
+                            > iou_thresh
+                        ):
+                            other_track_len = len(
+                                tracks[filename][other_tag["track_id"]]
+                            )
+                            if other_track_len > best_tag[2]:
+                                best_tag = (other_hash, other_tag, other_track_len)
+                            group.pop(i)
+                        else:
+                            i += 1
+
+                    # Add the best tag to the new tags
+                    tags_new[filename][frame_number][best_tag[0]] = best_tag[1]
+
+    return VideoTags.from_tags(dict(tags_new), video_tags.tagger_config)
+
+
 if __name__ == "__main__":
 
     # Testing code for the module.
@@ -273,42 +314,43 @@ if __name__ == "__main__":
         logger.info(f"Loading tags file {tags_file}")
         video_tags_database.merge(VideoTags.from_file(tags_file))
 
-    # Subselect tags that are "person"
-    # video_tags_database.tags = filter_by_value(video_tags_database.tags, "person")
+    logger.info(f"Tags Databse (pre de-dup)     : {video_tags_database.stats}")
 
-    logger.info(f"Tags Databse: {video_tags_database.stats}")
+    # First pass at removing duplicates in the entire database:
+    video_tags_database = remove_duplicates(video_tags_database)
+
+    logger.info(f"Tags Databse (post de-dup 1)  : {video_tags_database.stats}")
+
+    video_tags_database = remove_duplicates(video_tags_database)
+
+    logger.info(f"Tags Databse (post de-dup 2)  : {video_tags_database.stats}")
+
+    video_tags_database = remove_duplicates(video_tags_database)
+
+    logger.info(f"Tags Databse (post de-dup 3)  : {video_tags_database.stats}")
 
     # Export tags to Videos to keep onlt the relevant tags present in the videos
     video_tags = VideoTags.from_videos(video_tags_database.to_videos(videos))
 
-    logger.info(f"Video Tags: {video_tags.stats}")
+    logger.info(f"Tags in videos                : {video_tags.stats}")
 
-    # Remove near duplicated of tags.
-    iou_thresh: float = 0.5
-    video_tags_new = remove_duplicates(video_tags, iou_thresh)
+    video_tags = remove_duplicates(video_tags)
 
-    tracks_new = tags_to_tracks(video_tags_new.tags)
-    logger.info(f"Post near-duplicates removal: tags_new: {video_tags_new.stats}")
-    logger.info(f"Post near-duplicates removal: tracks_new: {track_stats(tracks_new)}")
+    logger.info(f"Tags in videos (post de-dup 1): {video_tags.stats}")
+
+    video_tags = remove_duplicates(video_tags)
+
+    logger.info(f"Tags in videos (post de-dup 2): {video_tags.stats}")
 
     videos_new = VideoMetadata.clean_and_sort(
         [VideoMetadata.from_video_file(file) for file in video_files]
     )
-    video_tags_new.to_videos(videos_new)
+    video_tags.to_videos(videos_new)
 
     show_tags_video: bool = False
     if show_tags_video:
         # Quick visualization of the tags in the videos.
-        tag_video_file = os.path.join(out_dir, f"{story_name}_tags.mp4")
-        logger.info(f"Generating video tag file {tag_video_file}")
-        TagVisualizer(
-            TagVisualizerConfig(output_size={"width": 1600, "height": 900})
-        ).run(videos, tag_video_file)
-
-    show_tags_video_new: bool = True
-    if show_tags_video_new:
-        # Quick visualization of the tags in the videos.
-        tag_video_file = os.path.join(out_dir, f"{story_name}_deduped_0.5_tags.mp4")
+        tag_video_file = os.path.join(out_dir, f"{story_name}_deduped_0.5_2_tags.mp4")
         logger.info(f"Generating video tag file {tag_video_file}")
         TagVisualizer(
             TagVisualizerConfig(output_size={"width": 1600, "height": 900})
