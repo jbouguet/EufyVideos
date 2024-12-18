@@ -102,11 +102,6 @@ class AnalysisConfig:
             stories=stories,
         )
 
-    # @classmethod
-    # def from_file(cls, config_file: str) -> "AnalysisConfig":
-    #     with open(config_file, "r") as f:
-    #         return cls.from_dict(yaml.safe_load(f))
-
     @classmethod
     def from_file(cls, config_file: str) -> "AnalysisConfig":
         try:
