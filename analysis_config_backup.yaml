@@ -1,66 +1,55 @@
-# Base directory definitions
-directories:
-  root_database: &root_database "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record"
-  stories_output: &stories_output "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
-
-# Common subdirectories
-subdirs:
-  tags_database: &tags_dir !join [*root_database, "/tags_database"]
-  batch_dirs: &batch_dirs
-    - !join [*root_database, "/Batch001"]
-    - !join [*root_database, "/Batch002"]
-    - !join [*root_database, "/Batch003"]
-    - !join [*root_database, "/Batch004"]
-    - !join [*root_database, "/Batch005"]
-    - !join [*root_database, "/Batch006"]
-    - !join [*root_database, "/Batch007"]
-    - !join [*root_database, "/Batch008"]
-    - !join [*root_database, "/Batch009"]
-    - !join [*root_database, "/Batch010"]
-    - !join [*root_database, "/Batch011"]
-    - !join [*root_database, "/Batch012"]
-    - !join [*root_database, "/Batch013"]
-    - !join [*root_database, "/Batch014"]
-    - !join [*root_database, "/Batch015"]
-    - !join [*root_database, "/Batch016"]
-    - !join [*root_database, "/Batch017"]
-    - !join [*root_database, "/Batch018"]
-    - !join [*root_database, "/Batch019"]
-    - !join [*root_database, "/Batch020"]
-    - !join [*root_database, "/Batch021"]
-    - !join [*root_database, "/Batch022"]
-    - !join [*root_database, "/Batch023"]
-    - !join [*root_database, "/Batch024"]
-    - !join [*root_database, "/Batch025"]
-
-# Video database configuration
 video_database_list:
+
 - force_video_directories_scanning: false
-  video_metadata_file: !join [*root_database, "/videos_in_batches.csv"]
-  video_directories: *batch_dirs
+  video_metadata_file: '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/videos_in_batches.csv'
+  video_directories:
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch001'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch002'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch003'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch004'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch005'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch006'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch007'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch008'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch009'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch010'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch011'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch012'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch013'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch014'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch015'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch016'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch017'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch018'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch019'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch020'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch021'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch022'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch023'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch024'
+  - '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch025'
 
 - force_video_directories_scanning: true
-  video_metadata_file: !join [*root_database, "/videos_in_backup.csv"]
-  video_directories: !join [*root_database, "/backup"]
+  video_metadata_file: '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/videos_in_backup.csv'
+  video_directories: '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/backup'
 
-# Tag database files
 tag_database_files:
-- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_7fps_tags.json"]
-- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_3fps_tags.json"]
-- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_1.5fps_tags.json"]
-- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_0.6fps_tags.json"]
-- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_0.3fps_tags.json"]
-- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_0.15fps_tags.json"]
-- !join [*tags_dir, "/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_15.0fps_tags.json"]
-- !join [*tags_dir, "/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_7.5fps_tags.json"]
-- !join [*tags_dir, "/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_3.0fps_tags.json"]
-- !join [*tags_dir, "/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_1.5fps_tags.json"]
-- !join [*tags_dir, "/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_1.0fps_tags.json"]
-- !join [*tags_dir, "/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_0.6fps_tags.json"]
-- !join [*tags_dir, "/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_0.3fps_tags.json"]
-- !join [*tags_dir, "/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_0.15fps_tags.json"]
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/2024-11-18 - Backyard Planning_Yolo11x_Track_7fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/2024-11-18 - Backyard Planning_Yolo11x_Track_3fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/2024-11-18 - Backyard Planning_Yolo11x_Track_1.5fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/2024-11-18 - Backyard Planning_Yolo11x_Track_0.6fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/2024-11-18 - Backyard Planning_Yolo11x_Track_0.3fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/2024-11-18 - Backyard Planning_Yolo11x_Track_0.15fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_15.0fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_7.5fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_3.0fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_1.5fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_1.0fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_0.6fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_0.3fps_tags.json'
+- '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/tags_database/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_0.15fps_tags.json'
 
-output_directory: *stories_output
+output_directory: '/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories'
 process_stories: true
 
 stories:

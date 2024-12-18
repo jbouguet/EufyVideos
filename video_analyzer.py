@@ -17,6 +17,56 @@ from video_visualizer import VideoVisualizer
 logger = setup_logger(__name__)
 
 
+class JoinPathsLoader(yaml.SafeLoader):
+    """Custom YAML Loader that handles path joining with variable resolution"""
+
+    def __init__(self, stream):
+        super().__init__(stream)
+        self.add_constructor("!join", self._join_paths)
+
+    def _join_paths(self, loader, node):
+        """Join paths while resolving aliases"""
+        logger.debug(f"Starting path join operation with node type: {type(node)}")
+        try:
+            # For sequence nodes (multiple path components)
+            if isinstance(node, yaml.SequenceNode):
+                logger.debug(
+                    f"Processing sequence node with {len(node.value)} elements"
+                )
+                resolved_paths = []
+                for i, path_node in enumerate(node.value):
+                    path = loader.construct_object(path_node)
+                    logger.debug(f"Raw path component {i}: {path}")
+
+                    # Convert to string and ensure proper formatting
+                    path_str = str(path)
+                    if i > 0 and path_str.startswith("/"):
+                        # Remove leading slash from all but first component
+                        path_str = path_str.lstrip("/")
+                        logger.debug(f"Formatted path component {i}: {path_str}")
+
+                    resolved_paths.append(path_str)
+
+                result = os.path.join(*resolved_paths)
+                logger.debug(f"Final joined path: {result}")
+                return result
+
+            # For scalar nodes (single path)
+            elif isinstance(node, yaml.ScalarNode):
+                result = loader.construct_scalar(node)
+                logger.debug(f"Processing scalar node, value: {result}")
+                return result
+            else:
+                error_msg = f"Invalid node type for !join tag: {type(node)}"
+                logger.error(error_msg)
+                raise yaml.constructor.ConstructorError(
+                    None, None, error_msg, node.start_mark
+                )
+        except Exception as e:
+            logger.error(f"Error in _join_paths: {str(e)}")
+            raise
+
+
 @dataclass
 class AnalysisConfig:
     video_database_list: VideoDatabaseList
@@ -52,10 +102,52 @@ class AnalysisConfig:
             stories=stories,
         )
 
+    # @classmethod
+    # def from_file(cls, config_file: str) -> "AnalysisConfig":
+    #     with open(config_file, "r") as f:
+    #         return cls.from_dict(yaml.safe_load(f))
+
     @classmethod
     def from_file(cls, config_file: str) -> "AnalysisConfig":
-        with open(config_file, "r") as f:
-            return cls.from_dict(yaml.safe_load(f))
+        try:
+            logger.debug(f"Loading configuration from file: {config_file}")
+            with open(config_file, "r") as f:
+                config_dict = yaml.load(f, Loader=JoinPathsLoader)
+
+                # Enhanced logging for debugging paths
+                logger.debug("Raw loaded configuration:")
+                if "video_database_list" in config_dict:
+                    for idx, db in enumerate(config_dict["video_database_list"]):
+                        logger.debug(f"Database {idx + 1}:")
+                        if "video_metadata_file" in db:
+                            logger.debug(
+                                f"  metadata_file: {db['video_metadata_file']}"
+                            )
+                            logger.debug(
+                                f"  metadata_file exists: {os.path.exists(db['video_metadata_file'])}"
+                            )
+                        if "video_directories" in db:
+                            if isinstance(db["video_directories"], list):
+                                logger.debug("  directories:")
+                                for dir in db["video_directories"]:
+                                    logger.debug(f"    - {dir}")
+                                    logger.debug(f"    - exists: {os.path.exists(dir)}")
+                            else:
+                                logger.debug(f"  directory: {db['video_directories']}")
+                                logger.debug(
+                                    f"  directory exists: {os.path.exists(db['video_directories'])}"
+                                )
+
+                if "directories" in config_dict:
+                    del config_dict["directories"]
+
+                return cls.from_dict(config_dict)
+        except yaml.YAMLError as e:
+            logger.error(f"Error parsing YAML configuration: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Error loading configuration: {e}")
+            raise
 
     def to_file(self, config_file: str) -> None:
         with open(config_file, "w") as f:
