@@ -66,8 +66,7 @@ class VideoAnalyzer:
     def __init__(self, config: AnalysisConfig) -> None:
         self.config: AnalysisConfig = config
         self.videos_database: List[VideoMetadata] = []
-        self.tags_database: List[VideoTags] = []
-        self.merged_tags_database: VideoTags = None
+        self.tags_database: VideoTags = None
 
     @staticmethod
     def run(config_filename: str) -> None:
@@ -86,22 +85,11 @@ class VideoAnalyzer:
         self.tags_database = (
             VideoAnalyzer._load_tags_database(self.config.tag_database_files)
             if self.config.tag_database_files
-            else []
+            else None
         )
-        num_tags_loaded = (
-            sum(tags.stats["num_tags"] for tags in self.tags_database)
-            if self.tags_database
-            else 0
-        )
-
-        # Create a merged tag database removing any duplicate.
-        self.merged_tags_database = VideoTags.from_tags(tags={})
-        for video_tags in self.tags_database:
-            self.merged_tags_database.merge(video_tags)
-        self.merged_tags_database.to_videos(self.videos_database)
-        logger.info(
-            f"Unique tags exported to videos: {self.merged_tags_database.stats}  out of a total of {num_tags_loaded} tags loaded from files"
-        )
+        if self.tags_database:
+            self.tags_database.to_videos(self.videos_database)
+            logger.info(f"Unique tags exported to videos: {self.tags_database.stats}")
 
     @staticmethod
     def _load_videos_database(
@@ -114,10 +102,8 @@ class VideoAnalyzer:
         return videos_database
 
     @staticmethod
-    def _load_tags_database(
-        tag_database_files: Union[str, List[str]]
-    ) -> List[VideoTags]:
-        tags_database: List[VideoTags] = []
+    def _load_tags_database(tag_database_files: Union[str, List[str]]) -> VideoTags:
+        tags_database = VideoTags.from_tags(tags={})
         tag_database_files = (
             [tag_database_files]
             if isinstance(tag_database_files, str)
@@ -126,7 +112,9 @@ class VideoAnalyzer:
         for tag_file in tag_database_files:
             tags: VideoTags = VideoTags.from_file(tag_file)
             logger.info(f"{tags.stats} loaded from {tag_file}")
-            tags_database.append(tags)
+            tags_database.merge(tags)
+
+        tags_database.remove_duplicates()
 
         return tags_database
 
@@ -141,7 +129,7 @@ class VideoAnalyzer:
             sum(video.file_size for video in self.videos_database) / 1024
         )
 
-        tags_stats = self.merged_tags_database.stats
+        tags_stats = self.tags_database.stats
         num_tagged_videos = tags_stats["num_tagged_videos"]
         num_tagged_frames = tags_stats["num_tagged_frames"]
         num_tags = tags_stats["num_tags"]

@@ -12,6 +12,7 @@ tags from batches of videos. It serves as a high-level abstraction layer that:
 
 import json
 import os
+from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -244,6 +245,83 @@ class VideoTags:
         y2: int = bbox["y2"]
         return int(hash((hash_filename, frame_number, value_hash, x1, x2, y1, y2)))
 
+    @staticmethod
+    def compute_iou(tag1: Dict[str, Any], tag2: Dict[str, Any]) -> float:
+        """
+        Compute Intersection over Union (IoU) between two bounding boxes.
+        Boxes are dictionaries with keys 'x1', 'y1', 'x2', 'y2'.
+        Returns a value between 0 (no overlap) and 1 (perfect overlap).
+        """
+        if tag1["value"] != tag2["value"]:
+            return 0.0
+
+        bbox1 = tag1["bounding_box"]
+        bbox2 = tag2["bounding_box"]
+        # Calculate intersection coordinates
+        x_left = max(bbox1["x1"], bbox2["x1"])
+        y_top = max(bbox1["y1"], bbox2["y1"])
+        x_right = min(bbox1["x2"], bbox2["x2"])
+        y_bottom = min(bbox1["y2"], bbox2["y2"])
+
+        # If there's no intersection, return 0
+        if x_right < x_left or y_bottom < y_top:
+            return 0.0
+
+        # Calculate intersection area
+        intersection_area = (x_right - x_left) * (y_bottom - y_top)
+
+        # Calculate union area
+        bbox1_area = (bbox1["x2"] - bbox1["x1"]) * (bbox1["y2"] - bbox1["y1"])
+        bbox2_area = (bbox2["x2"] - bbox2["x1"]) * (bbox2["y2"] - bbox2["y1"])
+        union_area = bbox1_area + bbox2_area - intersection_area
+
+        # Calculate IoU
+        iou = intersection_area / union_area if union_area > 0 else 0.0
+
+        return iou
+
+    def remove_duplicates(self, iou_thresh: float = 0.5) -> "VideoTags":
+        track_lengths = defaultdict(int)
+        for file_tags in self.tags.values():
+            for frame_tags in file_tags.values():
+                for tag in frame_tags.values():
+                    if "track_id" in tag:
+                        track_lengths[int(tag["track_id"])] += 1
+
+        tags_new = defaultdict(lambda: defaultdict(dict))
+
+        for filename, file_tags in self.tags.items():
+            for frame_number, frame_tags in file_tags.items():
+                # Group tags by value
+                value_groups = defaultdict(list)
+                for hash_key, tag in frame_tags.items():
+                    value_groups[tag["value"]].append((hash_key, tag))
+
+                # Process each value group
+                for group in value_groups.values():
+                    while group:
+                        hash_key, tag = group.pop(0)
+                        track_len = track_lengths[tag["track_id"]]
+                        best_tag = (hash_key, tag, track_len)
+
+                        # Compare with remaining tags in the group
+                        i = 0
+                        while i < len(group):
+                            other_hash, other_tag = group[i]
+                            if VideoTags.compute_iou(tag, other_tag) > iou_thresh:
+                                other_track_len = track_lengths[other_tag["track_id"]]
+                                if other_track_len > best_tag[2]:
+                                    best_tag = (other_hash, other_tag, other_track_len)
+                                group.pop(i)
+                            else:
+                                i += 1
+
+                        # Add the best tag to the new tags
+                        tags_new[filename][frame_number][best_tag[0]] = best_tag[1]
+
+        self.tags = tags_new
+        return self
+
 
 class TagProcessor:
     """Main interface for computing video tags using object detection models."""
@@ -358,7 +436,7 @@ if __name__ == "__main__":
 
     # Tracking configurations
     # temporal_subsamplings: List[float] = [100, 50, 25, 15, 10, 5, 2, 1]
-    temporal_subsamplings: List[float] = [100]
+    temporal_subsamplings: List[float] = [100, 50, 25, 15, 10, 5, 2, 1]
     tracker_configs: List[TaggerConfig] = [
         TaggerConfig(
             model="Yolo11x",
@@ -375,7 +453,7 @@ if __name__ == "__main__":
     ]
 
     # Process tags
-    force_recompute: bool = True
+    force_recompute: bool = False
     for config, tag_file in zip(tracker_configs, tag_files):
         logger.info(f"Processing tag file {tag_file}")
         if not os.path.exists(tag_file) or force_recompute:
@@ -390,6 +468,10 @@ if __name__ == "__main__":
     logger.info(f"Initial forward merge tags: {merged_tags.stats}")
     for tag_file in tag_files:
         merged_tags.merge(VideoTags.from_file(tag_file))
+
+    logger.info(f"Merged tags before duplicates removal: {merged_tags.stats}")
+    merged_tags.remove_duplicates()
+    logger.info(f"Merged tags after duplicates removal:  {merged_tags.stats}")
 
     tag_video_file = os.path.join(out_dir, "merged_tags.mp4")
     logger.info(f"Generating video tag file {tag_video_file}")
