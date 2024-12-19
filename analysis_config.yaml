@@ -1,10 +1,7 @@
-# yaml-language-server: $schema=none
 # Base directory definitions
 directories:
   root_database: &root_database "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record"
   stories_output: &stories_output "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
-
-# Rest of your existing file remains exactly the same...
   tags_database: &tags_dir !join [*root_database, "/tags_database"]
   batch_dirs: &batch_dirs
     - !join [*root_database, "/Batch001"]
