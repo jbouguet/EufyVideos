@@ -17,6 +17,40 @@ from video_visualizer import VideoVisualizer
 logger = setup_logger(__name__)
 
 
+class VariableSubstitutionLoader(yaml.SafeLoader):
+    def __init__(self, stream):
+        super().__init__(stream)
+        self.variables = {}
+
+    def construct_scalar(self, node):
+        value = super().construct_scalar(node)
+        if isinstance(value, str):
+            return self.substitute_variables(value)
+        return value
+
+    def substitute_variables(self, value):
+        if "${" in value:
+            for var_name, var_value in self.variables.items():
+                value = value.replace(f"${{{var_name}}}", var_value)
+        return value
+
+    def construct_mapping(self, node, deep=False):
+        mapping = super().construct_mapping(node, deep=deep)
+        for key, value in mapping.items():
+            if isinstance(value, str) and value.startswith("&"):
+                self.variables[value[1:]] = mapping[key]
+        return mapping
+
+
+def load_yaml_with_substitution(file_path):
+    with open(file_path, "r") as file:
+        loader = VariableSubstitutionLoader(file)
+        try:
+            return yaml.load(file, Loader=loader)
+        except yaml.YAMLError as exc:
+            print(f"Error in configuration file: {exc}")
+
+
 class JoinPathsLoader(yaml.SafeLoader):
     """Custom YAML Loader that handles path joining with variable resolution"""
 
@@ -67,11 +101,6 @@ class JoinPathsLoader(yaml.SafeLoader):
             raise
 
 
-def load_yaml_with_substitution(file_path):
-    with open(file_path, "r") as f:
-        return yaml.load(f, Loader=JoinPathsLoader)
-
-
 @dataclass
 class AnalysisConfig:
     video_database_list: VideoDatabaseList
@@ -109,49 +138,45 @@ class AnalysisConfig:
 
     @classmethod
     def from_file(cls, config_file: str) -> "AnalysisConfig":
-        logger.info(f"Loading configuration from file: {config_file}")
-        config_dict = load_yaml_with_substitution(config_file)
+        try:
+            logger.debug(f"Loading configuration from file: {config_file}")
+            config_dict = load_yaml_with_substitution(config_file)
 
-        if "directories" in config_dict:
-            logger.debug(f"directories: {config_dict["directories"]}")
+            # with open(config_file, "r") as f:
+            #     config_dict = yaml.load(f, Loader=JoinPathsLoader)
 
-        if "subdirs" in config_dict:
-            logger.debug(f"subdirs: {config_dict["subdirs"]}")
-
-        if "video_database_list" in config_dict:
-            for idx, db in enumerate(config_dict["video_database_list"]):
-                logger.debug(f"Database {idx + 1}:")
-                if "video_metadata_file" in db:
-                    logger.debug(f"  metadata_file: {db['video_metadata_file']}")
-                    logger.debug(
-                        f"  file exists: {os.path.exists(db['video_metadata_file'])}"
-                    )
-                if "video_directories" in db:
-                    if isinstance(db["video_directories"], list):
-                        logger.debug("  directories:")
-                        for dir in db["video_directories"]:
-                            logger.debug(f"    - {dir}")
-                            logger.debug(
-                                f"    - directory exists: {os.path.exists(dir)}"
-                            )
-                    else:
-                        logger.debug(f"  directory: {db['video_directories']}")
+            # Enhanced logging for debugging paths
+            logger.debug("Raw loaded configuration:")
+            if "video_database_list" in config_dict:
+                for idx, db in enumerate(config_dict["video_database_list"]):
+                    logger.debug(f"Database {idx + 1}:")
+                    if "video_metadata_file" in db:
+                        logger.debug(f"  metadata_file: {db['video_metadata_file']}")
                         logger.debug(
-                            f"  directory exists: {os.path.exists(db['video_directories'])}"
+                            f"  metadata_file exists: {os.path.exists(db['video_metadata_file'])}"
                         )
-        if "tag_database_files" in config_dict:
-            logger.debug("Tag Database:")
-            for tag_file in config_dict["tag_database_files"]:
-                logger.debug(f"    - {tag_file}")
-                logger.debug(f"    - exists: {os.path.exists(tag_file)}")
+                    if "video_directories" in db:
+                        if isinstance(db["video_directories"], list):
+                            logger.debug("  directories:")
+                            for dir in db["video_directories"]:
+                                logger.debug(f"    - {dir}")
+                                logger.debug(f"    - exists: {os.path.exists(dir)}")
+                        else:
+                            logger.debug(f"  directory: {db['video_directories']}")
+                            logger.debug(
+                                f"  directory exists: {os.path.exists(db['video_directories'])}"
+                            )
 
-        if "output_directory" in config_dict:
-            logger.debug(f"Output Dir: {config_dict["output_directory"]}")
-            logger.debug(
-                f"  directory exists: {os.path.exists(config_dict["output_directory"])}"
-            )
+                if "directories" in config_dict:
+                    del config_dict["directories"]
 
-        return cls.from_dict(config_dict)
+                return cls.from_dict(config_dict)
+        except yaml.YAMLError as e:
+            logger.error(f"Error parsing YAML configuration: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Error loading configuration: {e}")
+            raise
 
     def to_file(self, config_file: str) -> None:
         with open(config_file, "w") as f:

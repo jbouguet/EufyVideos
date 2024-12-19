@@ -17,16 +17,20 @@ def setup_logger(name):
     ch.setLevel(logging.INFO)
 
     # Create formatter
-    formatter = FilenameFormatter(
-        "\x1b[31;20m%(asctime)s\x1b[0m - %(filename)s:%(lineno)d - %(funcName)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-
     # formatter = FilenameFormatter(
-    #    "\x1b[31;20m%(asctime)s\x1b[0m %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+    #     "\x1b[31m%(asctime)s\x1b[0m - "
+    #     "\x1b[32m%(filename)s:%(lineno)d\x1b[0m - "
+    #     "\x1b[34m%(funcName)s\x1b[0m - "
+    #     "\x1b[35m%(levelname)s\x1b[0m - "
+    #     "%(message)s",
+    #     datefmt="%Y-%m-%d %H:%M:%S",
     # )
 
-    # formatter = FilenameFormatter("%(message)s")
+    # Create formatter
+    formatter = FilenameFormatter(
+        "\x1b[31m%(asctime)s\x1b[0m - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
 
     # Add formatter to ch
     ch.setFormatter(formatter)
