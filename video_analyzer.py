@@ -185,7 +185,7 @@ class VideoAnalyzer:
         )
         if self.tags_database:
             self.tags_database.to_videos(self.videos_database)
-            logger.info(f"Unique tags exported to videos: {self.tags_database.stats}")
+            logger.info(f"Tag Database: {self.tags_database.stats}")
 
     @staticmethod
     def _load_videos_database(
@@ -194,7 +194,7 @@ class VideoAnalyzer:
         corrupted_files: List[str] = []
         videos_database = video_database_list.load_videos(corrupted_files)
         for file in corrupted_files:
-            logger.info(f"    - {file}")
+            logger.warning(f"    - {file}")
         return videos_database
 
     @staticmethod
@@ -207,10 +207,12 @@ class VideoAnalyzer:
         )
         for tag_file in tag_database_files:
             tags: VideoTags = VideoTags.from_file(tag_file)
-            logger.info(f"{tags.stats} loaded from {tag_file}")
+            logger.debug(f"{tags.stats} loaded from {tag_file}")
             tags_database.merge(tags)
 
+        logger.debug(f"{tags_database.stats} before duplicates removal")
         tags_database.remove_duplicates()
+        logger.debug(f"{tags_database.stats} after duplicates removal")
 
         return tags_database
 
