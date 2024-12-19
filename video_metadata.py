@@ -46,9 +46,9 @@ from dateutil.tz import tzlocal, tzutc
 from tqdm import tqdm
 
 from config import Config
-from logging_config import setup_logger
+from logging_config import create_logger
 
-logger = setup_logger(__name__)
+logger = create_logger(__name__)
 
 
 class VideoMetadataError(Exception):

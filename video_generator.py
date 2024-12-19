@@ -45,10 +45,10 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 from config import Config
-from logging_config import setup_logger
+from logging_config import create_logger
 from video_metadata import VideoMetadata
 
-logger = setup_logger(__name__)
+logger = create_logger(__name__)
 
 
 @dataclass

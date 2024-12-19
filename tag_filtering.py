@@ -8,7 +8,10 @@ Built on top of tag_processor.
 from collections import defaultdict
 from typing import Any, Dict, List, Tuple
 
+from logging_config import create_logger
 from tag_processor import VideoTags
+
+logger = create_logger(__name__)
 
 
 def filter_by_value(
@@ -56,15 +59,19 @@ def tracks_to_tags(
 if __name__ == "__main__":
 
     # Testing code for the module.
+    import logging
     import os
     import sys
     from typing import List
 
-    from logging_config import setup_logger
+    from logging_config import set_logger_level_and_format
     from tag_visualizer import TagVisualizer, TagVisualizerConfig
     from video_metadata import VideoMetadata
 
-    logger = setup_logger(__name__)
+    # Set extended logging for this module only.
+    set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
+    # Set extended logging for all modules.
+    # set_all_loggers_level_and_format(level=logging.DEBUG, extended_format=True)
 
     story_name: str = "track_testing"
     video_files: List[str] = [
@@ -93,12 +100,12 @@ if __name__ == "__main__":
     # Restrict to person tags:
     # video_tags_database.tags = filter_by_value(video_tags_database.tags, "person")
 
-    logger.info(f"Tags Database (pre de-dup)     : {video_tags_database.stats}")
+    logger.debug(f"Tags Database (pre de-dup)     : {video_tags_database.stats}")
 
     # Remove duplicate tags in the entire database:
     video_tags_database.remove_duplicates()
 
-    logger.info(f"Tags Database (post de-dup 1)  : {video_tags_database.stats}")
+    logger.debug(f"Tags Database (post de-dup 1)  : {video_tags_database.stats}")
 
     # Export and import tags to and from videos of interest to retain relevant tags present in the videos
     video_tags = VideoTags.from_videos(
@@ -109,7 +116,7 @@ if __name__ == "__main__":
         )
     )
 
-    logger.info(f"Tags in videos: {video_tags.stats}")
+    logger.debug(f"Tags in videos: {video_tags.stats}")
 
     tracks = tags_to_tracks(video_tags.tags)
     num_tracks = sum(len(tracks[filename]) for filename in tracks.keys())
@@ -159,18 +166,18 @@ if __name__ == "__main__":
     # Collapse all of the track_id renaming into distinct clusters
     keep_collapsing_renaming_chains: bool = True
     while keep_collapsing_renaming_chains:
-        logger.info("Collapsing the chains of merges...")
+        logger.debug("Collapsing the chains of merges...")
         keep_collapsing_renaming_chains = False
         for track_id in track_renames.keys():
             if track_renames[track_id] in track_renames:
                 if track_renames[track_id] != track_renames[track_renames[track_id]]:
-                    logger.info(
+                    logger.debug(
                         f"Closing chain: {track_id} -> {track_renames[track_id]} -> {track_renames[track_renames[track_id]]}"
                     )
                     track_renames[track_id] = track_renames[track_renames[track_id]]
                     keep_collapsing_renaming_chains = True
 
-    logger.info(f"Number of tracks to be renamed: {len(track_renames.keys())}")
+    logger.debug(f"Number of tracks to be renamed: {len(track_renames.keys())}")
 
     # WIP: Experimentally, not all renames shoudl be committed. In pratice,
     # When long tracks are committed to merge together, bad things happen.
@@ -191,10 +198,10 @@ if __name__ == "__main__":
         for filename in tracks_collapsed_tracks.keys()
     )
 
-    print(f"Original number of tracks: {num_tracks}")
-    print(f"Number of tracks after collapse: {num_tracks_collapsed}")
+    logger.debug(f"Original number of tracks: {num_tracks}")
+    logger.debug(f"Number of tracks after collapse: {num_tracks_collapsed}")
 
-    show_tags_video: bool = True
+    show_tags_video: bool = False
     if show_tags_video:
         tag_video_file = os.path.join(
             out_dir, f"{story_name}_deduped_tracks_collapsed_tags5.mp4"

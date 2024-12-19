@@ -14,11 +14,11 @@ import ffmpeg
 from tqdm import tqdm
 
 from config import Config
-from logging_config import setup_logger
+from logging_config import create_logger
 from video_analyzer import AnalysisConfig
 from video_metadata import VideoMetadata
 
-logger = setup_logger(__name__)
+logger = create_logger(__name__)
 
 
 class VideoParser:

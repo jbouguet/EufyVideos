@@ -21,8 +21,11 @@ from typing import Any, Dict, List, Union
 
 from tqdm import tqdm
 
+from logging_config import create_logger
 from object_detector_base import ObjectDetectorFactory
 from video_metadata import VideoMetadata
+
+logger = create_logger(__name__)
 
 
 class Model(Enum):
@@ -417,10 +420,10 @@ if __name__ == "__main__":
     # Testing code for the module.
     import sys
 
-    from logging_config import setup_logger
+    from logging_config import create_logger
     from tag_visualizer import TagVisualizer, TagVisualizerConfig
 
-    logger = setup_logger(__name__)
+    logger = create_logger(__name__)
 
     video_files: List[str] = [
         "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch022/T8600P102338033E_20240930085536.mp4",

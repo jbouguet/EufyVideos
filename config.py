@@ -5,9 +5,9 @@ import os
 
 import plotly.express as px
 
-from logging_config import setup_logger
+from logging_config import create_logger
 
-logger = setup_logger(__name__)
+logger = create_logger(__name__)
 
 
 class Config:

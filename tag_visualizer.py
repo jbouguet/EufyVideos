@@ -42,7 +42,10 @@ import cv2
 import numpy as np
 from tqdm import tqdm
 
+from logging_config import create_logger
 from video_metadata import VideoMetadata
+
+logger = create_logger(__name__)
 
 
 @contextlib.contextmanager

@@ -42,14 +42,14 @@ import yaml
 from termcolor import colored
 
 from config import Config
-from logging_config import setup_logger
+from logging_config import create_logger
 from tag_processor import TaggerConfig, TagProcessor, VideoTags
 from tag_visualizer import TagVisualizer, TagVisualizerConfig
 from video_generator import VideoGenerationConfig, VideoGenerator
 from video_metadata import VideoFilter, VideoMetadata, VideoSelector
 from video_visualizer import VideoVisualizer
 
-logger = setup_logger(__name__)
+logger = create_logger(__name__)
 
 
 @dataclass

@@ -8,13 +8,13 @@ import yaml
 from termcolor import colored
 
 from config import Config
-from logging_config import setup_logger
+from logging_config import create_logger
 from story_creator import Story
 from tag_processor import VideoTags
 from video_metadata import VideoDatabase, VideoDatabaseList, VideoMetadata
 from video_visualizer import VideoVisualizer
 
-logger = setup_logger(__name__)
+logger = create_logger(__name__)
 
 
 class JoinPathsLoader(yaml.SafeLoader):
@@ -282,6 +282,8 @@ if __name__ == "__main__":
     import argparse
     import logging
 
+    from logging_config import set_all_loggers_level_and_format
+
     parser = argparse.ArgumentParser(description="Run video analysis")
     parser.add_argument(
         "--config",
@@ -289,12 +291,15 @@ if __name__ == "__main__":
         help="Path to the configuration file",
     )
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument(
+        "--extended_format", action="store_true", help="Enable extended logging format"
+    )
     args = parser.parse_args()
 
-    if args.debug:
-        logger.setLevel(logging.DEBUG)
-        for handler in logger.handlers:
-            handler.setLevel(logging.DEBUG)
+    set_all_loggers_level_and_format(
+        logging.DEBUG if args.debug else logging.INFO,
+        args.debug or args.extended_format,
+    )
 
     if not os.path.exists(args.config):
         logger.error(f"Configuration file {args.config} not found.")

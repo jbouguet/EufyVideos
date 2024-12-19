@@ -34,7 +34,10 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from config import Config
+from logging_config import create_logger
 from video_metadata import VideoMetadata  # Main interface point
+
+logger = create_logger(__name__)
 
 
 class VideoDataAggregator:

@@ -8,13 +8,13 @@ import yaml
 from termcolor import colored
 
 from config import Config
-from logging_config import setup_logger
+from logging_config import create_logger
 from story_creator import Story
 from tag_processor import VideoTags
 from video_metadata import VideoDatabase, VideoDatabaseList, VideoMetadata
 from video_visualizer import VideoVisualizer
 
-logger = setup_logger(__name__)
+logger = create_logger(__name__)
 
 
 class VariableSubstitutionLoader(yaml.SafeLoader):

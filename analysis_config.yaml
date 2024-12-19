@@ -61,27 +61,49 @@ output_directory: *stories_output
 process_stories: true
 
 stories:
-  - name: '2024-12-12 - 2024-12-13'
+  - name: 'HotTub Installation'
     skip: false
     selectors:
-      - date_range:
-          start: '2024-12-12'
-          end: '2024-12-13'
-
-  - name: '2024-12-12'
-    skip: true
-    selectors:
+      # Delivery and Installation
       - date_range:
           start: '2024-12-12'
           end: '2024-12-12'
-
-  - name: '2024-12-11 Backyard'
-    skip: true
-    selectors:
-      - date_range:
-          start: '2024-12-11'
-          end: '2024-12-11'
+        time_range:
+          start: '11:23:00'
+          end: '19:36:00'
         devices: ['Backyard']
+      # Face to Face training
+      - date_range:
+          start: '2024-12-13'
+          end: '2024-12-13'
+        time_range:
+          start: '08:03:00'
+          end: '08:20:00'
+        devices: ['Backyard']
+      # Visit of Kyle with water care products
+      - date_range:
+          start: '2024-12-13'
+          end: '2024-12-13'
+        time_range:
+          start: '12:42:00'
+          end: '12:55:00'
+        devices: ['Backyard']
+      # Final fix of the electrical
+      - date_range:
+          start: '2024-12-13'
+          end: '2024-12-13'
+        time_range:
+          start: '19:12:00'
+          end: '19:57:00'
+        devices: ['Backyard']
+    generate_video: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 20
+        offset_in_seconds: 30
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 1600
 
   - name: '2024-11-27'
     skip: true
@@ -274,27 +296,6 @@ stories:
           end: '13:00:00'
         devices: ['Backyard', 'Back Alleyway']
 
-  - name: '2024-11-20'
-    skip: true
-    selectors:
-      - date_range:
-          start: '2024-11-20'
-          end: '2024-11-20'
-
-  - name: '2024-11-19'
-    skip: true
-    selectors:
-      - date_range:
-          start: '2024-11-19'
-          end: '2024-11-19'
-
-  - name: '2024-11-18'
-    skip: true
-    selectors:
-      - date_range:
-          start: '2024-11-18'
-          end: '2024-11-18'
-
   - name: 'Front Yard Cleaning - 2024-11-17'
     skip: true
     selectors:
@@ -316,13 +317,6 @@ stories:
           start: '08:41:00'
           end: '15:05:00'
         devices: ['Backyard']
-
-  - name: '2024-11-17'
-    skip: true
-    selectors:
-      - date_range:
-          start: '2024-11-17'
-          end: '2024-11-17'
 
   - name: 'Stolen Moped '
     skip: true
@@ -424,78 +418,6 @@ stories:
         duration_in_seconds: 6
         enforce_16_9_aspect_ratio: true
 
-  - name: 'New Patio Cover Installation - Track Failures 4 '
-    skip: true
-    selectors:
-      - filenames: ['T8600P102338033E_20241011082403.mp4','T8600P102338033E_20241011082613.mp4']
-    process_tags: true
-    generate_tags_video: true
-    tagger_config:
-      model: "Yolo11x"
-      task: "Track"
-      num_frames_per_second: 2
-      conf_threshold: 0.2
-
-  - name: 'New Patio Cover Installation - Track Failures 3 '
-    skip: true
-    selectors:
-      - filenames: ['T8600P102338033E_20241011081844.mp4','T8600P102338033E_20241011081920.mp4']
-    process_tags: true
-    generate_tags_video: true
-    tagger_config:
-      model: "Yolo11x"
-      task: "Track"
-      num_frames_per_second: 2
-      conf_threshold: 0.2
-
-  - name: 'New Patio Cover Installation - Track Failures 2 '
-    skip: true
-    selectors:
-      - filenames: ['T8600P102338033E_20241011081030.mp4','T8600P102338033E_20241011081127.mp4']
-    process_tags: true
-    generate_tags_video: true
-    tagger_config:
-      model: "Yolo11x"
-      task: "Track"
-      num_frames_per_second: 2
-      conf_threshold: 0.2
-
-  - name: 'New Patio Cover Installation - Track Failures 1 '
-    skip: true
-    selectors:
-      - filenames: ['T8600P102338033E_20241011080507.mp4','T8600P102338033E_20241011080633.mp4']
-    process_tags: true
-    generate_tags_video: true
-    tagger_config:
-      model: "Yolo11x"
-      task: "Track"
-      num_frames_per_second: 2
-      conf_threshold: 0.2
-
-  - name: 'T8600P102338033E_20240930085536'
-    skip: true
-    process_tags: true
-    generate_tags_video: true
-    tagger_config:
-      model: "Yolo11x"
-      task: "Track"
-      num_frames_per_second: 15
-      conf_threshold: 0.2
-    selectors:
-      - filenames: ['T8600P102338033E_20240930085536.mp4']
-
-  - name: 'T8410P4224140C2E_20241010140425'
-    skip: true
-    process_tags: true
-    generate_tags_video: true
-    tagger_config:
-      model: "Yolo11x"
-      task: "Detect"
-      num_frames_per_second: 4
-      conf_threshold: 0.2
-    selectors:
-      - filenames: ['T8410P4224140C2E_20241010140425.mp4']
-
   - name: 'New Patio Cover Installation'
     skip: true
     selectors:
@@ -574,15 +496,6 @@ stories:
       input_fragments:
         duration_in_seconds: 6
         enforce_16_9_aspect_ratio: true
-
-  - name: 'To Donate'
-    skip: true
-    process_tags: false
-    generate_tags_video: false
-    selectors:
-      - date_range:
-          start: '2024-09-05'
-          end: '2024-12-31'
 
   - name: 'corrupted_files'
     skip: true
