@@ -94,7 +94,6 @@ stories:
           end: '2024-11-27'
         devices: ['Front Entrance']
 
-
   - name: 'tracks'
     skip: true
     selectors:
@@ -150,7 +149,6 @@ stories:
         width: 1600
         height: 900
 
-
   - name: 'T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809'
     skip: true
     selectors:
@@ -166,9 +164,7 @@ stories:
       output_size:
         width: 1600
         height: 900
-
   # TAGS DATABASE - END
-
 
   - name: '2024-11-18_to_2024-11-20 - Outdoor Shower'
     skip: true
@@ -200,7 +196,6 @@ stories:
         normalized_crop_roi: [0.5, 0.1, 1, 1]
       output_video:
         width: 600
-
 
   - name: 'Audio Failures'
     skip: true
@@ -259,7 +254,6 @@ stories:
         devices: ['Garage', 'Front Door', 'Backyard']
       - filenames: ['T8600P1023450AFB_20240831130618.mp4','T8600P1023450AFB_20240831124041.mp4']
     generate_tags_video: true
-
 
   - name: '2024-11-20 1pm-8am'
     skip: true
