@@ -130,7 +130,7 @@ class TagVisualizerConfig:
     track_color: Tuple[int, int, int] = field(default=(230, 230, 230))  # Light gray
     text_color: Tuple[int, int, int] = field(default=(0, 255, 0))  # Green
     info_color: Tuple[int, int, int] = field(default=(255, 255, 255))  # White
-    font_scale: float = field(default=0.8)
+    font_scale: float = field(default=0.6)
     line_thickness: int = field(default=2)
     use_color_from_track_id: bool = field(default=True)
 
@@ -148,7 +148,7 @@ class TagVisualizerConfig:
             track_color=tuple(config_dict.get("track_color", (230, 230, 230))),
             text_color=tuple(config_dict.get("text_color", (0, 255, 0))),
             info_color=tuple(config_dict.get("info_color", (255, 255, 255))),
-            font_scale=config_dict.get("font_scale", 0.8),
+            font_scale=config_dict.get("font_scale", 0.6),
             line_thickness=config_dict.get("line_thickness", 2),
             use_color_from_track_id=config_dict.get("use_color_from_track_id", True),
         )
@@ -366,7 +366,9 @@ class TagVisualizer:
             track_history[track_id].pop(0)
 
         # label = f"{tag['value']} ({tag['confidence']})"
-        label = f"{tag['value']} ({len(track_history[track_id])})"
+        # label = f"{tag['value']} ({len(track_history[track_id])})"
+        label = f"{track_id}"
+
         self._draw_label(frame, label, bbox, track_color)
 
         if len(track_history[track_id]) > 1:
