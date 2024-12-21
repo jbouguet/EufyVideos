@@ -8,10 +8,10 @@ def set_handler_level(console_handler, level=logging.INFO):
 def set_handler_record_format(console_handler, extended_format: bool = False):
     if extended_format:
         formatter = logging.Formatter(
-            "\x1b[31m%(asctime)s\x1b[0m - "
-            "\x1b[32m%(filename)s:%(lineno)d\x1b[0m - "
-            "\x1b[34m%(funcName)s\x1b[0m - "
-            "\x1b[35m%(levelname)s\x1b[0m - "
+            "\x1b[31m%(asctime)s\x1b[0m | "
+            "\x1b[32m%(filename)s:%(lineno)d\x1b[0m | "
+            "\x1b[34m%(funcName)s\x1b[0m | "
+            "\x1b[35m%(levelname)s\x1b[0m | "
             "%(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
