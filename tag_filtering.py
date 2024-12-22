@@ -260,7 +260,7 @@ if __name__ == "__main__":
 
     logger.debug(f"Original number of tracks: {num_tracks}")
 
-    show_not_collapsed_video: bool = True
+    show_not_collapsed_video: bool = False
     if show_not_collapsed_video:
         tag_video_file = os.path.join(out_dir, f"{story_name}_tracks_not_collapsed.mp4")
         logger.info(f"Generating video tag file {tag_video_file}")
@@ -289,7 +289,7 @@ if __name__ == "__main__":
 
     logger.debug(f"Number of tracks after collapse: {num_tracks_collapsed}")
 
-    show_collapsed_video: bool = True
+    show_collapsed_video: bool = False
     if show_collapsed_video:
         tag_video_file = os.path.join(out_dir, f"{story_name}_tracks_collapsed3.mp4")
         logger.info(f"Generating video tag file {tag_video_file}")
