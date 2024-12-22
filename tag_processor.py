@@ -236,6 +236,17 @@ class VideoTags:
         return cls.from_tags(tags=tags, tagger_config=tagger_config)
 
     @staticmethod
+    def clear_tags(
+        videos: Union[VideoMetadata, List[VideoMetadata]],
+    ) -> List[VideoMetadata]:
+        """Clear all tags from VideoMetadata objects."""
+        videos = [videos] if isinstance(videos, VideoMetadata) else videos
+        for video in videos:
+            if hasattr(video, "tags") and video.tags:
+                video.tags.clear()
+        return videos
+
+    @staticmethod
     def compute_tag_hash(filename: str, tag: Dict[str, Any]) -> int:
         """Compute a unique hash for a tag based on its key properties."""
         hash_filename = hash(filename)
@@ -283,7 +294,7 @@ class VideoTags:
 
         return iou
 
-    def remove_duplicates(self, iou_thresh: float = 0.5) -> "VideoTags":
+    def remove_duplicates(self, iou_thresh: float = 0.8) -> "VideoTags":
         track_lengths = defaultdict(int)
         for file_tags in self.tags.values():
             for frame_tags in file_tags.values():
