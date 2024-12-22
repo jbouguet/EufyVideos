@@ -576,7 +576,7 @@ class VideoGenerator:
                 capture_stderr=True,
             )
 
-        except ffmpeg.Error as e:
+        except ffmpeg.Error:
             if audio_stream is not None:
                 logger.warning(
                     f"Audio processing failed. Falling back to video-only output for fragment {fragment_file}"
@@ -740,7 +740,7 @@ if __name__ == "__main__":
     # Testing code for the module.
     import sys
 
-    from tag_processor import TaggerConfig, TagProcessor, VideoTags
+    from tag_processor import TaggerConfig, TagProcessor
     from tag_visualizer import TagVisualizer, TagVisualizerConfig
 
     video_file: str = (

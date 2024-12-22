@@ -86,10 +86,10 @@ if __name__ == "__main__":
 
     story_name: str = "track_testing"
     video_files: List[str] = [
-        # os.path.join(root_database, "Batch010/T8600P1024260D5E_20241118084615.mp4"),
-        # os.path.join(root_database, "Batch010/T8600P1024260D5E_20241118084819.mp4"),
-        # os.path.join(root_database, "Batch010/T8600P1024260D5E_20241118084902.mp4"),
-        # os.path.join(root_database, "Batch010/T8600P1024260D5E_20241118085102.mp4"),
+        os.path.join(root_database, "Batch010/T8600P1024260D5E_20241118084615.mp4"),
+        os.path.join(root_database, "Batch010/T8600P1024260D5E_20241118084819.mp4"),
+        os.path.join(root_database, "Batch010/T8600P1024260D5E_20241118084902.mp4"),
+        os.path.join(root_database, "Batch010/T8600P1024260D5E_20241118085102.mp4"),
         os.path.join(root_database, "Batch010/T8600P1024260D5E_20241118085306.mp4"),
     ]
     out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
@@ -188,9 +188,6 @@ if __name__ == "__main__":
                                 f"\x1b[31mTracks {(track_lost, track_new)} share {num_common_frames} frames, and therefore cannot be considered for merge\x1b[0m"
                             )
                         else:
-                            # logger.debug(
-                            #    f"\x1b[32mTracks {(track_lost, track_new)} do not share frames, and therefore can be considered for merge\x1b[0m"
-                            # )
                             track_pairings.append(
                                 (track_lost, track_new, tag_similarity)
                             )
@@ -261,14 +258,9 @@ if __name__ == "__main__":
 
     logger.debug(f"Number of tracks to be renamed: {len(track_renames.keys())}")
 
-    # WIP: Experimentally, not all renames should be committed. In practice,
-    # When long tracks are committed to merge together, bad things happen.
-    # Is it best to take an approcah of voting. When many votes call for 2 tracks to merge
-    # a merge should be called. Otherwise, no.
-
     logger.debug(f"Original number of tracks: {num_tracks}")
 
-    show_not_collapsed_video: bool = False
+    show_not_collapsed_video: bool = True
     if show_not_collapsed_video:
         tag_video_file = os.path.join(out_dir, f"{story_name}_tracks_not_collapsed.mp4")
         logger.info(f"Generating video tag file {tag_video_file}")
