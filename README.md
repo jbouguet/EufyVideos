@@ -16,7 +16,15 @@ security cameras.
 
 ## VS Code setup instructions
 
-### 1. Install VS Code and Python
+### 1. Install Python using Homebew
+
+1. Check if python is already insalled
+   ```bash
+   which -a python3
+   ```
+2. Install Python if not already installed using [Homebrew](https://mac.install.guide/python/brew) or other [options](https://mac.install.guide/python/install)
+
+### 2. Install VS Code and Python Extensions
 1. Install VS Code from https://code.visualstudio.com/
 2. Install the Python extension in VS Code
    - Open VS Code
@@ -24,7 +32,7 @@ security cameras.
    - Search for "Python"
    - Install the Microsoft Python extension
 
-### 2. Clone the Repository
+### 3. Clone the Repository
 1. Open VS Code
 2. Press Cmd+Shift+P to open the Command Palette
 3. Type "Git: Clone" and select it
@@ -36,11 +44,11 @@ security cameras.
    git config --global core.editor "code --wait"
    ```
 
-### 3. Set Up Python Environment
+### 4. Set Up Python Environment
 1. Open VS Code's integrated terminal (View > Terminal or Cmd+`)
-2. Create a new virtual environment:
+2. Create a new virtual environment (/opt/homebrew/bin/python3 may have to be replaced by /usr/bin/python3 or /usr/local/bin/python3 depending on how python was initially installed on the system):
    ```bash
-   python -m venv myenv
+   /opt/homebrew/bin/python3 -m venv myenv
    ```
 3. Activate the virtual environment:
    ```bash
@@ -53,9 +61,9 @@ security cameras.
 5. Select Python Interpreter:
    - Press Cmd+Shift+P
    - Type "Python: Select Interpreter"
-   - Choose the interpreter from myenv (should end with '/myenv/bin/python')
+   - Choose the interpreter from myenv (should be './myenv/bin/python')
 
-### 4. Git workflow
+### 5. Git workflow
 
    ```bash
    git add .
