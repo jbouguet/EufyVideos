@@ -418,12 +418,16 @@ class TagProcessor:
 
 if __name__ == "__main__":
     # Testing code for the module.
+    import logging
     import sys
 
-    from logging_config import create_logger
+    from logging_config import set_logger_level_and_format
     from tag_visualizer import TagVisualizer, TagVisualizerConfig
 
-    logger = create_logger(__name__)
+    # Set extended logging for this module only.
+    set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
+    # Set extended logging for all modules.
+    # set_all_loggers_level_and_format(level=logging.DEBUG, extended_format=True)
 
     video_files: List[str] = [
         "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch022/T8600P102338033E_20240930085536.mp4",
