@@ -28,7 +28,7 @@ Example usage:
 """
 
 from datetime import datetime
-from typing import Dict, List, Literal, Tuple
+from typing import Dict, List, Literal
 
 import pandas as pd
 import plotly.graph_objects as go
