@@ -62,30 +62,6 @@ process_stories: true
 
 stories:
 
-  - name: '2024-11-18 - Backyard Planning - 5 videos'
-    skip: false
-    selectors:
-      - filenames: ['T8600P1024260D5E_20241118084615.mp4', 'T8600P1024260D5E_20241118084819.mp4', 'T8600P1024260D5E_20241118084902.mp4', 'T8600P1024260D5E_20241118085102.mp4', 'T8600P1024260D5E_20241118085306.mp4']
-    process_tags: false
-    tagger_config:
-      model: "Yolo11x"
-      task: "Track"
-      num_frames_per_second: 15
-      conf_threshold: 0.2
-    generate_tags_video: false
-    tag_visualizer_config:
-      output_size:
-        width: 1600
-        height: 900
-    generate_video: false
-    video_generation_config:
-      input_fragments:
-        duration_in_seconds: 1
-        offset_in_seconds: 1
-        enforce_16_9_aspect_ratio: true
-      output_video:
-        width: 800
-
   - name: 'HotTub Installation'
     skip: true
     selectors:
@@ -165,6 +141,31 @@ stories:
         width: 800
 
   # TAGS DATABASE - START
+
+  - name: '2024-11-18 - Backyard Planning - 5 videos'
+    skip: true
+    selectors:
+      - filenames: ['T8600P1024260D5E_20241118084615.mp4', 'T8600P1024260D5E_20241118084819.mp4', 'T8600P1024260D5E_20241118084902.mp4', 'T8600P1024260D5E_20241118085102.mp4', 'T8600P1024260D5E_20241118085306.mp4']
+    process_tags: false
+    tagger_config:
+      model: "Yolo11x"
+      task: "Track"
+      num_frames_per_second: 15
+      conf_threshold: 0.2
+    generate_tags_video: false
+    tag_visualizer_config:
+      output_size:
+        width: 1600
+        height: 900
+    generate_video: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 1
+        offset_in_seconds: 1
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 800
+
   - name: '2024-11-18 - Backyard Planning'
     skip: true
     selectors:

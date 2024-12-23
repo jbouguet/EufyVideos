@@ -1,0 +1,29 @@
+{
+	"workbench.colorTheme": "Atom One Dark",
+	"editor.detectIndentation": false,
+	"ipynb.pasteImagesAsAttachments.enabled": false,
+	"scm.inputFontSize": 8,
+	"debug.console.fontSize": 8,
+	"markdown.preview.fontSize": 8,
+	"chat.editor.fontSize": 8,
+	"editor.minimap.enabled": false,
+	"terminal.integrated.fontSize": 11,
+	"editor.minimap.sectionHeaderFontSize": 8,
+	"editor.codeActionsOnSave": {},
+	"[python]": {
+		"editor.formatOnSave": true,
+    	"editor.defaultFormatter": "ms-python.black-formatter",
+		"editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        }
+	},
+	"jupyter.interactiveWindow.textEditor.executeSelection": true,
+	"python.analysis.autoFormatStrings": true,
+	"python.analysis.autoImportCompletions": true,
+	"continue.showInlineTip": false,
+    "editor.tabCompletion": "on",
+    "git.autofetch": true,
+    "yaml.customTags": [
+        "!join sequence"
+    ]
+}

@@ -18,7 +18,7 @@ security cameras.
 
 ### 1. Install Python using Homebew
 
-1. Check if python is already insalled on the system
+1. Check if python is already insalled:
    ```bash
    which -a python3
    ```
@@ -31,7 +31,7 @@ security cameras.
 
 ### 2. Install VS Code and Python Extensions
 1. Install VS Code from https://code.visualstudio.com/
-2. Install the Python extension in VS Code
+2. Install the Python extension in VS Code:
    - Open VS Code
    - Click the Extensions icon in the left sidebar (or press Cmd+Shift+X)
    - Search for "Python"
@@ -50,7 +50,7 @@ security cameras.
    ```
 
 ### 4. Set Up Python Environment
-1. Open VS Code's integrated terminal (View > Terminal`
+1. Open VS Code's integrated terminal (View > Terminal)`
 2. Create a new virtual environment (/opt/homebrew/bin/python3 may have to be replaced by /usr/bin/python3 or /usr/local/bin/python3 depending on how python was initially installed on the system):
    ```bash
    /opt/homebrew/bin/python3 -m venv myenv
@@ -68,7 +68,19 @@ security cameras.
    - Type "Python: Select Interpreter"
    - Choose the interpreter from myenv (should be './myenv/bin/python')
 
-### 5. Git workflow
+### 5. Import VS Code settings [optional]
+
+1. Install the suggested VS Code extensions:
+   ```bash
+   cat VSCode/vscode-extensions.txt | xargs -n 1 code --install-extension
+   ```
+2. Import general settings:
+   ```bash
+   cp "VSCode/settings.json" "/User/{user_name}/Library/Application Support/Code/User/settings.json"
+   ```
+3. Restart VS Code to apply all settings.
+
+### 6. Git workflow
 
 1. Most simple git workflow:
    ```bash
