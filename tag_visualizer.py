@@ -365,9 +365,10 @@ class TagVisualizer:
         if len(track_history[track_id]) > self.config.max_track_history:
             track_history[track_id].pop(0)
 
+        # Selection of tag labels for debug purposes:
         # label = f"{tag['value']} ({tag['confidence']})"
-        # label = f"{tag['value']} ({len(track_history[track_id])})"
-        label = f"{track_id}"
+        label = f"{tag['value']} ({len(track_history[track_id])})"
+        # label = f"{track_id}"
 
         self._draw_label(frame, label, bbox, track_color)
 

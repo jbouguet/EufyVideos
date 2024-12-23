@@ -96,22 +96,48 @@ if __name__ == "__main__":
 
     # Load the tag database
     tags_directory: str = os.path.join(root_database, "tags_database")
-    tags_files = [
-        os.path.join(tags_directory, file)
-        for file in os.listdir(tags_directory)
-        if file.lower().endswith((".json", ".tags"))
+    # tag_filenames = [
+    #    filename
+    #    for filename in os.listdir(tags_directory)
+    #    if filename.lower().endswith((".json", ".tags"))
+    # ]
+    tag_filenames = [
+        "2024-11-18 - Backyard Planning - 5 videos_Yolo11x_Track_15fps_tags.json",
+        "T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_15.0fps_tags.json",
+        "T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_7.5fps_tags.json",
+        "2024-11-18 - Backyard Planning_Yolo11x_Track_7fps_tags.json",
+        "2024-11-18 - Backyard Planning_Yolo11x_Track_3fps_tags.json",
+        "T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_3.0fps_tags.json",
+        "2024-11-18 - Backyard Planning_Yolo11x_Track_1.5fps_tags.json",
+        "T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_1.5fps_tags.json",
+        "T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_1.0fps_tags.json",
+        "2024-11-18 - Backyard Planning_Yolo11x_Track_0.6fps_tags.json",
+        "T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_0.6fps_tags.json",
+        "2024-11-18 - Backyard Planning_Yolo11x_Track_0.3fps_tags.json",
+        "T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_0.3fps_tags.json",
+        "2024-11-18 - Backyard Planning_Yolo11x_Track_0.15fps_tags.json",
+        "T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_0.15fps_tags.json",
     ]
+
     video_tags_database: VideoTags = VideoTags.from_tags(tags={})
-    for tags_file in tags_files:
+    for tag_filename in tag_filenames:
+        tags_file = os.path.join(tags_directory, tag_filename)
         logger.info(f"Loading tags file {tags_file}")
         video_tags_database.merge(VideoTags.from_file(tags_file))
 
+    logger.info(f"Tag database size pre-duplicate removal: {video_tags_database.stats}")
     # Remove duplicates:
     video_tags_database.remove_duplicates()
-    # Restrict to tags of specific vaslue:
-    video_tags_database.tags = filter_by_values(video_tags_database.tags, ["person"])
+    logger.info(
+        f"Tag database size post-duplicate removal: {video_tags_database.stats}"
+    )
 
-    logger.debug(f"Tags database: {video_tags_database.stats}")
+    # Restrict to tags of specific value:
+    tag_values_to_keep = ["person"]
+    video_tags_database.tags = filter_by_values(video_tags_database.tags, ["person"])
+    logger.info(
+        f"Tag database size after keeping values {tag_values_to_keep}: {video_tags_database.stats}"
+    )
 
     # Export and import tags to and from videos of interest to retain relevant tags present in the videos
     video_tags = VideoTags.from_videos(
@@ -146,9 +172,9 @@ if __name__ == "__main__":
 
     for filename in video_tags.tags.keys():
         tracks_in_file = tracks[filename]
-        logger.debug(f"number of tracks in {filename} ={len(tracks_in_file)}")
+        logger.debug(f"Number of tracks in {filename} = {len(tracks_in_file)}")
         tags_in_file = video_tags.tags[filename]
-        logger.debug(f"number of tagged frames in {filename} ={len(tags_in_file)}")
+        logger.debug(f"Number of tagged frames in {filename} = {len(tags_in_file)}")
 
         frame_numbers = sorted(video_tags.tags[filename].keys())
         for current_frame, next_frame in zip(frame_numbers, frame_numbers[1:]):
@@ -241,7 +267,7 @@ if __name__ == "__main__":
             )
 
     # Collapse all of the track_id renaming into distinct clusters
-    keep_collapsing_renaming_chains: bool = True
+    keep_collapsing_renaming_chains: bool = False
     while keep_collapsing_renaming_chains:
         logger.debug("Collapsing the chains of merges...")
         keep_collapsing_renaming_chains = False
@@ -260,7 +286,7 @@ if __name__ == "__main__":
 
     logger.debug(f"Original number of tracks: {num_tracks}")
 
-    show_not_collapsed_video: bool = False
+    show_not_collapsed_video: bool = True
     if show_not_collapsed_video:
         tag_video_file = os.path.join(out_dir, f"{story_name}_tracks_not_collapsed.mp4")
         logger.info(f"Generating video tag file {tag_video_file}")

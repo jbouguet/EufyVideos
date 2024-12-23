@@ -42,19 +42,20 @@ video_database_list:
 
 # Tag database files
 tag_database_files:
-- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_7fps_tags.json"]
-- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_3fps_tags.json"]
-- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_1.5fps_tags.json"]
-- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_0.6fps_tags.json"]
-- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_0.3fps_tags.json"]
-- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_0.15fps_tags.json"]
+- !join [*tags_dir, "/2024-11-18 - Backyard Planning - 5 videos_Yolo11x_Track_15fps_tags.json"]
 - !join [*tags_dir, "/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_15.0fps_tags.json"]
 - !join [*tags_dir, "/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_7.5fps_tags.json"]
+- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_7fps_tags.json"]
+- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_3fps_tags.json"]
 - !join [*tags_dir, "/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_3.0fps_tags.json"]
+- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_1.5fps_tags.json"]
 - !join [*tags_dir, "/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_1.5fps_tags.json"]
 - !join [*tags_dir, "/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_1.0fps_tags.json"]
+- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_0.6fps_tags.json"]
 - !join [*tags_dir, "/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_0.6fps_tags.json"]
+- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_0.3fps_tags.json"]
 - !join [*tags_dir, "/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_0.3fps_tags.json"]
+- !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_0.15fps_tags.json"]
 - !join [*tags_dir, "/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_0.15fps_tags.json"]
 
 output_directory: *stories_output
