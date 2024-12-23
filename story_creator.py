@@ -372,10 +372,10 @@ class Story:
             logger.info("No new tag computed or loaded")
 
         if video_tags.stats["num_tags"] > 0:
-            # Export tags to videos by first creating a complete set of merged, and deduped tags.
-            video_tags.merge(VideoTags.from_videos(videos))
-            video_tags.remove_duplicates()
-            video_tags.to_videos(VideoTags.clear_tags(videos))
+            # Export tags to videos by first creating a complete set of merged and deduped tags.
+            video_tags.merge(
+                VideoTags.from_videos(videos)
+            ).remove_duplicates().to_videos(VideoTags.clear_tags(videos))
             tags_stats = VideoTags.from_videos(videos).stats
             logger.info(f"Tags statistics after merge of new tags: {tags_stats}")
 
