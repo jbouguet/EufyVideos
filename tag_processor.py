@@ -108,6 +108,7 @@ class VideoTags:
 
     @property
     def stats(self) -> Dict[str, int]:
+        """Return the total number of tags, tagged frames and tagged videos."""
         if self.tags is None or not self.tags:
             return {"num_tags": 0, "num_tagged_frames": 0, "num_tagged_videos": 0}
         return {
@@ -121,6 +122,7 @@ class VideoTags:
 
     @property
     def filenames(self) -> List[str]:
+        """Returns the list of filenames of tagged videos."""
         if self.tags is None or not self.tags:
             return []
         return list(self.tags.keys())
@@ -138,7 +140,7 @@ class VideoTags:
             tags=tags,
         )
 
-    def to_file(self, tag_file: str) -> None:
+    def to_file(self, tag_file: str) -> "VideoTags":
         """Save tags to file with lossless serialization."""
         tagger_config_dict = None
         if self.tagger_config is not None:
@@ -150,6 +152,7 @@ class VideoTags:
         }
         with open(tag_file, "w") as jsonfile:
             json.dump(batch_data, jsonfile, indent=2)
+        return self
 
     @classmethod
     def from_file(cls, tag_file: str) -> "VideoTags":
@@ -186,6 +189,7 @@ class VideoTags:
         )
 
     def merge(self, other: "VideoTags") -> "VideoTags":
+        """Merge in another VideoTags instance."""
         # Merge other in self, and output the merged self.
         if self.timestamp is None and other.timestamp is not None:
             self.timestamp = other.timestamp
@@ -262,7 +266,7 @@ class VideoTags:
         videos: Union[VideoMetadata, List[VideoMetadata]],
         tagger_config: TaggerConfig = None,
     ) -> "VideoTags":
-        """Create VideoTags from VideoMetadata objects."""
+        """Create VideoTags instance from existing tags in VideoMetadata objects."""
         videos = [videos] if isinstance(videos, VideoMetadata) else videos
         tags = {}
         for video in videos:
@@ -334,7 +338,14 @@ class VideoTags:
 
         return iou
 
-    def remove_duplicates(self, iou_thresh: float = 0.8) -> "VideoTags":
+    def dedupe(self, iou_thresh: float = 0.8) -> "VideoTags":
+        """
+        Remove near duplicate tags. Two tags are declares near duplicates
+        if they have the same "value" and their Intersecton over Union score
+        (IoU) is larger than the input threshold iou_thresh.
+        Within a group of near duplicate tags, the one belonging to the
+        longest track will be kept as representative.
+        """
         track_lengths = defaultdict(int)
         for file_tags in self.tags.values():
             for frame_tags in file_tags.values():
@@ -474,26 +485,32 @@ if __name__ == "__main__":
 
     from logging_config import set_logger_level_and_format
     from tag_visualizer import TagVisualizer, TagVisualizerConfig
+    from video_metadata import VideoDatabase, VideoFilter, VideoSelector
 
     # Set extended logging for this module only.
     set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
-    # Set extended logging for all modules.
-    # set_all_loggers_level_and_format(level=logging.DEBUG, extended_format=True)
 
-    video_files: List[str] = [
-        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch022/T8600P102338033E_20240930085536.mp4",
-        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch010/T8600P1024260D5E_20241119181809.mp4",
-    ]
+    root_database: str = (
+        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"
+    )
     out_dir: str = (
         "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories/tag_processor_test"
     )
+    video_metadata_file: str = os.path.join(root_database, "videos_in_batches.csv")
+    video_database = VideoDatabase(
+        video_directories=None, video_metadata_file=video_metadata_file
+    ).load_videos()
+
     story_name: str = "T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809"
-    videos = VideoMetadata.clean_and_sort(
-        [VideoMetadata.from_video_file(file) for file in video_files]
+    filenames = [
+        "T8600P102338033E_20240930085536.mp4",
+        "T8600P1024260D5E_20241119181809.mp4",
+    ]
+    videos = VideoFilter.by_selectors(
+        video_database, VideoSelector(filenames=filenames)
     )
 
     # Tracking configurations
-    # temporal_subsamplings: List[float] = [100, 50, 25, 15, 10, 5, 2, 1]
     temporal_subsamplings: List[float] = [100, 50, 25, 15, 10, 5, 2, 1]
     tracker_configs: List[TaggerConfig] = [
         TaggerConfig(
@@ -515,7 +532,10 @@ if __name__ == "__main__":
     for config, tag_file in zip(tracker_configs, tag_files):
         logger.info(f"Processing tag file {tag_file}")
         if not os.path.exists(tag_file) or force_recompute:
-            TagProcessor(config).run(videos).to_file(tag_file)
+            video_tags = TagProcessor(config).run(videos).to_file(tag_file)
+        else:
+            video_tags = VideoTags.from_file(tag_file)
+        logger.info(f"Tags for config {config}: {video_tags.stats}")
 
     tag_visualizer = TagVisualizer(
         TagVisualizerConfig(output_size={"width": 1600, "height": 900})
@@ -523,12 +543,12 @@ if __name__ == "__main__":
 
     # Merge and export tags
     merged_tags = VideoTags.from_tags(tags={})
-    logger.info(f"Initial forward merge tags: {merged_tags.stats}")
+    logger.info(f"Initial merge tags: {merged_tags.stats}")
     for tag_file in tag_files:
         merged_tags.merge(VideoTags.from_file(tag_file))
 
     logger.info(f"Merged tags before duplicates removal: {merged_tags.stats}")
-    merged_tags.remove_duplicates()
+    merged_tags.dedupe()
     logger.info(f"Merged tags after duplicates removal:  {merged_tags.stats}")
 
     tag_video_file = os.path.join(out_dir, "merged_tags.mp4")

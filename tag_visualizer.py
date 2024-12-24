@@ -446,23 +446,24 @@ class TagVisualizer:
 if __name__ == "__main__":
     # Testing code for the module.
     from tag_processor import TaggerConfig, TagProcessor
+    from video_metadata import VideoDatabase, VideoFilter, VideoSelector
 
-    video_file: str = (
-        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch022/T8600P102338033E_20240930085536.mp4"
+    root_database: str = (
+        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"
     )
     out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
-    tag_video: str = os.path.join(out_dir, "T8600P102338033E_20240930085536_tags.mp4")
-    videos = [VideoMetadata.from_video_file(video_file)]
-    TagVisualizer(TagVisualizerConfig(output_size={"width": 1600, "height": 900})).run(
-        TagProcessor(
-            TaggerConfig(
-                model="Yolo11x",
-                task="Track",
-                num_frames_per_second=1,
-                conf_threshold=0.2,
-            )
-        )
-        .run(videos)
-        .to_videos(videos),
-        tag_video,
+    video_metadata_file: str = os.path.join(root_database, "videos_in_batches.csv")
+    video_database = VideoDatabase(
+        video_directories=None, video_metadata_file=video_metadata_file
+    ).load_videos()
+    videos = VideoFilter.by_selectors(
+        video_database, VideoSelector(filenames=["T8600P102338033E_20240930085536.mp4"])
     )
+    tag_video: str = os.path.join(out_dir, "T8600P102338033E_20240930085536_tags.mp4")
+    viz = TagVisualizer(TagVisualizerConfig(output_size={"width": 1600, "height": 900}))
+    proc = TagProcessor(
+        TaggerConfig(
+            model="Yolo11x", task="Track", num_frames_per_second=1, conf_threshold=0.2
+        )
+    )
+    viz.run(proc.run(videos).dedupe().to_videos(videos), tag_video)

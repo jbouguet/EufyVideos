@@ -42,9 +42,10 @@ security cameras.
 2. Press Cmd+Shift+P to open the Command Palette
 3. Type "Git: Clone" and select it
 4. Enter repository URL: https://github.com/jbouguet/EufyVideos.git
-5. Choose a local folder to clone into
+5. Choose a local folder to clone into (e.g. a folder called "python")
 6. Click "Open" when prompted to open the cloned repository
-7. Set VS Code your default Git editor
+7. A new subfolder "EufyVideos" should now contain the code
+8. Set VS Code your default Git editor
    ```bash
    git config --global core.editor "code --wait"
    ```

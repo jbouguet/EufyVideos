@@ -42,7 +42,7 @@ Example Usage:
 import os
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from config import Config
 from logging_config import create_logger
@@ -252,7 +252,9 @@ class VideoGenerator:
         """Initialize generator with optional configuration."""
         self.config = config or VideoGenerationConfig()
 
-    def run(self, videos: List[VideoMetadata], output_file: str) -> None:
+    def run(
+        self, videos: Union[VideoMetadata, List[VideoMetadata]], output_file: str
+    ) -> None:
         """
         Generate a composite video from multiple input videos.
 
@@ -269,7 +271,10 @@ class VideoGenerator:
         cleanup_fragment_directory(fragment_directory=temp_dir)
 
     def _create_from_video_fragments(
-        self, videos: List[VideoMetadata], output_file: str, fragment_directory: str
+        self,
+        videos: Union[VideoMetadata, List[VideoMetadata]],
+        output_file: str,
+        fragment_directory: str,
     ) -> None:
         """
         Internal method to create video from fragments.
@@ -280,7 +285,7 @@ class VideoGenerator:
         - Applying transformations
         - Fragment concatenation
         """
-
+        videos = [videos] if isinstance(videos, VideoMetadata) else videos
         os.makedirs(name=fragment_directory, exist_ok=True)
 
         default_width, target_fps = compute_default_fps_and_width(
@@ -753,16 +758,17 @@ if __name__ == "__main__":
 
     # Define crop configurations
     crop_configs = [
-        {"duration": 5.0, "width": 1600},
-        {"duration": 5.0, "width": 1600},
-        {"duration": 5.0, "width": 1600},
+        {"duration": 10.0, "width": 1600},
+        {"duration": 10.0, "width": 1600},
+        {"duration": 10.0, "width": 1600},
     ]
 
     # Initialize variables for crop generation
-    videos_crops = []
+    videos = []
     current_offset = 0.0
 
     logger.info(f"Cropping source video {video_file}")
+    video_in = [VideoMetadata.from_video_file(video_file)]
 
     # Generate crops
     for i, config in enumerate(crop_configs, 1):
@@ -774,15 +780,12 @@ if __name__ == "__main__":
                 width=config["width"], date_time_label=DateTimeLabel(draw=False)
             ),
         )
-
         crop_output = os.path.join(
             out_dir, f"T8600P102338033E_20240930085536_crop{i}.mp4"
         )
         logger.info(f"Creating cropped video {crop_output}")
-        VideoGenerator(crop_config).run(
-            [VideoMetadata.from_video_file(video_file)], crop_output
-        )
-        videos_crops.append(VideoMetadata.from_video_file(crop_output))
+        VideoGenerator(crop_config).run(video_in, crop_output)
+        videos.append(VideoMetadata.from_video_file(crop_output))
 
         # Update offset for the next crop
         current_offset += config["duration"]
@@ -790,18 +793,12 @@ if __name__ == "__main__":
     logger.info(
         f"Generating video {tag_video} showing extracted tags in the cropped videos."
     )
-    TagVisualizer(TagVisualizerConfig(output_size={"width": 1600, "height": 900})).run(
-        TagProcessor(
-            TaggerConfig(
-                model="Yolo11x",
-                task="Track",
-                num_frames_per_second=1,
-                conf_threshold=0.2,
-            )
+    viz = TagVisualizer(TagVisualizerConfig(output_size={"width": 1600, "height": 900}))
+    proc = TagProcessor(
+        TaggerConfig(
+            model="Yolo11x", task="Track", num_frames_per_second=5, conf_threshold=0.2
         )
-        .run(videos_crops)
-        .to_videos(videos_crops),
-        tag_video,
     )
+    viz.run(proc.run(videos).dedupe().to_videos(videos), tag_video)
 
     sys.exit()

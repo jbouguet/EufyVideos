@@ -120,7 +120,7 @@ if __name__ == "__main__":
     logger.info(f"Tag database size pre-duplicate removal: {video_tags_database.stats}")
 
     # Remove tag duplicates:
-    video_tags_database.remove_duplicates(iou_thresh_tag_duplicates)
+    video_tags_database.dedupe(iou_thresh_tag_duplicates)
     logger.info(
         f"Tag database size post-duplicate removal: {video_tags_database.stats}"
     )

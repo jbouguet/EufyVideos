@@ -211,7 +211,7 @@ class VideoAnalyzer:
             tags_database.merge(tags)
 
         logger.debug(f"{tags_database.stats} before duplicates removal")
-        tags_database.remove_duplicates()
+        tags_database.dedupe()
         logger.debug(f"{tags_database.stats} after duplicates removal")
 
         return tags_database

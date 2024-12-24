@@ -357,8 +357,8 @@ class Story:
                 f"at {tagging_frame_rate}fps with a confidence threshold of {self.tagger_config.conf_threshold}"
             )
             logger.info(f"Number of frames to be tagged: {num_tagged_frames}")
-            video_tags = TagProcessor(self.tagger_config).run(videos)
-            video_tags.to_file(tag_filename)
+            tag_processor = TagProcessor(self.tagger_config)
+            video_tags = tag_processor.run(videos).to_file(tag_filename)
             logger.info(
                 f"{video_tags.stats} newly computed tags are saved to {tag_filename}."
             )
@@ -374,7 +374,7 @@ class Story:
         if video_tags.stats["num_tags"] > 0:
             # Export tags to videos by first creating a complete set of merged and deduped tags.
             merged_tags = video_tags.merge(VideoTags.from_videos(videos))
-            merged_tags.remove_duplicates().to_videos(videos, "REPLACE")
+            merged_tags.dedupe().to_videos(videos, "REPLACE")
             tags_stats = VideoTags.from_videos(videos).stats
             logger.info(f"Tags statistics after merge of new tags: {tags_stats}")
 
