@@ -298,7 +298,7 @@ if __name__ == "__main__":
         TagVisualizer(
             TagVisualizerConfig(output_size={"width": 1600, "height": 900})
         ).run(
-            video_tags.to_videos_replace(videos),
+            video_tags.to_videos(videos, "REPLACE"),
             tag_video_file,
         )
 
@@ -323,7 +323,7 @@ if __name__ == "__main__":
         TagVisualizer(
             TagVisualizerConfig(output_size={"width": 1600, "height": 900})
         ).run(
-            video_tags.to_videos_replace(videos),
+            video_tags.to_videos(videos, "REPLACE"),
             tag_video_file,
         )
 

@@ -211,6 +211,26 @@ class VideoTags:
         return self
 
     def to_videos(
+        self, videos: Union[VideoMetadata, List[VideoMetadata]], mode: str = "ADD"
+    ) -> List[VideoMetadata]:
+        """
+        Export tags to VideoMetadata objects.
+
+        Args:
+            videos: VideoMetadata object or list of VideoMetadata objects.
+            mode: Export mode, either "ADD" (default) or "REPLACE".
+
+        Returns:
+            List of VideoMetadata objects with updated tags.
+        """
+        if mode.upper() == "ADD":
+            return self.to_videos_add(videos)
+        elif mode.upper() == "REPLACE":
+            return self.to_videos_replace(videos)
+        else:
+            raise ValueError("Invalid mode. Use 'ADD' or 'REPLACE'.")
+
+    def to_videos_add(
         self, videos: Union[VideoMetadata, List[VideoMetadata]]
     ) -> List[VideoMetadata]:
         """Export tags to VideoMetadata objects with addition."""
@@ -226,7 +246,7 @@ class VideoTags:
         self, videos: Union[VideoMetadata, List[VideoMetadata]]
     ) -> List[VideoMetadata]:
         """Export tags to VideoMetadata objects with full replacement."""
-        return self.to_videos(VideoTags.clear_tags(videos))
+        return self.to_videos_add(VideoTags.clear_tags(videos))
 
     @classmethod
     def from_videos(
