@@ -748,7 +748,8 @@ class VideoFilter:
 
     @staticmethod
     def by_selectors(
-        videos: List[VideoMetadata], selectors: List[VideoSelector]
+        videos: List[VideoMetadata],
+        selectors: Union[VideoSelector, List[VideoSelector]],
     ) -> List[VideoMetadata]:
         """
         Filter videos using multiple selectors.
@@ -764,6 +765,7 @@ class VideoFilter:
         """
         if not selectors:
             return copy.deepcopy(videos)
+        selectors = [selectors] if isinstance(selectors, VideoSelector) else selectors
 
         output_videos: List[VideoMetadata] = []
         for selector in selectors:

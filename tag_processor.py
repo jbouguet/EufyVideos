@@ -119,6 +119,12 @@ class VideoTags:
             "num_tagged_videos": len(self.tags),
         }
 
+    @property
+    def filenames(self) -> List[str]:
+        if self.tags is None or not self.tags:
+            return []
+        return list(self.tags.keys())
+
     @classmethod
     def from_tags(
         cls,
@@ -207,7 +213,7 @@ class VideoTags:
     def to_videos(
         self, videos: Union[VideoMetadata, List[VideoMetadata]]
     ) -> List[VideoMetadata]:
-        """Export tags to VideoMetadata objects."""
+        """Export tags to VideoMetadata objects with addition."""
         if not self.timestamp or not self.tags:
             return 0
         videos = [videos] if isinstance(videos, VideoMetadata) else videos
@@ -215,6 +221,12 @@ class VideoTags:
             if video.filename in self.tags:
                 video.merge_new_tags(self.tags[video.filename])
         return videos
+
+    def to_videos_replace(
+        self, videos: Union[VideoMetadata, List[VideoMetadata]]
+    ) -> List[VideoMetadata]:
+        """Export tags to VideoMetadata objects with full replacement."""
+        return self.to_videos(VideoTags.clear_tags(videos))
 
     @classmethod
     def from_videos(

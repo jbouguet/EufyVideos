@@ -73,34 +73,27 @@ if __name__ == "__main__":
 
     from logging_config import set_logger_level_and_format
     from tag_visualizer import TagVisualizer, TagVisualizerConfig
-    from video_metadata import VideoMetadata
+    from video_metadata import VideoDatabase, VideoFilter, VideoSelector
 
-    # Set extended logging for this module only.
     set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
-    # Set extended logging for all modules.
-    # set_all_loggers_level_and_format(level=logging.DEBUG, extended_format=True)
+
+    iou_thresh_tag_duplicates: float = 0.8
+    iou_thresh_track_merge: float = 0.9
+    minimum_votes_track_merge: int = 10
 
     root_database: str = (
         "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"
     )
-
-    story_name: str = "track_testing"
-    video_files: List[str] = [
-        os.path.join(root_database, "Batch010/T8600P1024260D5E_20241118084615.mp4"),
-        os.path.join(root_database, "Batch010/T8600P1024260D5E_20241118084819.mp4"),
-        os.path.join(root_database, "Batch010/T8600P1024260D5E_20241118084902.mp4"),
-        os.path.join(root_database, "Batch010/T8600P1024260D5E_20241118085102.mp4"),
-        os.path.join(root_database, "Batch010/T8600P1024260D5E_20241118085306.mp4"),
-    ]
+    tags_directory: str = os.path.join(root_database, "tags_database")
+    video_metadata_file: str = os.path.join(root_database, "videos_in_batches.csv")
     out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
 
-    # Load the tag database
-    tags_directory: str = os.path.join(root_database, "tags_database")
-    # tag_filenames = [
-    #    filename
-    #    for filename in os.listdir(tags_directory)
-    #    if filename.lower().endswith((".json", ".tags"))
-    # ]
+    video_database = VideoDatabase(
+        video_directories=None, video_metadata_file=video_metadata_file
+    ).load_videos()
+
+    story_name: str = "track_testing"
+
     tag_filenames = [
         "2024-11-18 - Backyard Planning - 5 videos_Yolo11x_Track_15fps_tags.json",
         "T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_15.0fps_tags.json",
@@ -118,7 +111,6 @@ if __name__ == "__main__":
         "2024-11-18 - Backyard Planning_Yolo11x_Track_0.15fps_tags.json",
         "T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_0.15fps_tags.json",
     ]
-
     video_tags_database: VideoTags = VideoTags.from_tags(tags={})
     for tag_filename in tag_filenames:
         tags_file = os.path.join(tags_directory, tag_filename)
@@ -126,11 +118,13 @@ if __name__ == "__main__":
         video_tags_database.merge(VideoTags.from_file(tags_file))
 
     logger.info(f"Tag database size pre-duplicate removal: {video_tags_database.stats}")
-    # Remove duplicates:
-    video_tags_database.remove_duplicates()
+
+    # Remove tag duplicates:
+    video_tags_database.remove_duplicates(iou_thresh_tag_duplicates)
     logger.info(
         f"Tag database size post-duplicate removal: {video_tags_database.stats}"
     )
+    logger.info(f"Filenames in video_tags_database: {video_tags_database.filenames}")
 
     # Restrict to tags of specific value:
     tag_values_to_keep = ["person"]
@@ -139,14 +133,26 @@ if __name__ == "__main__":
         f"Tag database size after keeping values {tag_values_to_keep}: {video_tags_database.stats}"
     )
 
-    # Export and import tags to and from videos of interest to retain relevant tags present in the videos
-    video_tags = VideoTags.from_videos(
-        video_tags_database.to_videos(
-            VideoMetadata.clean_and_sort(
-                [VideoMetadata.from_video_file(file) for file in video_files]
-            )
-        )
+    keep_all_videos: bool = False
+    if keep_all_videos:
+        # Keep all of the video filenames
+        filenames: List[str] = video_tags_database.filenames
+    else:
+        # Manual selection of videos by filenames:
+        filenames = [
+            "T8600P1024260D5E_20241118084615.mp4",
+            "T8600P1024260D5E_20241118084819.mp4",
+            "T8600P1024260D5E_20241118084902.mp4",
+            "T8600P1024260D5E_20241118085102.mp4",
+            "T8600P1024260D5E_20241118085306.mp4",
+        ]
+
+    videos = VideoFilter.by_selectors(
+        video_database, VideoSelector(filenames=filenames)
     )
+
+    # Export and import tags to and from videos of interest to retain relevant tags present in the videos
+    video_tags = VideoTags.from_videos(video_tags_database.to_videos(videos))
 
     logger.debug(f"Tags in videos: {video_tags.stats}")
 
@@ -161,9 +167,6 @@ if __name__ == "__main__":
     first_fame_to_vote = defaultdict(int)
     max_similarity = defaultdict(float)
     min_similarity = defaultdict(lambda: 1.0)
-
-    iou_thresh: float = 0.9
-    min_votes: int = 10
 
     track_lengths = defaultdict(int)
     for filename in tracks.keys():
@@ -208,15 +211,15 @@ if __name__ == "__main__":
                     tag_lost = tracks_in_file[track_lost][current_frame]
                     tag_new = tracks_in_file[track_new][next_frame]
                     tag_similarity = VideoTags.compute_iou(tag_lost, tag_new)
-                    if tag_similarity > iou_thresh:
-                        if num_common_frames > 0:
-                            logger.warning(
-                                f"\x1b[31mTracks {(track_lost, track_new)} share {num_common_frames} frames, and therefore cannot be considered for merge\x1b[0m"
-                            )
-                        else:
+                    if tag_similarity > iou_thresh_track_merge:
+                        if num_common_frames == 0:
                             track_pairings.append(
                                 (track_lost, track_new, tag_similarity)
                             )
+                        # else:
+                        # logger.warning(
+                        #    f"\x1b[31mTracks {(track_lost, track_new)} share {num_common_frames} frames, and therefore cannot be considered for merge\x1b[0m"
+                        # )
 
             # Aggregate votes for track reassignment
             for track_pairing in track_pairings:
@@ -255,7 +258,7 @@ if __name__ == "__main__":
         # Make sure that the two tracks to merge do not have frames in common. If they do, thay cannot be merged!
         frames_in_track_to_rename = tracks
 
-        keep_pairing: bool = votes >= min_votes
+        keep_pairing: bool = votes >= minimum_votes_track_merge
         if keep_pairing:
             track_renames[track_to_rename] = track_name_to_keep
             logger.debug(
@@ -267,7 +270,8 @@ if __name__ == "__main__":
             )
 
     # Collapse all of the track_id renaming into distinct clusters
-    keep_collapsing_renaming_chains: bool = False
+    keep_collapsing_renaming_chains: bool = True
+    num_chain_collapsing: int = 0
     while keep_collapsing_renaming_chains:
         logger.debug("Collapsing the chains of merges...")
         keep_collapsing_renaming_chains = False
@@ -278,26 +282,23 @@ if __name__ == "__main__":
                         f"Closing chain: {track_id} -> {track_renames[track_id]} -> {track_renames[track_renames[track_id]]}"
                     )
                     track_renames[track_id] = track_renames[track_renames[track_id]]
+                    num_chain_collapsing += 1
                     keep_collapsing_renaming_chains = True
         if not keep_collapsing_renaming_chains:
             logger.debug("No more track needed to be renamed")
 
+    logger.debug(f"Number of chain collapses: {num_chain_collapsing}")
     logger.debug(f"Number of tracks to be renamed: {len(track_renames.keys())}")
-
     logger.debug(f"Original number of tracks: {num_tracks}")
 
-    show_not_collapsed_video: bool = True
+    show_not_collapsed_video: bool = False
     if show_not_collapsed_video:
         tag_video_file = os.path.join(out_dir, f"{story_name}_tracks_not_collapsed.mp4")
         logger.info(f"Generating video tag file {tag_video_file}")
         TagVisualizer(
             TagVisualizerConfig(output_size={"width": 1600, "height": 900})
         ).run(
-            video_tags.to_videos(
-                VideoMetadata.clean_and_sort(
-                    [VideoMetadata.from_video_file(file) for file in video_files]
-                )
-            ),
+            video_tags.to_videos_replace(videos),
             tag_video_file,
         )
 
@@ -313,20 +314,16 @@ if __name__ == "__main__":
         for filename in tracks_collapsed_tracks.keys()
     )
 
-    logger.debug(f"Number of tracks after collapse: {num_tracks_collapsed}")
+    logger.debug(f"Number of tracks after collapses: {num_tracks_collapsed}")
 
     show_collapsed_video: bool = False
     if show_collapsed_video:
-        tag_video_file = os.path.join(out_dir, f"{story_name}_tracks_collapsed3.mp4")
+        tag_video_file = os.path.join(out_dir, f"{story_name}_tracks_collapsed5.mp4")
         logger.info(f"Generating video tag file {tag_video_file}")
         TagVisualizer(
             TagVisualizerConfig(output_size={"width": 1600, "height": 900})
         ).run(
-            video_tags.to_videos(
-                VideoMetadata.clean_and_sort(
-                    [VideoMetadata.from_video_file(file) for file in video_files]
-                )
-            ),
+            video_tags.to_videos_replace(videos),
             tag_video_file,
         )
 

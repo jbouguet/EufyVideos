@@ -373,9 +373,8 @@ class Story:
 
         if video_tags.stats["num_tags"] > 0:
             # Export tags to videos by first creating a complete set of merged and deduped tags.
-            video_tags.merge(
-                VideoTags.from_videos(videos)
-            ).remove_duplicates().to_videos(VideoTags.clear_tags(videos))
+            merged_tags = video_tags.merge(VideoTags.from_videos(videos))
+            merged_tags.remove_duplicates().to_videos_replace(videos)
             tags_stats = VideoTags.from_videos(videos).stats
             logger.info(f"Tags statistics after merge of new tags: {tags_stats}")
 

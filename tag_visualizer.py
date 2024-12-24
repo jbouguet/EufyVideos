@@ -125,7 +125,7 @@ class TagVisualizerConfig:
     output_size: Dict[str, int] = field(
         default_factory=lambda: {"width": 1600, "height": 900}
     )
-    max_track_history: int = field(default=1000)
+    max_track_history: int = field(default=2000)
     bbox_color: Tuple[int, int, int] = field(default=(0, 255, 0))  # Green in BGR
     track_color: Tuple[int, int, int] = field(default=(230, 230, 230))  # Light gray
     text_color: Tuple[int, int, int] = field(default=(0, 255, 0))  # Green
