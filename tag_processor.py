@@ -246,7 +246,15 @@ class VideoTags:
         self, videos: Union[VideoMetadata, List[VideoMetadata]]
     ) -> List[VideoMetadata]:
         """Export tags to VideoMetadata objects with full replacement."""
-        return self.to_videos_add(VideoTags.clear_tags(videos))
+        if not self.timestamp or not self.tags:
+            return 0
+        videos = [videos] if isinstance(videos, VideoMetadata) else videos
+        for video in videos:
+            if video.filename in self.tags:
+                if hasattr(video, "tags") and video.tags:
+                    video.tags.clear()
+                video.merge_new_tags(self.tags[video.filename])
+        return videos
 
     @classmethod
     def from_videos(
@@ -268,7 +276,7 @@ class VideoTags:
         return cls.from_tags(tags=tags, tagger_config=tagger_config)
 
     @staticmethod
-    def clear_tags(
+    def clear_tags_in_videos(
         videos: Union[VideoMetadata, List[VideoMetadata]],
     ) -> List[VideoMetadata]:
         """Clear all tags from VideoMetadata objects."""
