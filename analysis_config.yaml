@@ -64,7 +64,7 @@ process_stories: true
 stories:
 
   - name: 'HotTub Installation'
-    skip: true
+    skip: false
     selectors:
       # Delivery and Installation
       - date_range:
