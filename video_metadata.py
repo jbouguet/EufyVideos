@@ -663,8 +663,7 @@ class VideoSelector:
     @staticmethod
     def log(selectors: Union["VideoSelector", List["VideoSelector"]]) -> None:
         """Log the criteria defined in one or more selectors."""
-        if isinstance(selectors, VideoSelector):
-            selectors = [selectors]
+        selectors = [selectors] if isinstance(selectors, VideoSelector) else selectors
         for i, selector in enumerate(selectors, 1):
             logger.info(f"Selector {i}:")
             if selector.devices:
@@ -824,8 +823,11 @@ class VideoDatabase:
             video_metadata_file = video_database_dict["video_metadata_file"]
         if "video_directories" in video_database_dict:
             video_directories = video_database_dict["video_directories"]
-            if isinstance(video_directories, str):
-                video_directories = [video_directories]
+            video_directories = (
+                [video_directories]
+                if isinstance(video_directories, str)
+                else video_directories
+            )
         return cls(
             video_directories=video_directories,
             video_metadata_file=video_metadata_file,

@@ -35,7 +35,7 @@ import plotly.graph_objects as go
 
 from config import Config
 from logging_config import create_logger
-from video_metadata import VideoMetadata  # Main interface point
+from video_metadata import DateRange, TimeRange, VideoMetadata  # Main interface point
 
 logger = create_logger(__name__)
 
@@ -519,3 +519,59 @@ class Dashboard:
 
         # Save to file
         self.save_graphs_to_html(daily_graphs + hourly_graphs, output_file)
+
+
+if __name__ == "__main__":
+
+    # Testing code for the module.
+    import logging
+    import os
+    import sys
+
+    from logging_config import set_logger_level_and_format
+    from video_metadata import VideoDatabase, VideoFilter, VideoSelector
+
+    set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
+
+    root_database: str = (
+        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"
+    )
+    video_metadata_file: str = os.path.join(root_database, "videos_in_batches.csv")
+    out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
+
+    video_database = VideoDatabase(
+        video_directories=None, video_metadata_file=video_metadata_file
+    ).load_videos()
+
+    # Create dashboard
+    dashboard = Dashboard()
+
+    # Generate dashboard file for the entire database
+    dashboard.create_graphs_file(
+        video_database, os.path.join(out_dir, "video_analytics_all.html")
+    )
+
+    # Creating a partial filtered view of the total database, filtering by date range, tiemrange and devices.
+    # Note that any of those filtering conditions could be removed by setting the entries date_range, time_range or devices to None.
+    # The range of acceptable dates can be computed from the min and maximum dates of videos in video_database.
+    # Since the dates are ordered, the minimum date is video_database[0].date_str and video_database[-1].date_str
+    # The range of times is between "00:00:00" and "23:59:59" and the start and end times do not need to be ordered
+    # (to selected videos crossing midnight)
+    # The set of devices to pick from for filtering can be picked from Config.get_all_devices imported from config.py
+    videos = VideoFilter.by_selectors(
+        video_database,
+        [
+            VideoSelector(
+                date_range=DateRange(start="2024-12-12", end="2024-12-13"),
+                time_range=TimeRange(start="08:03:00", end="19:36:00"),
+                devices=["Backyard", "Garage"],
+            ),
+        ],
+    )
+
+    # Generate dashboard file for a partial filtered view of the database.
+    dashboard.create_graphs_file(
+        videos, os.path.join(out_dir, "video_analytics_partial.html")
+    )
+
+    sys.exit()
