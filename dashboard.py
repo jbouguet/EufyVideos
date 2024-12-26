@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Video visualization module for creating interactive Plotly graphs from video metadata.
+Dashboard module for creating interactive Plotly graphs from video metadata.
 
 This module interfaces with video_metadata.py to create statistical visualizations of video data.
 It processes VideoMetadata objects to generate various types of graphs showing temporal distributions
@@ -22,9 +22,9 @@ Example usage:
     # Load videos using VideoMetadata's methods
     videos = VideoMetadata.load_videos_from_directories('/path/to/videos')
     
-    # Create visualizer and generate graphs
-    visualizer = VideoVisualizer()
-    visualizer.create_graphs_file(videos, 'video_analytics.html')
+    # Create dashboard and generate graphs
+    dashboard = Dashboard()
+    dashboard.create_graphs_file(videos, 'video_analytics.html')
 """
 
 from datetime import datetime
@@ -292,7 +292,7 @@ class VideoGraphCreator:
         return fig
 
 
-class VideoVisualizer:
+class Dashboard:
     """
     Main class for generating and saving video analytics visualizations.
 
@@ -306,11 +306,11 @@ class VideoVisualizer:
         # Load videos using VideoMetadata's methods
         videos = VideoMetadata.load_videos_from_directories('videos/')
 
-        # Create visualizer
-        visualizer = VideoVisualizer()
+        # Create dashboard
+        dashboard = Dashboard()
 
         # Generate graphs file
-        visualizer.create_graphs_file(
+        dashboard.create_graphs_file(
             videos,
             'video_analytics.html'
         )
@@ -333,7 +333,7 @@ class VideoVisualizer:
         3. Percentage distributions (showing relative device contributions)
 
         Example:
-            daily_graphs = visualizer.create_daily_graphs(daily_data)
+            daily_graphs = dashboard.create_daily_graphs(daily_data)
             # Returns list of figures in order: activity, duration, filesize,
             # followed by their cumulative and percentage distribution variants
         """
@@ -417,7 +417,7 @@ class VideoVisualizer:
         2. Cumulative totals for activity (showing patterns across hours)
 
         Example:
-            hourly_graphs = visualizer.create_hourly_graphs(hourly_data)
+            hourly_graphs = dashboard.create_hourly_graphs(hourly_data)
             # Returns list of figures showing hourly patterns
         """
         figures = []
@@ -461,7 +461,7 @@ class VideoVisualizer:
         the plotly.js library only once.
 
         Example:
-            visualizer.save_graphs_to_html(
+            dashboard.save_graphs_to_html(
                 daily_graphs + hourly_graphs,
                 'video_analytics.html'
             )
@@ -506,8 +506,8 @@ class VideoVisualizer:
             videos = VideoMetadata.load_videos_from_directories('videos/')
 
             # Create graphs
-            visualizer = VideoVisualizer()
-            visualizer.create_graphs_file(videos, 'video_analytics.html')
+            dashboard = Dashboard()
+            dashboard.create_graphs_file(videos, 'video_analytics.html')
         """
         # Get aggregated data
         daily_data = self.data_aggregator.get_daily_aggregates(videos)

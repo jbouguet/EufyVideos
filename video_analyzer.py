@@ -8,11 +8,11 @@ import yaml
 from termcolor import colored
 
 from config import Config
+from dashboard import Dashboard
 from logging_config import create_logger
 from story_creator import Story
 from tag_processor import VideoTags
 from video_metadata import VideoDatabase, VideoDatabaseList, VideoMetadata
-from video_visualizer import VideoVisualizer
 
 logger = create_logger(__name__)
 
@@ -271,8 +271,8 @@ class VideoAnalyzer:
             self.videos_database, playlist_filename
         )
         logger.info(f"  - graphs file:   {graphs_filename}")
-        visualizer = VideoVisualizer()
-        visualizer.create_graphs_file(self.videos_database, graphs_filename)
+        dashboard = Dashboard()
+        dashboard.create_graphs_file(self.videos_database, graphs_filename)
 
     def _process_stories(self) -> None:
         if self.config.process_stories and self.config.stories:

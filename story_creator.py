@@ -39,15 +39,15 @@ from math import ceil
 from typing import Any, Dict, List, Optional
 
 import yaml
+from tag_dashboard import Tagdashboard, TagdashboardConfig
 from termcolor import colored
 
 from config import Config
+from dashboard import Dashboard
 from logging_config import create_logger
 from tag_processor import TaggerConfig, TagProcessor, VideoTags
-from tag_visualizer import TagVisualizer, TagVisualizerConfig
 from video_generator import VideoGenerationConfig, VideoGenerator
 from video_metadata import VideoFilter, VideoMetadata, VideoSelector
-from video_visualizer import VideoVisualizer
 
 logger = create_logger(__name__)
 
@@ -66,7 +66,7 @@ class Story:
         process_tags (bool): Whether to analyze and generate tags
         tagger_config (TaggerConfig): Settings for tag processing
         generate_tags_video (bool): Whether to create a visualization of tagged frames
-        tag_visualizer_config (TagVisualizerConfig): Settings for tag visualization
+        tag_dashboard_config (TagdashboardConfig): Settings for tag visualization
     """
 
     name: str
@@ -79,9 +79,7 @@ class Story:
     process_tags: bool = False
     tagger_config: TaggerConfig = field(default_factory=TaggerConfig)
     generate_tags_video: bool = False
-    tag_visualizer_config: TagVisualizerConfig = field(
-        default_factory=TagVisualizerConfig
-    )
+    tag_dashboard_config: TagdashboardConfig = field(default_factory=TagdashboardConfig)
 
     @property
     def devices(self) -> List[str]:
@@ -126,8 +124,8 @@ class Story:
             video_generation_config=VideoGenerationConfig.from_dict(
                 story_dict.get("video_generation_config", {})
             ),
-            tag_visualizer_config=TagVisualizerConfig.from_dict(
-                story_dict.get("tag_visualizer_config", {})
+            tag_dashboard_config=TagdashboardConfig.from_dict(
+                story_dict.get("tag_dashboard_config", {})
             ),
             skip=story_dict.get("skip", False),
             process_tags=story_dict.get("process_tags", False),
@@ -318,8 +316,8 @@ class Story:
         VideoMetadata.export_videos_to_metadata_file(videos, video_metadata_file)
         VideoMetadata.export_videos_to_playlist_file(videos, playlist_filename)
 
-        visualizer = VideoVisualizer()
-        visualizer.create_graphs_file(videos, graphs_filename)
+        dashboard = Dashboard()
+        dashboard.create_graphs_file(videos, graphs_filename)
 
         # Log file locations
         logger.info(f"Story config saved to {config_filename}")
@@ -420,8 +418,8 @@ class Story:
             logger.info(
                 f"Generating the video {video_tag_file} of all of the tagged frames"
             )
-            tag_visualizer = TagVisualizer(self.tag_visualizer_config)
-            tag_visualizer.run(videos, video_tag_file)
+            tag_dashboard = Tagdashboard(self.tag_dashboard_config)
+            tag_dashboard.run(videos, video_tag_file)
             logger.info(f"Video saved to {video_tag_file}")
 
         # Generate composite video if requested
