@@ -582,7 +582,7 @@ class VideoSelector:
     """
     Defines criteria for filtering videos.
 
-    Combines multiple filtering criteria (devices, dates, times, filenames)
+    Combines multiple filtering criteria (devices, dates, times, filenames, weekdays)
     that are applied together (AND condition). When multiple VideoSelector
     objects are used, they act as OR conditions.
 
@@ -590,7 +590,8 @@ class VideoSelector:
         selector = VideoSelector(
             devices=['Front Yard'],
             date_range=DateRange(start='2023-01-01', end='2023-12-31'),
-            time_range=TimeRange(start='08:00:00', end='17:00:00')
+            time_range=TimeRange(start='08:00:00', end='17:00:00'),
+            weekdays=['monday', 'wednesday', 'friday']
         )
     """
 
@@ -598,6 +599,33 @@ class VideoSelector:
     date_range: Optional[DateRange] = None
     time_range: Optional[TimeRange] = None
     filenames: Optional[List[str]] = None
+    weekdays: Optional[List[str]] = None
+
+    def _validate_weekdays(self, weekdays):
+        """Validate and normalize weekday inputs."""
+        if weekdays is None:
+            return None
+
+        valid_weekdays = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+        ]
+        if not isinstance(weekdays, (list, tuple)):
+            raise ValueError("Weekdays must be provided as a list or tuple")
+
+        normalized_weekdays = [day.lower() for day in weekdays]
+        invalid_days = [day for day in normalized_weekdays if day not in valid_weekdays]
+        if invalid_days:
+            raise ValueError(
+                f"Invalid weekdays provided: {invalid_days}. Valid values are: {valid_weekdays}"
+            )
+
+        return normalized_weekdays
 
     @classmethod
     def from_dict(cls, selector_dict: Dict[str, Any]) -> "VideoSelector":
@@ -653,11 +681,16 @@ class VideoSelector:
         if filenames and not isinstance(filenames, list):
             filenames = [filenames]
 
+        weekdays = selector_dict.get("weekdays")
+        if weekdays and not isinstance(weekdays, list):
+            weekdays = [weekdays]
+
         return cls(
             devices=devices,
             date_range=date_range,
             time_range=time_range,
             filenames=filenames,
+            weekdays=weekdays,
         )
 
     @staticmethod
@@ -678,6 +711,8 @@ class VideoSelector:
                 )
             if selector.filenames:
                 logger.info(f"  Filenames: {', '.join(selector.filenames)}")
+            if selector.weekdays:
+                logger.info(f"  Weekdays: {', '.join(selector.weekdays)}")
 
 
 class VideoFilter:
@@ -738,6 +773,20 @@ class VideoFilter:
         )
 
     @staticmethod
+    def by_weekdays(
+        videos: List[VideoMetadata], weekdays: List[str]
+    ) -> List[VideoMetadata]:
+        """Filter videos by weekdays."""
+        normalized_weekdays = [day.lower() for day in weekdays]
+        return VideoMetadata.clean_and_sort(
+            [
+                v
+                for v in videos
+                if v.datetime.strftime("%A").lower() in normalized_weekdays
+            ]
+        )
+
+    @staticmethod
     def is_time_in_range(time, start, end) -> bool:
         """Check if time falls within range, handling midnight crossing."""
         if start <= end:
@@ -783,6 +832,8 @@ class VideoFilter:
                 )
             if selector.filenames:
                 temp_videos = VideoFilter.by_filenames(temp_videos, selector.filenames)
+            if selector.weekdays:
+                temp_videos = VideoFilter.by_weekdays(temp_videos, selector.weekdays)
 
             output_videos.extend(temp_videos)
 

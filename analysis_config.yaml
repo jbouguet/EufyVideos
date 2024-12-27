@@ -63,8 +63,21 @@ process_stories: true
 
 stories:
 
-  - name: 'HotTub Installation'
+  - name: 'Trash Pickups'
     skip: false
+    selectors:
+      # Delivery and Installation
+      - date_range:
+          start: '2024-11-07'
+          end: '2025-01-09'
+        time_range:
+          start: '08:00:00'
+          end: '17:00:00'
+        devices: ['Garage']
+        weekdays: ['thursday']
+
+  - name: 'HotTub Installation'
+    skip: true
     selectors:
       # Delivery and Installation
       - date_range:
