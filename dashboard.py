@@ -35,7 +35,7 @@ import plotly.graph_objects as go
 
 from config import Config
 from logging_config import create_logger
-from video_metadata import DateRange, TimeRange, VideoMetadata  # Main interface point
+from video_metadata import VideoMetadata  # Main interface point
 
 logger = create_logger(__name__)
 
@@ -529,7 +529,8 @@ if __name__ == "__main__":
     import sys
 
     from logging_config import set_logger_level_and_format
-    from video_metadata import VideoDatabase, VideoFilter, VideoSelector
+    from video_database import VideoDatabase
+    from video_filter import DateRange, TimeRange, VideoFilter, VideoSelector
 
     set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
 

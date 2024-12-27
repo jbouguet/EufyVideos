@@ -446,7 +446,8 @@ class TagVisualizer:
 if __name__ == "__main__":
     # Testing code for the module.
     from tag_processor import TaggerConfig, TagProcessor
-    from video_metadata import VideoDatabase, VideoFilter, VideoSelector
+    from video_database import VideoDatabase
+    from video_filter import VideoFilter, VideoSelector
 
     root_database: str = (
         "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"

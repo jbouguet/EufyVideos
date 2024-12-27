@@ -12,7 +12,8 @@ from dashboard import Dashboard
 from logging_config import create_logger
 from story_creator import Story
 from tag_processor import VideoTags
-from video_metadata import VideoDatabase, VideoDatabaseList, VideoMetadata
+from video_database import VideoDatabase, VideoDatabaseList
+from video_metadata import VideoMetadata
 
 logger = create_logger(__name__)
 

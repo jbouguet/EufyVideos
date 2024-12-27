@@ -485,7 +485,8 @@ if __name__ == "__main__":
 
     from logging_config import set_logger_level_and_format
     from tag_visualizer import TagVisualizer, TagVisualizerConfig
-    from video_metadata import VideoDatabase, VideoFilter, VideoSelector
+    from video_database import VideoDatabase
+    from video_filter import VideoFilter, VideoSelector
 
     # Set extended logging for this module only.
     set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)

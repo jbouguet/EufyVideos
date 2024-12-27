@@ -46,8 +46,9 @@ from dashboard import Dashboard
 from logging_config import create_logger
 from tag_processor import TaggerConfig, TagProcessor, VideoTags
 from tag_visualizer import TagVisualizer, TagVisualizerConfig
+from video_filter import VideoFilter, VideoSelector
 from video_generator import VideoGenerationConfig, VideoGenerator
-from video_metadata import VideoFilter, VideoMetadata, VideoSelector
+from video_metadata import VideoMetadata
 
 logger = create_logger(__name__)
 
