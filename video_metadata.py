@@ -518,13 +518,6 @@ class VideoMetadata:
         return sorted(set1 - set2), sorted(set2 - set1)
 
     @staticmethod
-    def intersection(
-        list1: List["VideoMetadata"], list2: List["VideoMetadata"]
-    ) -> List["VideoMetadata"]:
-        """Find videos present in both lists."""
-        return sorted(set(list1).intersection(set(list2)))
-
-    @staticmethod
     def repeats(
         source: List["VideoMetadata"], other: List["VideoMetadata"]
     ) -> List["VideoMetadata"]:

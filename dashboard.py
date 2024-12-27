@@ -241,10 +241,10 @@ class VideoGraphCreator:
                 go.Scatter(
                     x=data[x_column],
                     y=total,
-                    mode="lines+markers",
+                    mode="markers",
                     name="Total",
-                    line=dict(color="red", width=2, shape="spline"),
-                    marker=dict(size=6, color="red"),
+                    # line=dict(color="red", width=0, shape="linear"),
+                    marker=dict(size=4, color="red"),
                     hovertemplate=hovertemplate,
                 )
             )
