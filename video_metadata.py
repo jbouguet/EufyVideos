@@ -24,18 +24,16 @@ Example Usage:
     VideoMetadata.export_videos_to_metadata_file(filtered_videos, 'metadata.csv')
 """
 
-import copy
 import csv
 import io
 import os
 import sys
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import av
 import dateutil.parser
-import yaml
 from dateutil.tz import tzlocal, tzutc
 from tqdm import tqdm
 
