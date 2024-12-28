@@ -63,10 +63,17 @@ process_stories: true
 
 stories:
 
+  - name: 'Every Other Day'
+    skip: false
+    selectors:
+      - date_range:
+          start: '2024-11-01'
+          end: '2024-12-27'
+        weekdays: ['monday', 'wednesday', 'friday', 'sunday']
+
   - name: 'Trash Pickups'
     skip: false
     selectors:
-      # Delivery and Installation
       - date_range:
           start: '2024-11-07'
           end: '2025-01-09'
@@ -75,6 +82,13 @@ stories:
           end: '17:00:00'
         devices: ['Garage']
         weekdays: ['thursday']
+      - date_range:
+          start: '2024-12-27'
+          end: '2024-12-27'
+        time_range:
+          start: '08:00:00'
+          end: '17:00:00'
+        devices: ['Garage']
 
   - name: 'HotTub Installation'
     skip: true

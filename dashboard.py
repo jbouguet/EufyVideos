@@ -191,7 +191,6 @@ class VideoGraphCreator:
         if config is None:
             config = {
                 "is_cumulative": False,
-                "is_percentage": False,
                 "is_hourly": False,
             }
 
@@ -203,14 +202,10 @@ class VideoGraphCreator:
         # Add device traces
         for device in devices:
             hovertemplate = (
-                f"<b>{device}</b><br>"
-                + (
-                    f"<b>Hour:</b> %{{x}}<br>"
-                    if config.get("is_hourly")
-                    else f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
-                )
-                + f"<b>Value:</b> %{{y:.2f}}<extra></extra>"
-            )
+                f"<b>Hour:</b> %{{x:02d}}:00<br>"
+                if config.get("is_hourly")
+                else f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
+            ) + f"<b>{device}:</b> %{{y:.0f}}<extra></extra>"
 
             fig.add_trace(
                 go.Bar(
@@ -218,36 +213,30 @@ class VideoGraphCreator:
                     y=data[device],
                     name=device,
                     marker_color=colors[device],
-                    text=data[device].apply(lambda x: f"{x:.2f}"),
+                    text=data[device].apply(lambda x: f"{int(x)}"),
                     textposition="inside",
                     hovertemplate=hovertemplate,
                 )
             )
 
-        # Add total line if appropriate
-        if not config.get("is_cumulative") and not config.get("is_percentage"):
-            total = data[devices].sum(axis=1)
-            hovertemplate = (
-                "<b>Total</b><br>"
-                + (
-                    f"<b>Hour:</b> %{{x}}<br>"
-                    if config.get("is_hourly")
-                    else f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
-                )
-                + f"<b>Value:</b> %{{y:.2f}}<extra></extra>"
-            )
+        # Add total line
+        total = data[devices].sum(axis=1)
+        hovertemplate = (
+            f"<b>Hour:</b> %{{x:02d}}:00<br>"
+            if config.get("is_hourly")
+            else f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
+        ) + f"<b>Total:</b> %{{y:.0f}}<extra></extra>"
 
-            fig.add_trace(
-                go.Scatter(
-                    x=data[x_column],
-                    y=total,
-                    mode="markers",
-                    name="Total",
-                    # line=dict(color="red", width=0, shape="linear"),
-                    marker=dict(size=4, color="red"),
-                    hovertemplate=hovertemplate,
-                )
+        fig.add_trace(
+            go.Scatter(
+                x=data[x_column],
+                y=total,
+                mode="lines",
+                name="Total",
+                line=dict(color="red", width=1, shape="spline"),
+                hovertemplate=hovertemplate,
             )
+        )
 
         # Update layout and axes
         fig_height = Config.get_figure_height()
@@ -278,11 +267,18 @@ class VideoGraphCreator:
         )
 
         if config.get("is_hourly"):
-            fig.update_xaxes(tickmode="linear", tick0=0, dtick=1, range=[-0.5, 23.5])
+            hours = list(range(24))
+            fig.update_xaxes(
+                tickmode="array",
+                tickvals=hours,
+                ticktext=[f"{h:02d}:00" for h in hours],
+                range=[-0.5, 23.5],
+                type="linear",
+            )
         else:
             fig.update_xaxes(
                 dtick="D1",
-                tickformat="%a %Y/%m/%d",
+                tickformat="%a %Y-%m-%d",
                 tickangle=-90,
                 tickfont=dict(size=8),
                 rangeslider=dict(visible=False),
@@ -321,135 +317,29 @@ class Dashboard:
         self.data_aggregator = VideoDataAggregator()
         self.graph_creator = VideoGraphCreator()
 
-    def create_daily_graphs(
-        self, daily_data: Dict[str, pd.DataFrame]
+    def create_graphs(
+        self, daily_data: Dict[str, pd.DataFrame], hourly_data: Dict[str, pd.DataFrame]
     ) -> List[go.Figure]:
         """
-        Creates all daily graphs from aggregated data.
-
-        This method generates three types of visualizations for each metric:
-        1. Daily values (stacked bar charts)
-        2. Cumulative totals (stacked bar charts with running totals)
-        3. Percentage distributions (showing relative device contributions)
-
-        Example:
-            daily_graphs = dashboard.create_daily_graphs(daily_data)
-            # Returns list of figures in order: activity, duration, filesize,
-            # followed by their cumulative and percentage distribution variants
+        Creates daily and hourly activity graphs from aggregated data.
         """
-        figures = []
-
-        # Basic daily graphs
-        figures.append(
+        return [
             self.graph_creator.create_figure(
                 daily_data["activity"], "Event Video Count per Device per Day", "Count"
-            )
-        )
-
-        figures.append(
-            self.graph_creator.create_figure(
-                daily_data["duration"],
-                "Video Capture Time in Hours per Device per Day",
-                "Duration (Hours)",
-            )
-        )
-
-        figures.append(
-            self.graph_creator.create_figure(
-                daily_data["filesize"],
-                "Video File Size in MB per Device per Day",
-                "File Size (MB)",
-            )
-        )
-
-        # Cumulative graphs and percentage distributions
-        for metric, df in daily_data.items():
-            cumulative = df.set_index("Date").cumsum().reset_index()
-            title_map = {
-                "activity": (
-                    "Cumulative Event Video Count per Device",
-                    "Cumulative Count",
-                ),
-                "duration": (
-                    "Cumulative Video Capture Time in Hours per Device",
-                    "Cumulative Duration (Hours)",
-                ),
-                "filesize": (
-                    "Cumulative Video Disk Space in MB per Device",
-                    "Cumulative File Size (MB)",
-                ),
-            }
-
-            figures.append(
-                self.graph_creator.create_figure(
-                    cumulative,
-                    title_map[metric][0],
-                    title_map[metric][1],
-                    {"is_cumulative": True},
-                )
-            )
-
-            # Add percentage distribution
-            devices = [dev for dev in Config.get_device_order() if dev in df.columns]
-            total = cumulative[devices].sum(axis=1)
-            percentage_dist = cumulative[devices].div(total, axis=0) * 100
-            percentage_dist["Date"] = cumulative["Date"]
-
-            figures.append(
-                self.graph_creator.create_figure(
-                    percentage_dist,
-                    f"Cumulative {title_map[metric][0]} Percentage Distribution",
-                    "Percentage (%)",
-                    {"is_percentage": True},
-                )
-            )
-
-        return figures
-
-    def create_hourly_graphs(
-        self, hourly_data: Dict[str, pd.DataFrame]
-    ) -> List[go.Figure]:
-        """
-        Creates all hourly graphs from aggregated data.
-
-        This method generates hourly distribution visualizations:
-        1. Hourly values for each metric (stacked bar charts)
-        2. Cumulative totals for activity (showing patterns across hours)
-
-        Example:
-            hourly_graphs = dashboard.create_hourly_graphs(hourly_data)
-            # Returns list of figures showing hourly patterns
-        """
-        figures = []
-
-        title_map = {
-            "activity": ("Hourly Video Count per Device", "Count"),
-            "duration": (
-                "Hourly Video Duration per Device (Hours)",
-                "Duration (Hours)",
             ),
-            "filesize": ("Hourly Video File Size per Device (MB)", "File Size (MB)"),
-        }
-
-        for metric, df in hourly_data.items():
-            figures.append(
-                self.graph_creator.create_figure(
-                    df, title_map[metric][0], title_map[metric][1], {"is_hourly": True}
-                )
-            )
-
-            if metric == "activity":  # Only create cumulative for activity
-                cumulative = df.set_index("Hour").cumsum().reset_index()
-                figures.append(
-                    self.graph_creator.create_figure(
-                        cumulative,
-                        "Cumulative Hourly Video Count per Device",
-                        "Cumulative Count",
-                        {"is_cumulative": True, "is_hourly": True},
-                    )
-                )
-
-        return figures
+            self.graph_creator.create_figure(
+                daily_data["activity"].set_index("Date").cumsum().reset_index(),
+                "Cumulative Event Video Count per Device",
+                "Cumulative Count",
+                {"is_cumulative": True},
+            ),
+            self.graph_creator.create_figure(
+                hourly_data["activity"],
+                "Hourly Video Count per Device",
+                "Count",
+                {"is_hourly": True},
+            ),
+        ]
 
     @staticmethod
     def save_graphs_to_html(figures: List[go.Figure], output_file: str):
@@ -514,11 +404,10 @@ class Dashboard:
         hourly_data = self.data_aggregator.get_hourly_aggregates(videos)
 
         # Create all graphs
-        daily_graphs = self.create_daily_graphs(daily_data)
-        hourly_graphs = self.create_hourly_graphs(hourly_data)
+        graphs = self.create_graphs(daily_data, hourly_data)
 
         # Save to file
-        self.save_graphs_to_html(daily_graphs + hourly_graphs, output_file)
+        self.save_graphs_to_html(graphs, output_file)
 
 
 if __name__ == "__main__":
