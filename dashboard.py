@@ -242,7 +242,7 @@ class VideoGraphCreator:
         fig_height = Config.get_figure_height()
         fig.update_layout(
             title=title,
-            xaxis_title="" if config.get("is_hourly") else "",
+            xaxis_title="",
             yaxis_title=y_axis_title,
             barmode="stack",
             bargap=0,
@@ -278,13 +278,14 @@ class VideoGraphCreator:
         else:
             fig.update_xaxes(
                 dtick="D1",
+                tickmode="auto",
+                nticks=100,
                 tickformat="%a %Y-%m-%d",
                 tickangle=-90,
-                tickfont=dict(size=8),
+                tickfont=dict(size=10),
                 rangeslider=dict(visible=False),
                 type="date",
             )
-
         return fig
 
 
@@ -418,28 +419,29 @@ if __name__ == "__main__":
     import sys
 
     from logging_config import set_logger_level_and_format
-    from video_database import VideoDatabase
-    from video_filter import DateRange, TimeRange, VideoFilter, VideoSelector
+    from video_database import VideoDatabase, VideoDatabaseList
+    from video_filter import DateRange, VideoFilter, VideoSelector
 
     set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
 
     root_database: str = (
         "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"
     )
-    video_metadata_file: str = os.path.join(root_database, "videos_in_batches.csv")
     out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
 
-    video_database = VideoDatabase(
-        video_directories=None, video_metadata_file=video_metadata_file
+    video_metadata_file1: str = os.path.join(root_database, "videos_in_batches.csv")
+    video_metadata_file2: str = os.path.join(root_database, "videos_in_backup.csv")
+
+    video_database = VideoDatabaseList(
+        [
+            VideoDatabase(
+                video_directories=None, video_metadata_file=video_metadata_file1
+            ),
+            VideoDatabase(
+                video_directories=None, video_metadata_file=video_metadata_file2
+            ),
+        ]
     ).load_videos()
-
-    # Create dashboard
-    dashboard = Dashboard()
-
-    # Generate dashboard file for the entire database
-    dashboard.create_graphs_file(
-        video_database, os.path.join(out_dir, "video_analytics_all.html")
-    )
 
     # Creating a partial filtered view of the total database, filtering by date range, tiemrange and devices.
     # Note that any of those filtering conditions could be removed by setting the entries date_range, time_range or devices to None.
@@ -452,16 +454,28 @@ if __name__ == "__main__":
         video_database,
         [
             VideoSelector(
-                date_range=DateRange(start="2024-12-12", end="2024-12-13"),
-                time_range=TimeRange(start="08:03:00", end="19:36:00"),
-                devices=["Backyard", "Garage"],
+                date_range=DateRange(start="2024-05-05", end="2024-06-05"),
+            ),
+            VideoSelector(
+                date_range=DateRange(start="2024-11-11", end="2024-12-31"),
             ),
         ],
     )
 
-    # Generate dashboard file for a partial filtered view of the database.
-    dashboard.create_graphs_file(
-        videos, os.path.join(out_dir, "video_analytics_partial.html")
+    # Get aggregated data
+    data_aggregator = VideoDataAggregator()
+    daily_data = data_aggregator.get_daily_aggregates(videos)
+    hourly_data = data_aggregator.get_hourly_aggregates(videos)
+
+    # Create dashboard
+    dashboard = Dashboard()
+
+    # Create all graphs
+    graphs = dashboard.create_graphs(daily_data, hourly_data)
+
+    # Save to file
+    dashboard.save_graphs_to_html(
+        graphs, os.path.join(out_dir, "video_analytics_partial.html")
     )
 
     sys.exit()

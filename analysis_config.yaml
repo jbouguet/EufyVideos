@@ -64,7 +64,7 @@ process_stories: true
 stories:
 
   - name: 'Every Other Day'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-01'
@@ -72,7 +72,7 @@ stories:
         weekdays: ['monday', 'wednesday', 'friday', 'sunday']
 
   - name: 'Trash Pickups'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-07'
