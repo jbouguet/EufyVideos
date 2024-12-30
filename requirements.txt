@@ -1,5 +1,6 @@
 pandas
 plotly
+dash
 opencv-python
 av
 ffmpeg-python

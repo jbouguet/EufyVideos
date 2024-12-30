@@ -443,7 +443,7 @@ if __name__ == "__main__":
         ]
     ).load_videos()
 
-    # Creating a partial filtered view of the total database, filtering by date range, tiemrange and devices.
+    # Creating a partial filtered view of the total database, filtering by date range, timreange and devices.
     # Note that any of those filtering conditions could be removed by setting the entries date_range, time_range or devices to None.
     # The range of acceptable dates can be computed from the min and maximum dates of videos in video_database.
     # Since the dates are ordered, the minimum date is video_database[0].date_str and video_database[-1].date_str

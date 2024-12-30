@@ -60,11 +60,15 @@ security cameras.
    ```bash
    source myenv/bin/activate
    ```
-4. Install required packages:
+4. Upgrade pip:
+   ```bash
+   python -m pip install --upgrade pip
+   ```
+5. Install required packages:
    ```bash
    pip install -r requirements.txt
    ```
-5. Select Python Interpreter:
+6. Select Python Interpreter:
    - Press Cmd+Shift+P
    - Type "Python: Select Interpreter"
    - Choose the interpreter from myenv (should be './myenv/bin/python')
