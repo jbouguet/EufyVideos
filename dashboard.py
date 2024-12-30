@@ -443,13 +443,6 @@ if __name__ == "__main__":
         ]
     ).load_videos()
 
-    # Creating a partial filtered view of the total database, filtering by date range, timreange and devices.
-    # Note that any of those filtering conditions could be removed by setting the entries date_range, time_range or devices to None.
-    # The range of acceptable dates can be computed from the min and maximum dates of videos in video_database.
-    # Since the dates are ordered, the minimum date is video_database[0].date_str and video_database[-1].date_str
-    # The range of times is between "00:00:00" and "23:59:59" and the start and end times do not need to be ordered
-    # (to selected videos crossing midnight)
-    # The set of devices to pick from for filtering can be picked from Config.get_all_devices imported from config.py
     videos = VideoFilter.by_selectors(
         video_database,
         [

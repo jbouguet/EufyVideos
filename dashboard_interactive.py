@@ -298,7 +298,7 @@ class InteractiveDashboard:
             start_time,
             end_time,
         ):
-            logger.debug(f"Callback triggered with:")
+            logger.debug("Callback triggered with:")
             logger.debug(f"  Date range: {start_date} to {end_date}")
             logger.debug(f"  Start time: {start_time}")
             logger.debug(f"  End time: {end_time}")
