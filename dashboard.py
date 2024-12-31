@@ -443,17 +443,15 @@ if __name__ == "__main__":
         ]
     ).load_videos()
 
-    out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
+    min_date = video_database[0].date_str
+    max_date = video_database[-1].date_str
 
     # Filter the database
     videos = VideoFilter.by_selectors(
         video_database,
         [
             VideoSelector(
-                date_range=DateRange(start="2024-05-05", end="2024-06-05"),
-            ),
-            VideoSelector(
-                date_range=DateRange(start="2024-11-11", end="2024-12-31"),
+                date_range=DateRange(start=min_date, end=max_date),
             ),
         ],
     )
@@ -470,8 +468,7 @@ if __name__ == "__main__":
     graphs = dashboard.create_graphs(daily_data, hourly_data)
 
     # Save graph to file
-    dashboard.save_graphs_to_html(
-        graphs, os.path.join(out_dir, "video_analytics_partial.html")
-    )
+    out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
+    dashboard.save_graphs_to_html(graphs, os.path.join(out_dir, "video_analytics.html"))
 
     sys.exit()
