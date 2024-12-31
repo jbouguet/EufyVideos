@@ -37,7 +37,7 @@ video_database_list:
   video_metadata_file: !join [*root_database, "/videos_in_batches.csv"]
   video_directories: *batch_dirs
 
-- force_video_directories_scanning: false
+- force_video_directories_scanning: true
   video_metadata_file: !join [*root_database, "/videos_in_backup.csv"]
   video_directories: !join [*root_database, "/backup"]
 

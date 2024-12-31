@@ -274,18 +274,20 @@ class VideoGraphCreator:
                 ticktext=[f"{h:02d}:00" for h in hours],
                 range=[-0.5, 23.5],
                 type="linear",
+                tickfont=dict(size=8),
             )
         else:
             fig.update_xaxes(
                 dtick="D1",
-                tickmode="auto",
-                nticks=100,
-                tickformat="%a %Y-%m-%d",
+                tickformat="%a %Y/%m/%d",
                 tickangle=-90,
-                tickfont=dict(size=10),
+                tickfont=dict(size=6),
                 rangeslider=dict(visible=False),
                 type="date",
+                # tickmode="auto",
+                # nticks=100,
             )
+
         return fig
 
 
@@ -324,23 +326,24 @@ class Dashboard:
         """
         Creates daily and hourly activity graphs from aggregated data.
         """
-        return [
-            self.graph_creator.create_figure(
-                daily_data["activity"], "Event Video Count per Device per Day", "Count"
-            ),
-            self.graph_creator.create_figure(
-                daily_data["activity"].set_index("Date").cumsum().reset_index(),
-                "Cumulative Event Video Count per Device",
-                "Cumulative Count",
-                {"is_cumulative": True},
-            ),
-            self.graph_creator.create_figure(
-                hourly_data["activity"],
-                "Hourly Video Count per Device",
-                "Count",
-                {"is_hourly": True},
-            ),
-        ]
+        # Create figures
+        daily_fig = self.graph_creator.create_figure(
+            daily_data["activity"], "Daily Video Count per Device", "Count"
+        )
+        hourly_fig = self.graph_creator.create_figure(
+            hourly_data["activity"],
+            "Hourly Video Count per Device",
+            "Count",
+            {"is_hourly": True},
+        )
+        cumulative_fig = self.graph_creator.create_figure(
+            daily_data["activity"].set_index("Date").cumsum().reset_index(),
+            "Cumulative Daily Video Count per Device",
+            "Cumulative Count",
+            {"is_cumulative": True},
+        )
+
+        return [daily_fig, hourly_fig, cumulative_fig]
 
     @staticmethod
     def save_graphs_to_html(figures: List[go.Figure], output_file: str):
@@ -424,25 +427,25 @@ if __name__ == "__main__":
 
     set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
 
-    root_database: str = (
+    # Load video database
+    root_database = (
         "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"
     )
-    out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
-
-    video_metadata_file1: str = os.path.join(root_database, "videos_in_batches.csv")
-    video_metadata_file2: str = os.path.join(root_database, "videos_in_backup.csv")
-
+    metadata_files = [
+        os.path.join(root_database, "videos_in_batches.csv"),
+        os.path.join(root_database, "videos_in_backup.csv"),
+        # Add more metadata files as needed
+    ]
     video_database = VideoDatabaseList(
         [
-            VideoDatabase(
-                video_directories=None, video_metadata_file=video_metadata_file1
-            ),
-            VideoDatabase(
-                video_directories=None, video_metadata_file=video_metadata_file2
-            ),
+            VideoDatabase(video_directories=None, video_metadata_file=file)
+            for file in metadata_files
         ]
     ).load_videos()
 
+    out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
+
+    # Filter the database
     videos = VideoFilter.by_selectors(
         video_database,
         [
@@ -466,7 +469,7 @@ if __name__ == "__main__":
     # Create all graphs
     graphs = dashboard.create_graphs(daily_data, hourly_data)
 
-    # Save to file
+    # Save graph to file
     dashboard.save_graphs_to_html(
         graphs, os.path.join(out_dir, "video_analytics_partial.html")
     )

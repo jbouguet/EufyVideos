@@ -65,7 +65,7 @@ class InteractiveDashboard:
             [
                 html.H1(
                     "Video Analytics Dashboard",
-                    style={"textAlign": "center", "marginBottom": "30px"},
+                    style={"textAlign": "center", "marginBottom": "0px"},
                 ),
                 # Filters section
                 html.Div(
@@ -81,71 +81,10 @@ class InteractiveDashboard:
                                     start_date=self.min_date,
                                     end_date=self.max_date,
                                     display_format="YYYY-MM-DD",
+                                    day_size=30,
                                 ),
                             ],
-                            style={"marginBottom": "20px"},
-                        ),
-                        # Time Range Selection
-                        html.Div(
-                            [
-                                html.H3("Time Range"),
-                                # Start Time Slider
-                                html.Div(
-                                    [
-                                        html.Label("Start Time:"),
-                                        dcc.Slider(
-                                            id="start-time",
-                                            min=0,
-                                            max=24,
-                                            step=1 / 12,  # 5-minute intervals
-                                            value=0,
-                                            marks={
-                                                i: f"{i:02d}:00"
-                                                for i in range(0, 25, 3)
-                                            },
-                                            updatemode="drag",
-                                        ),
-                                        html.Div(id="start-time-display"),
-                                    ],
-                                    style={"marginBottom": "10px"},
-                                ),
-                                # End Time Slider
-                                html.Div(
-                                    [
-                                        html.Label("End Time:"),
-                                        dcc.Slider(
-                                            id="end-time",
-                                            min=0,
-                                            max=24,
-                                            step=1 / 12,  # 5-minute intervals
-                                            value=24,
-                                            marks={
-                                                i: f"{i:02d}:00"
-                                                for i in range(0, 25, 3)
-                                            },
-                                            updatemode="drag",
-                                        ),
-                                        html.Div(id="end-time-display"),
-                                    ],
-                                    style={"marginBottom": "10px"},
-                                ),
-                                # Apply Time Range Button
-                                html.Button(
-                                    "Apply Time Range",
-                                    id="apply-time-range",
-                                    n_clicks=0,
-                                    style={
-                                        "backgroundColor": "#007bff",
-                                        "color": "white",
-                                        "border": "none",
-                                        "padding": "10px 20px",
-                                        "borderRadius": "5px",
-                                        "cursor": "pointer",
-                                        "marginTop": "10px",
-                                    },
-                                ),
-                            ],
-                            style={"marginBottom": "20px"},
+                            style={"marginBottom": "0px"},
                         ),
                         # Device Selection
                         html.Div(
@@ -161,7 +100,7 @@ class InteractiveDashboard:
                                     inline=True,
                                 ),
                             ],
-                            style={"marginBottom": "20px"},
+                            style={"marginBottom": "0px"},
                         ),
                         # Weekday Selection
                         html.Div(
@@ -193,26 +132,88 @@ class InteractiveDashboard:
                                     inline=True,
                                 ),
                             ],
-                            style={"marginBottom": "30px"},
+                            style={"marginBottom": "0px"},
+                        ),
+                        # Time Range Selection
+                        html.Div(
+                            [
+                                html.H3("Time Range"),
+                                # Start Time Slider
+                                html.Div(
+                                    [
+                                        html.Label("Start Time:"),
+                                        dcc.Slider(
+                                            id="start-time",
+                                            min=0,
+                                            max=24,
+                                            step=1 / 12,  # 5-minute intervals
+                                            value=0,
+                                            marks={
+                                                i: f"{i:02d}:00"
+                                                for i in range(0, 25, 1)
+                                            },
+                                            updatemode="drag",
+                                        ),
+                                        html.Div(id="start-time-display"),
+                                    ],
+                                    style={"marginBottom": "0px"},
+                                ),
+                                # End Time Slider
+                                html.Div(
+                                    [
+                                        html.Label("End Time:"),
+                                        dcc.Slider(
+                                            id="end-time",
+                                            min=0,
+                                            max=24,
+                                            step=1 / 12,  # 5-minute intervals
+                                            value=24,
+                                            marks={
+                                                i: f"{i:02d}:00"
+                                                for i in range(0, 25, 1)
+                                            },
+                                            updatemode="mouseup",
+                                        ),
+                                        html.Div(id="end-time-display"),
+                                    ],
+                                    style={"marginBottom": "0px"},
+                                ),
+                                # Apply Time Range Button
+                                html.Button(
+                                    "Apply Time Range",
+                                    id="apply-time-range",
+                                    n_clicks=0,
+                                    style={
+                                        "backgroundColor": "#007bff",
+                                        "color": "white",
+                                        "border": "none",
+                                        "padding": "10px 20px",
+                                        "borderRadius": "5px",
+                                        "cursor": "pointer",
+                                        "marginTop": "10px",
+                                    },
+                                ),
+                            ],
+                            style={"marginBottom": "0px"},
                         ),
                     ],
                     style={
-                        "padding": "20px",
-                        "backgroundColor": "#f8f9fa",
-                        "borderRadius": "5px",
-                        "marginBottom": "30px",
+                        "padding": "0px",
+                        "backgroundColor": "#ffffff",
+                        "borderRadius": "0px",
+                        "marginBottom": "0px",
                     },
                 ),
                 # Graphs section
                 html.Div(
                     [
                         dcc.Graph(id="daily-count-graph"),
-                        dcc.Graph(id="cumulative-count-graph"),
                         dcc.Graph(id="hourly-count-graph"),
+                        dcc.Graph(id="cumulative-count-graph"),
                     ]
                 ),
             ],
-            style={"padding": "20px"},
+            style={"padding": "10px"},
         )
 
     def format_time(self, t):
@@ -251,15 +252,17 @@ class InteractiveDashboard:
             Output("start-time-display", "children"), Input("start-time", "value")
         )
         def update_start_time_display(value):
-            time = self.format_display_time(value)
-            return f"Start: {time}"
+            # time = self.format_display_time(value)
+            # return f"Start: {time}"
+            return ""
 
         @self.app.callback(
             Output("end-time-display", "children"), Input("end-time", "value")
         )
         def update_end_time_display(value):
-            time = self.format_display_time(value)
-            return f"End: {time}"
+            # time = self.format_display_time(value)
+            # return f"End: {time}"
+            return ""
 
         # Store current time values
         @self.app.callback(
@@ -277,8 +280,8 @@ class InteractiveDashboard:
         @self.app.callback(
             [
                 Output("daily-count-graph", "figure"),
-                Output("cumulative-count-graph", "figure"),
                 Output("hourly-count-graph", "figure"),
+                Output("cumulative-count-graph", "figure"),
             ],
             [
                 Input("date-range", "start_date"),
@@ -299,11 +302,11 @@ class InteractiveDashboard:
             end_time,
         ):
             logger.debug("Callback triggered with:")
-            logger.debug(f"  Date range: {start_date} to {end_date}")
-            logger.debug(f"  Start time: {start_time}")
-            logger.debug(f"  End time: {end_time}")
-            logger.debug(f"  Selected devices: {selected_devices}")
-            logger.debug(f"  Weekdays: {weekdays}")
+            logger.debug(f"  - Date range: {start_date} to {end_date}")
+            logger.debug(f"  - Start time: {start_time}")
+            logger.debug(f"  - End time: {end_time}")
+            logger.debug(f"  - Selected devices: {selected_devices}")
+            logger.debug(f"  - Weekdays: {weekdays}")
 
             # Ensure we have valid inputs
             if not start_date or not end_date or start_time is None or end_time is None:
@@ -340,37 +343,14 @@ class InteractiveDashboard:
             start_time_str = self.format_time(start_time)
             end_time_str = self.format_time(end_time)
 
-            # Check if time range crosses midnight
-            crosses_midnight = start_time > end_time
-            if crosses_midnight:
-                # Create two selectors for before and after midnight
-                logger.debug(
-                    f"Time range crosses midnight: {start_time_str} → midnight → {end_time_str}"
-                )
-                selector1 = VideoSelector(
-                    devices=selected_devices,
-                    date_range=DateRange(start=start_date, end=end_date),
-                    time_range=TimeRange(start=start_time_str, end="23:59:59"),
-                    weekdays=weekdays,
-                )
-                selector2 = VideoSelector(
-                    devices=selected_devices,
-                    date_range=DateRange(start=start_date, end=end_date),
-                    time_range=TimeRange(start="00:00:00", end=end_time_str),
-                    weekdays=weekdays,
-                )
-                filtered_videos = VideoFilter.by_selectors(
-                    self.videos, [selector1, selector2]
-                )
-            else:
-                logger.debug(f"Regular time range: {start_time_str} to {end_time_str}")
-                selector = VideoSelector(
-                    devices=selected_devices,
-                    date_range=DateRange(start=start_date, end=end_date),
-                    time_range=TimeRange(start=start_time_str, end=end_time_str),
-                    weekdays=weekdays,
-                )
-                filtered_videos = VideoFilter.by_selectors(self.videos, selector)
+            logger.debug(f"Time range: {start_time_str} to {end_time_str}")
+            selector = VideoSelector(
+                devices=selected_devices,
+                date_range=DateRange(start=start_date, end=end_date),
+                time_range=TimeRange(start=start_time_str, end=end_time_str),
+                weekdays=weekdays,
+            )
+            filtered_videos = VideoFilter.by_selectors(self.videos, selector)
 
             # Get aggregated data
             daily_data = self.data_aggregator.get_daily_aggregates(filtered_videos)
@@ -378,24 +358,22 @@ class InteractiveDashboard:
 
             # Create figures
             daily_fig = self.graph_creator.create_figure(
-                daily_data["activity"], "Event Video Count per Device per Day", "Count"
+                daily_data["activity"], "Daily Video Count per Device", "Count"
             )
-
-            cumulative_fig = self.graph_creator.create_figure(
-                daily_data["activity"].set_index("Date").cumsum().reset_index(),
-                "Cumulative Event Video Count per Device",
-                "Cumulative Count",
-                {"is_cumulative": True},
-            )
-
             hourly_fig = self.graph_creator.create_figure(
                 hourly_data["activity"],
                 "Hourly Video Count per Device",
                 "Count",
                 {"is_hourly": True},
             )
+            cumulative_fig = self.graph_creator.create_figure(
+                daily_data["activity"].set_index("Date").cumsum().reset_index(),
+                "Cumulative Daily Video Count per Device",
+                "Cumulative Count",
+                {"is_cumulative": True},
+            )
 
-            return daily_fig, cumulative_fig, hourly_fig
+            return daily_fig, hourly_fig, cumulative_fig
 
     def run(self, debug=False, port=8050):
         """Run the dashboard server."""
@@ -420,7 +398,6 @@ if __name__ == "__main__":
         os.path.join(root_database, "videos_in_backup.csv"),
         # Add more metadata files as needed
     ]
-
     video_database = VideoDatabaseList(
         [
             VideoDatabase(video_directories=None, video_metadata_file=file)
