@@ -60,6 +60,14 @@ class VideoDataAggregator:
         # daily_data now contains aggregated metrics by date and device
     """
 
+    def __init__(self, metrics: List[str] = None):
+        """Initialize aggregarator optionally specifying metrics of interest"""
+        if metrics is None:
+            # By default, aggregate across all metrics
+            self.metrics = ["activity", "duration", "filesize"]
+        else:
+            self.metrics = metrics
+
     @staticmethod
     def _aggregate_by_metric(
         videos: List[VideoMetadata],
@@ -111,9 +119,8 @@ class VideoDataAggregator:
             .reset_index()
         )
 
-    @classmethod
     def get_daily_aggregates(
-        cls, videos: List[VideoMetadata]
+        self, videos: List[VideoMetadata]
     ) -> Dict[str, pd.DataFrame]:
         """
         Returns daily aggregates for all metrics.
@@ -124,21 +131,23 @@ class VideoDataAggregator:
             duration_by_date = daily_data['duration']  # Hours per day
             storage_by_date = daily_data['filesize']   # MB per day
         """
-        return {
-            "activity": cls._aggregate_by_metric(videos, "date", "count").rename(
-                columns={"TimeKey": "Date"}
-            ),
-            "duration": cls._aggregate_by_metric(videos, "date", "duration").rename(
-                columns={"TimeKey": "Date"}
-            ),
-            "filesize": cls._aggregate_by_metric(videos, "date", "filesize").rename(
-                columns={"TimeKey": "Date"}
-            ),
-        }
+        output = {}
+        if "activity" in self.metrics:
+            output["activity"] = self._aggregate_by_metric(
+                videos, "date", "count"
+            ).rename(columns={"TimeKey": "Date"})
+        if "duration" in self.metrics:
+            output["duration"] = self._aggregate_by_metric(
+                videos, "date", "duration"
+            ).rename(columns={"TimeKey": "Date"})
+        if "filesize" in self.metrics:
+            output["filesize"] = self._aggregate_by_metric(
+                videos, "date", "filesize"
+            ).rename(columns={"TimeKey": "Date"})
+        return output
 
-    @classmethod
     def get_hourly_aggregates(
-        cls, videos: List[VideoMetadata]
+        self, videos: List[VideoMetadata]
     ) -> Dict[str, pd.DataFrame]:
         """
         Returns hourly aggregates for all metrics.
@@ -149,17 +158,20 @@ class VideoDataAggregator:
             duration_by_hour = hourly_data['duration']  # Hours per hour slot
             storage_by_hour = hourly_data['filesize']   # MB per hour
         """
-        return {
-            "activity": cls._aggregate_by_metric(videos, "hour", "count").rename(
-                columns={"TimeKey": "Hour"}
-            ),
-            "duration": cls._aggregate_by_metric(videos, "hour", "duration").rename(
-                columns={"TimeKey": "Hour"}
-            ),
-            "filesize": cls._aggregate_by_metric(videos, "hour", "filesize").rename(
-                columns={"TimeKey": "Hour"}
-            ),
-        }
+        output = {}
+        if "activity" in self.metrics:
+            output["activity"] = self._aggregate_by_metric(
+                videos, "hour", "count"
+            ).rename(columns={"TimeKey": "Hour"})
+        if "duration" in self.metrics:
+            output["duration"] = self._aggregate_by_metric(
+                videos, "hour", "duration"
+            ).rename(columns={"TimeKey": "Hour"})
+        if "filesize" in self.metrics:
+            output["filesize"] = self._aggregate_by_metric(
+                videos, "hour", "filesize"
+            ).rename(columns={"TimeKey": "Hour"})
+        return output
 
 
 class VideoGraphCreator:

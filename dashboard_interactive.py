@@ -40,10 +40,19 @@ class InteractiveDashboard:
     Updates graphs dynamically based on user selections.
     """
 
-    def __init__(self, videos: List[VideoMetadata]):
+    def __init__(self, videos: List[VideoMetadata], metrics: List[str] = None):
         """Initialize dashboard with video data and create Dash app."""
+        if metrics is None:
+            # By default, aggregate across all metrics
+            self.metrics = ["activity", "duration", "filesize"]
+        else:
+            # Only aggregate across a subset of specified metrics
+            self.metrics = metrics
+
+        logger.debug(f"Specified metrics: {self.metrics}")
+
         self.videos = videos
-        self.data_aggregator = VideoDataAggregator()
+        self.data_aggregator = VideoDataAggregator(self.metrics)
         self.graph_creator = VideoGraphCreator()
 
         # Get date range from videos
@@ -357,6 +366,11 @@ class InteractiveDashboard:
             hourly_data = self.data_aggregator.get_hourly_aggregates(filtered_videos)
 
             # Create figures
+            if "activity" not in self.metrics:
+                logger.error(
+                    f"Metric {activity} not in specified metrics {self.metrics}"
+                )
+
             daily_fig = self.graph_creator.create_figure(
                 daily_data["activity"], "Daily Video Count per Device", "Count"
             )
@@ -406,5 +420,5 @@ if __name__ == "__main__":
     ).load_videos()
 
     # Create and run dashboard
-    dashboard = InteractiveDashboard(video_database)
+    dashboard = InteractiveDashboard(video_database, ["activity"])
     dashboard.run(debug=True)
