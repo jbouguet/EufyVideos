@@ -1,6 +1,7 @@
 pandas
 plotly
 dash
+dash-bootstrap-components
 opencv-python
 av
 ffmpeg-python
