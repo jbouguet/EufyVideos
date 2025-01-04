@@ -182,6 +182,33 @@ class InteractiveDashboard:
                         dbc.Col(
                             [
                                 html.Label(
+                                    "Time Bin Size:",
+                                    style={
+                                        "font-size": "14px",
+                                        "font-weight": "bold",
+                                    },
+                                ),
+                                dcc.Dropdown(
+                                    id="bin-size-selector",
+                                    options=[
+                                        {"label": "1 hour", "value": 1},
+                                        {"label": "30 minutes", "value": 2},
+                                        {"label": "15 minutes", "value": 4},
+                                    ],
+                                    value=1,
+                                    style={"font-size": "10px"},
+                                ),
+                            ],
+                            width=4,
+                        ),
+                    ],
+                    style={"background-color": self.tools_color},
+                ),
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                html.Label(
                                     "Start Time:",
                                     style={
                                         "font-size": "14px",
@@ -243,7 +270,10 @@ class InteractiveDashboard:
                     style={"background-color": self.tools_color},
                 ),
                 # Graphs section
-                html.H3("Video Analytics Dashboard", style={"textAlign": "center"}),
+                html.H3(
+                    "Video Analytics Dashboard",
+                    style={"textAlign": "center", "padding": "20px"},
+                ),
                 html.Div(
                     [
                         dcc.Graph(id="daily-count-graph"),
@@ -286,6 +316,7 @@ class InteractiveDashboard:
                 Input("end-time", "value"),
                 Input("device-selector", "value"),
                 Input("weekday-selector", "value"),
+                Input("bin-size-selector", "value"),
             ],
         )
         def update_graphs(
@@ -295,6 +326,7 @@ class InteractiveDashboard:
             end_time,
             selected_devices,
             weekdays,
+            bins_per_hour,
         ):
             # Ensure we have valid inputs
             if not start_date or not end_date or start_time is None or end_time is None:
@@ -330,7 +362,9 @@ class InteractiveDashboard:
 
             # Get aggregated data
             daily_data = self.data_aggregator.get_daily_aggregates(filtered_videos)
-            hourly_data = self.data_aggregator.get_hourly_aggregates(filtered_videos)
+            hourly_data = self.data_aggregator.get_hourly_aggregates(
+                filtered_videos, bins_per_hour=bins_per_hour
+            )
 
             # Create figures
             if "activity" not in self.metrics:
@@ -345,7 +379,7 @@ class InteractiveDashboard:
                 hourly_data["activity"],
                 "Hourly Video Count per Device",
                 "Count",
-                {"is_hourly": True},
+                {"is_hourly": True, "bins_per_hour": bins_per_hour},
             )
             cumulative_fig = self.graph_creator.create_figure(
                 daily_data["activity"].set_index("Date").cumsum().reset_index(),

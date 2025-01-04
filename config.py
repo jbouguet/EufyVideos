@@ -109,7 +109,7 @@ class Config:
     SELECTED_PALETTE = "light24"
 
     # Figure height for plots
-    FIGURE_HEIGHT = 500
+    FIGURE_HEIGHT = 600
 
     # File naming conventions
     METADATA = "_videos.csv"

@@ -40,13 +40,14 @@ class VideoGraphCreator:
         data: pd.DataFrame,
         title: str,
         y_axis_title: str,
-        config: Dict[str, bool] = None,
+        config: Dict[str, bool | int] = None,
     ) -> go.Figure:
         """Creates a plotly figure with consistent styling"""
         if config is None:
             config = {
                 "is_cumulative": False,
                 "is_hourly": False,
+                "bins_per_hour": 1,
             }
 
         fig = go.Figure()
@@ -56,11 +57,16 @@ class VideoGraphCreator:
 
         # Add device traces
         for device in devices:
-            hovertemplate = (
-                f"<b>Hour:</b> %{{x:02d}}:00<br>"
-                if config.get("is_hourly")
-                else f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
-            ) + f"<b>{device}:</b> %{{y:.0f}}<extra></extra>"
+            if config.get("is_hourly"):
+                hovertemplate = (
+                    "<b>Hour:</b> %{x:.2f}<br>"
+                    + f"<b>{device}:</b> %{{y:.0f}}<extra></extra>"
+                )
+            else:
+                hovertemplate = (
+                    f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
+                    + f"<b>{device}:</b> %{{y:.0f}}<extra></extra>"
+                )
 
             fig.add_trace(
                 go.Bar(
@@ -76,11 +82,15 @@ class VideoGraphCreator:
 
         # Add total line
         total = data[devices].sum(axis=1)
-        hovertemplate = (
-            f"<b>Hour:</b> %{{x:02d}}:00<br>"
-            if config.get("is_hourly")
-            else f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
-        ) + f"<b>Total:</b> %{{y:.0f}}<extra></extra>"
+        if config.get("is_hourly"):
+            hovertemplate = (
+                "<b>Hour:</b> %{x:.2f}<br>" + "<b>Total:</b> %{y:.0f}<extra></extra>"
+            )
+        else:
+            hovertemplate = (
+                f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
+                + "<b>Total:</b> %{y:.0f}<extra></extra>"
+            )
 
         fig.add_trace(
             go.Scatter(
@@ -122,14 +132,26 @@ class VideoGraphCreator:
         )
 
         if config.get("is_hourly"):
-            hours = list(range(24))
+            bins_per_hour = config.get("bins_per_hour", 1)
+            total_bins = 24 * bins_per_hour
+            tick_values = [i / bins_per_hour for i in range(total_bins)]
+
+            # Create time labels based on bin size
+            tick_labels = []
+            for i in range(total_bins):
+                hours = int(i / bins_per_hour)
+                minutes = int((i % bins_per_hour) * (60 / bins_per_hour))
+                time_str = f"{hours:02d}:{minutes:02d}"
+                tick_labels.append(time_str)
+
             fig.update_xaxes(
                 tickmode="array",
-                tickvals=hours,
-                ticktext=[f"{h:02d}:00" for h in hours],
-                range=[-0.5, 23.5],
+                tickvals=tick_values,
+                ticktext=tick_labels,
+                range=[-0.5 / bins_per_hour, 23.5],
                 type="linear",
                 tickfont=dict(size=8),
+                tickangle=-90,
             )
         else:
             fig.update_xaxes(

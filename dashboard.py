@@ -187,6 +187,8 @@ if __name__ == "__main__":
         os.path.join(root_database, "videos_in_backup.csv"),
         # Add more metadata files as needed
     ]
+    out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
+
     video_database = VideoDatabaseList(
         [
             VideoDatabase(video_directories=None, video_metadata_file=file)
@@ -197,29 +199,34 @@ if __name__ == "__main__":
     min_date = video_database[0].date_str
     max_date = video_database[-1].date_str
 
+    start_date = min_date  # "2024-12-14"
+    end_date = max_date  # "2024-12-25"
+
+    logger.debug("Filter:")
+    logger.debug(f"  Date range: {start_date} to {end_date}")
+
+    selector = VideoSelector(
+        date_range=DateRange(start=start_date, end=end_date),
+    )
+
     # Filter the database
-    videos = VideoFilter.by_selectors(
-        video_database,
-        [
-            VideoSelector(
-                date_range=DateRange(start=min_date, end=max_date),
-            ),
-        ],
+    videos = VideoFilter.by_selectors(video_database, selector)
+
+    VideoMetadata.export_videos_to_metadata_file(
+        videos, os.path.join(out_dir, "filtered_videos.csv")
     )
 
     # Get aggregated data
+    dashboard = Dashboard()
     data_aggregator = VideoDataAggregator()
     daily_data = data_aggregator.get_daily_aggregates(videos)
-    hourly_data = data_aggregator.get_hourly_aggregates(videos)
-
-    # Create dashboard
-    dashboard = Dashboard()
-
-    # Create all graphs
-    graphs = dashboard.create_graphs(daily_data, hourly_data)
-
-    # Save graph to file
-    out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
-    dashboard.save_graphs_to_html(graphs, os.path.join(out_dir, "video_analytics.html"))
+    bins_per_hour = 12
+    hourly_data_5_minutes_bins = data_aggregator.get_hourly_aggregates(
+        videos, bins_per_hour=bins_per_hour
+    )
+    graphs = dashboard.create_graphs(daily_data, hourly_data_5_minutes_bins)
+    dashboard.save_graphs_to_html(
+        graphs, os.path.join(out_dir, "video_analytics_5_minutes_bins.html")
+    )
 
     sys.exit()
