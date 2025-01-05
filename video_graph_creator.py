@@ -47,8 +47,14 @@ class VideoGraphCreator:
             config = {
                 "is_cumulative": False,
                 "is_hourly": False,
-                "bins_per_hour": 1,
+                "bins_per_hour": 4,
             }
+
+        def decimal_hour_to_time(decimal_hour):
+            hours = int(decimal_hour)
+            minutes = int((decimal_hour - hours) * 60)
+            seconds = int(((decimal_hour - hours) * 60 - minutes) * 60)
+            return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
         fig = go.Figure()
         x_column = "Hour" if config.get("is_hourly") else "Date"
@@ -59,7 +65,7 @@ class VideoGraphCreator:
         for device in devices:
             if config.get("is_hourly"):
                 hovertemplate = (
-                    "<b>Hour:</b> %{x:.2f}<br>"
+                    "<b>Time:</b> %{customdata}<br>"
                     + f"<b>{device}:</b> %{{y:.0f}}<extra></extra>"
                 )
             else:
@@ -67,6 +73,11 @@ class VideoGraphCreator:
                     f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
                     + f"<b>{device}:</b> %{{y:.0f}}<extra></extra>"
                 )
+
+            if config.get("is_hourly"):
+                customdata = [decimal_hour_to_time(h) for h in data[x_column]]
+            else:
+                customdata = None
 
             fig.add_trace(
                 go.Bar(
@@ -77,20 +88,30 @@ class VideoGraphCreator:
                     text=data[device].apply(lambda x: f"{int(x)}"),
                     textposition="inside",
                     hovertemplate=hovertemplate,
+                    customdata=customdata,
                 )
             )
 
         # Add total line
         total = data[devices].sum(axis=1)
         if config.get("is_hourly"):
+            # hovertemplate = (
+            #    "<b>Hour:</b> %{x:.2f}<br>" + "<b>Total:</b> %{y:.0f}<extra></extra>"
+            # )
             hovertemplate = (
-                "<b>Hour:</b> %{x:.2f}<br>" + "<b>Total:</b> %{y:.0f}<extra></extra>"
+                "<b>Time:</b> %{customdata}<br>"
+                + f"<b>{device}:</b> %{{y:.0f}}<extra></extra>"
             )
         else:
             hovertemplate = (
                 f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
                 + "<b>Total:</b> %{y:.0f}<extra></extra>"
             )
+
+        if config.get("is_hourly"):
+            customdata = [decimal_hour_to_time(h) for h in data[x_column]]
+        else:
+            customdata = None
 
         fig.add_trace(
             go.Scatter(
@@ -100,6 +121,7 @@ class VideoGraphCreator:
                 name="Total",
                 line=dict(color="red", width=1, shape="spline"),
                 hovertemplate=hovertemplate,
+                customdata=customdata,
             )
         )
 
@@ -132,7 +154,7 @@ class VideoGraphCreator:
         )
 
         if config.get("is_hourly"):
-            bins_per_hour = config.get("bins_per_hour", 1)
+            bins_per_hour = config.get("bins_per_hour", 4)
             total_bins = 24 * bins_per_hour
             tick_values = [i / bins_per_hour for i in range(total_bins)]
 
@@ -161,8 +183,6 @@ class VideoGraphCreator:
                 tickfont=dict(size=6),
                 rangeslider=dict(visible=False),
                 type="date",
-                # tickmode="auto",
-                # nticks=100,
             )
 
         return fig

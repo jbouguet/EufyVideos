@@ -71,7 +71,10 @@ class Dashboard:
         self.graph_creator = VideoGraphCreator()
 
     def create_graphs(
-        self, daily_data: Dict[str, pd.DataFrame], hourly_data: Dict[str, pd.DataFrame]
+        self,
+        daily_data: Dict[str, pd.DataFrame],
+        hourly_data: Dict[str, pd.DataFrame],
+        config: Dict[str, bool | int] = None,
     ) -> List[go.Figure]:
         """
         Creates daily and hourly activity graphs from aggregated data.
@@ -80,11 +83,12 @@ class Dashboard:
         daily_fig = self.graph_creator.create_figure(
             daily_data["activity"], "Daily Video Count per Device", "Count"
         )
+        bins_per_hour = config.get("bins_per_hour", 4)
         hourly_fig = self.graph_creator.create_figure(
             hourly_data["activity"],
             "Hourly Video Count per Device",
             "Count",
-            {"is_hourly": True},
+            {"is_hourly": True, "bins_per_hour": bins_per_hour},
         )
         cumulative_fig = self.graph_creator.create_figure(
             daily_data["activity"].set_index("Date").cumsum().reset_index(),
@@ -137,7 +141,12 @@ class Dashboard:
                 file.write(fig.to_html(full_html=False, include_plotlyjs=False))
             file.write("</body></html>")
 
-    def create_graphs_file(self, videos: List[VideoMetadata], output_file: str):
+    def create_graphs_file(
+        self,
+        videos: List[VideoMetadata],
+        output_file: str,
+        config: Dict[str, bool | int] = None,
+    ):
         """
         Main entry point for creating all graphs and saving to file.
 
@@ -156,10 +165,13 @@ class Dashboard:
         """
         # Get aggregated data
         daily_data = self.data_aggregator.get_daily_aggregates(videos)
-        hourly_data = self.data_aggregator.get_hourly_aggregates(videos)
+        bins_per_hour = config.get("bins_per_hour", 4)
+        hourly_data = self.data_aggregator.get_hourly_aggregates(
+            videos, bins_per_hour=bins_per_hour
+        )
 
         # Create all graphs
-        graphs = self.create_graphs(daily_data, hourly_data)
+        graphs = self.create_graphs(daily_data, hourly_data, config)
 
         # Save to file
         self.save_graphs_to_html(graphs, output_file)
@@ -199,8 +211,8 @@ if __name__ == "__main__":
     min_date = video_database[0].date_str
     max_date = video_database[-1].date_str
 
-    start_date = min_date  # "2024-12-14"
-    end_date = max_date  # "2024-12-25"
+    start_date = min_date
+    end_date = max_date
 
     logger.debug("Filter:")
     logger.debug(f"  Date range: {start_date} to {end_date}")
@@ -220,13 +232,13 @@ if __name__ == "__main__":
     dashboard = Dashboard()
     data_aggregator = VideoDataAggregator()
     daily_data = data_aggregator.get_daily_aggregates(videos)
-    bins_per_hour = 12
-    hourly_data_5_minutes_bins = data_aggregator.get_hourly_aggregates(
+    bins_per_hour = 30
+    hourly_data = data_aggregator.get_hourly_aggregates(
         videos, bins_per_hour=bins_per_hour
     )
-    graphs = dashboard.create_graphs(daily_data, hourly_data_5_minutes_bins)
-    dashboard.save_graphs_to_html(
-        graphs, os.path.join(out_dir, "video_analytics_5_minutes_bins.html")
+    graphs = dashboard.create_graphs(
+        daily_data, hourly_data, config={"bins_per_hour": bins_per_hour}
     )
+    dashboard.save_graphs_to_html(graphs, os.path.join(out_dir, "video_analytics.html"))
 
     sys.exit()

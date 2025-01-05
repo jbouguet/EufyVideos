@@ -320,7 +320,9 @@ class Story:
         VideoMetadata.export_videos_to_playlist_file(videos, playlist_filename)
 
         dashboard = Dashboard()
-        dashboard.create_graphs_file(videos, graphs_filename)
+        dashboard.create_graphs_file(
+            videos, graphs_filename, config={"bins_per_hour": 4}
+        )
 
         # Log file locations
         logger.info(f"Story config saved to {config_filename}")

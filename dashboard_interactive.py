@@ -104,7 +104,19 @@ class InteractiveDashboard:
                                     },
                                 ),
                             ],
-                            width=4,
+                            width=3,
+                        ),
+                        dbc.Col(
+                            [
+                                html.Label(
+                                    "Time Bins:",
+                                    style={
+                                        "font-size": "14px",
+                                        "font-weight": "bold",
+                                    },
+                                ),
+                            ],
+                            width=1,
                         ),
                         dbc.Col(
                             [
@@ -148,7 +160,25 @@ class InteractiveDashboard:
                                     calendar_orientation="vertical",
                                 ),
                             ],
-                            width=4,
+                            width=3,
+                        ),
+                        dbc.Col(
+                            [
+                                dcc.Dropdown(
+                                    id="bin-size-selector",
+                                    options=[
+                                        {"label": "60 mins", "value": 1},
+                                        {"label": "30 mins", "value": 2},
+                                        {"label": "15 mins", "value": 4},
+                                        {"label": "10 mins", "value": 6},
+                                        {"label": "5 mins", "value": 12},
+                                        {"label": "2 mins", "value": 30},
+                                    ],
+                                    value=4,
+                                    style={"font-size": "10px"},
+                                ),
+                            ],
+                            width=1,
                         ),
                         dbc.Col(
                             [
@@ -169,33 +199,6 @@ class InteractiveDashboard:
                                     options=self.all_weekdays.copy(),
                                     value=self.all_weekdays.copy(),
                                     multi=True,
-                                    style={"font-size": "10px"},
-                                ),
-                            ],
-                            width=4,
-                        ),
-                    ],
-                    style={"background-color": self.tools_color},
-                ),
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            [
-                                html.Label(
-                                    "Time Bin Size:",
-                                    style={
-                                        "font-size": "14px",
-                                        "font-weight": "bold",
-                                    },
-                                ),
-                                dcc.Dropdown(
-                                    id="bin-size-selector",
-                                    options=[
-                                        {"label": "1 hour", "value": 1},
-                                        {"label": "30 minutes", "value": 2},
-                                        {"label": "15 minutes", "value": 4},
-                                    ],
-                                    value=1,
                                     style={"font-size": "10px"},
                                 ),
                             ],

@@ -74,7 +74,7 @@ class VideoDataAggregator:
         videos: List[VideoMetadata],
         time_key: Literal["date", "hour"],
         value_key: Literal["count", "duration", "filesize"],
-        bins_per_hour: int = 1,
+        bins_per_hour: int = 4,
     ) -> pd.DataFrame:
         """
         Generic aggregation function that processes VideoMetadata objects.
@@ -157,7 +157,7 @@ class VideoDataAggregator:
         return output
 
     def get_hourly_aggregates(
-        self, videos: List[VideoMetadata], bins_per_hour: int = 1
+        self, videos: List[VideoMetadata], bins_per_hour: int = 4
     ) -> Dict[str, pd.DataFrame]:
         """
         Returns hourly aggregates for all metrics with configurable temporal binning.
