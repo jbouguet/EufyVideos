@@ -271,9 +271,9 @@ class InteractiveDashboard:
                     style={"background-color": self.tools_color},
                 ),
                 # Graphs section
-                html.H3(
+                html.H2(
                     "Video Analytics Dashboard",
-                    style={"textAlign": "center", "padding": "20px"},
+                    style={"textAlign": "center"},
                 ),
                 html.Div(
                     [

@@ -93,44 +93,98 @@ class Dashboard:
     @staticmethod
     def save_graphs_to_html(figures: List[go.Figure], output_file: str):
         """
-        Saves all graphs to a single HTML file.
+        Saves all graphs to a single HTML file using Bootstrap styling.
+        Maximizes figure real estate by removing padding and borders.
 
-        Creates an interactive HTML page with all graphs stacked vertically.
-        Uses plotly's modular approach to minimize file size by including
-        the plotly.js library only once.
-
-        Example:
-            dashboard.save_graphs_to_html(
-                daily_graphs + hourly_graphs,
-                'video_analytics.html'
-            )
+        Args:
+            figures: List of plotly graph objects to render
+            output_file: Path to save the HTML file
         """
         fig_height = Config.get_figure_height()
 
         html_template = f"""
-            <html>
+            <!DOCTYPE html>
+            <html lang="en">
             <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Video Analytics</title>
+                <!-- Bootstrap CSS -->
+                <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+                <!-- Plotly.js -->
                 <script src='https://cdn.plot.ly/plotly-2.20.0.min.js'></script>
-                <meta name='viewport' content='width=device-width, initial-scale=1.0'>
                 <style>
-                    body {{ margin: 0; padding: 20px; }}
+                    :root {{
+                        --bs-font-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                    }}
+                    
+                    body {{
+                        font-family: var(--bs-font-sans-serif);
+                        margin: 0;
+                        padding: 0;
+                    }}
+                    
+                    .dashboard-title {{
+                        color: var(--bs-body-color);
+                        margin: 0.5rem 0;
+                        text-align: center;
+                    }}
+                    
+                    .graph-container {{
+                        margin: 0;
+                        padding: 0;
+                    }}
+                    
                     .plotly-graph-div {{
                         width: 100%;
                         height: {fig_height}px;
-                        margin-bottom: 20px;
+                    }}
+                    
+                    /* Remove default Bootstrap container padding */
+                    .container-fluid {{
+                        padding-left: 0;
+                        padding-right: 0;
+                    }}
+                    
+                    .row {{
+                        margin-left: 0;
+                        margin-right: 0;
+                    }}
+                    
+                    .col-12 {{
+                        padding-left: 0;
+                        padding-right: 0;
                     }}
                 </style>
             </head>
             <body>
-            <h2 style="text-align: center;">Video Analytics Dashboard</h2>
+                <div class="container-fluid">
+                    <h2 class="dashboard-title">Video Analytics Dashboard</h2>
+                    <div class="row">
+                        <div class="col-12">
         """
 
         with open(output_file, "w") as file:
             file.write(html_template)
+
+            # Write each figure without extra containers
             for fig in figures:
+                file.write('<div class="graph-container">')
                 file.write(fig.to_html(full_html=False, include_plotlyjs=False))
-            file.write("</body></html>")
+                file.write("</div>")
+
+            # Close all HTML tags
+            file.write(
+                """
+                        </div>
+                    </div>
+                </div>
+                <!-- Bootstrap JS Bundle -->
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+            </body>
+            </html>
+            """
+            )
 
     def create_graphs_file(
         self,
