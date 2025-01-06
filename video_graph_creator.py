@@ -6,7 +6,7 @@ VideoGraphCreator module for creating Plotly graphs from aggregated video metada
 This module interfaces with video_data_aggregator.py to create visualizations of video statistical data.
 """
 
-from typing import Dict
+from typing import Dict, List
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -39,7 +39,6 @@ class VideoGraphCreator:
     def create_figure(
         data: pd.DataFrame,
         title: str,
-        y_axis_title: str,
         config: Dict[str, bool | int] = None,
     ) -> go.Figure:
         """Creates a plotly figure with consistent styling"""
@@ -95,9 +94,6 @@ class VideoGraphCreator:
         # Add total line
         total = data[devices].sum(axis=1)
         if config.get("is_hourly"):
-            # hovertemplate = (
-            #    "<b>Hour:</b> %{x:.2f}<br>" + "<b>Total:</b> %{y:.0f}<extra></extra>"
-            # )
             hovertemplate = (
                 "<b>Time:</b> %{customdata}<br>"
                 + f"<b>{device}:</b> %{{y:.0f}}<extra></extra>"
@@ -129,8 +125,8 @@ class VideoGraphCreator:
         fig_height = Config.get_figure_height()
         fig.update_layout(
             title=title,
-            xaxis_title="Time" if config.get("is_hourly") else "Date",
-            yaxis_title=y_axis_title,
+            xaxis_title="",
+            yaxis_title="",
             barmode="stack",
             bargap=0,
             plot_bgcolor="white",
@@ -151,6 +147,7 @@ class VideoGraphCreator:
             gridcolor="lightgrey",
             zeroline=False,
             rangemode="nonnegative",
+            tickfont=dict(size=8),
         )
 
         if config.get("is_hourly"):
@@ -186,3 +183,31 @@ class VideoGraphCreator:
             )
 
         return fig
+
+    @staticmethod
+    def create_graphs(
+        daily_data: Dict[str, pd.DataFrame],
+        hourly_data: Dict[str, pd.DataFrame],
+        metric_to_graph: str = "activity",
+        bins_per_hour: int = 4,
+    ) -> List[go.Figure]:
+        """
+        Creates daily and hourly activity graphs from aggregated data.
+        """
+
+        daily_fig = VideoGraphCreator.create_figure(
+            daily_data[metric_to_graph],
+            title="Daily Video " + metric_to_graph.capitalize(),
+        )
+        hourly_fig = VideoGraphCreator.create_figure(
+            hourly_data[metric_to_graph],
+            title="Hourly Video " + metric_to_graph.capitalize(),
+            config={"is_hourly": True, "bins_per_hour": bins_per_hour},
+        )
+        cumulative_fig = VideoGraphCreator.create_figure(
+            daily_data[metric_to_graph].set_index("Date").cumsum().reset_index(),
+            title="Cumulative Daily Video " + metric_to_graph.capitalize(),
+            config={"is_cumulative": True},
+        )
+
+        return [daily_fig, hourly_fig, cumulative_fig]

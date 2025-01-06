@@ -54,8 +54,6 @@ class InteractiveDashboard:
         logger.debug(f"Specified metrics: {self.metrics}")
 
         self.videos = videos
-        self.data_aggregator = VideoDataAggregator(self.metrics)
-        self.graph_creator = VideoGraphCreator()
 
         # Get date range from videos
         dates = [v.date for v in videos]
@@ -364,34 +362,25 @@ class InteractiveDashboard:
             filtered_videos = VideoFilter.by_selectors(self.videos, selector)
 
             # Get aggregated data
-            daily_data = self.data_aggregator.get_daily_aggregates(filtered_videos)
-            hourly_data = self.data_aggregator.get_hourly_aggregates(
-                filtered_videos, bins_per_hour=bins_per_hour
+            data_aggregator = VideoDataAggregator(
+                metrics=self.metrics, config={"bins_per_hour": bins_per_hour}
             )
+
+            daily_data = data_aggregator.get_daily_aggregates(filtered_videos)
+            hourly_data = data_aggregator.get_hourly_aggregates(filtered_videos)
+
+            metric_to_graph = "activity"
 
             # Create figures
-            if "activity" not in self.metrics:
+            if metric_to_graph not in self.metrics:
                 logger.error(
-                    f"Metric 'activity' not in specified metrics {self.metrics}"
+                    f"Metric {metric_to_graph} not in specified metrics {self.metrics}"
                 )
 
-            daily_fig = self.graph_creator.create_figure(
-                daily_data["activity"], "Daily Video Count per Device", "Count"
+            figs = VideoGraphCreator.create_graphs(
+                daily_data, hourly_data, metric_to_graph, bins_per_hour
             )
-            hourly_fig = self.graph_creator.create_figure(
-                hourly_data["activity"],
-                "Hourly Video Count per Device",
-                "Count",
-                {"is_hourly": True, "bins_per_hour": bins_per_hour},
-            )
-            cumulative_fig = self.graph_creator.create_figure(
-                daily_data["activity"].set_index("Date").cumsum().reset_index(),
-                "Cumulative Daily Video Count per Device",
-                "Cumulative Count",
-                {"is_cumulative": True},
-            )
-
-            return daily_fig, hourly_fig, cumulative_fig
+            return figs[0], figs[1], figs[2]
 
     def run(self, debug=False, port=8050):
         """Run the dashboard server."""

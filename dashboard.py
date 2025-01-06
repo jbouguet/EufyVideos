@@ -65,39 +65,30 @@ class Dashboard:
         )
     """
 
-    def __init__(self):
+    def __init__(self, config: Dict[str, bool | int] = None):
         """Initialize with data aggregator and graph creator instances"""
-        self.data_aggregator = VideoDataAggregator()
-        self.graph_creator = VideoGraphCreator()
+        bins_per_hour = config.get("bins_per_hour", 4)
+        if config is None:
+            self.config = {}
+        else:
+            self.config = config
+        self.config["bins_per_hour"] = bins_per_hour
+        self.data_aggregator = VideoDataAggregator(config=self.config)
 
     def create_graphs(
         self,
         daily_data: Dict[str, pd.DataFrame],
         hourly_data: Dict[str, pd.DataFrame],
-        config: Dict[str, bool | int] = None,
     ) -> List[go.Figure]:
         """
         Creates daily and hourly activity graphs from aggregated data.
         """
-        # Create figures
-        daily_fig = self.graph_creator.create_figure(
-            daily_data["activity"], "Daily Video Count per Device", "Count"
-        )
-        bins_per_hour = config.get("bins_per_hour", 4)
-        hourly_fig = self.graph_creator.create_figure(
-            hourly_data["activity"],
-            "Hourly Video Count per Device",
-            "Count",
-            {"is_hourly": True, "bins_per_hour": bins_per_hour},
-        )
-        cumulative_fig = self.graph_creator.create_figure(
-            daily_data["activity"].set_index("Date").cumsum().reset_index(),
-            "Cumulative Daily Video Count per Device",
-            "Cumulative Count",
-            {"is_cumulative": True},
-        )
+        metric_to_graph = "activity"
+        bins_per_hour = self.config.get("bins_per_hour", 4)
 
-        return [daily_fig, hourly_fig, cumulative_fig]
+        return VideoGraphCreator.create_graphs(
+            daily_data, hourly_data, metric_to_graph, bins_per_hour
+        )
 
     @staticmethod
     def save_graphs_to_html(figures: List[go.Figure], output_file: str):
@@ -145,7 +136,6 @@ class Dashboard:
         self,
         videos: List[VideoMetadata],
         output_file: str,
-        config: Dict[str, bool | int] = None,
     ):
         """
         Main entry point for creating all graphs and saving to file.
@@ -165,13 +155,10 @@ class Dashboard:
         """
         # Get aggregated data
         daily_data = self.data_aggregator.get_daily_aggregates(videos)
-        bins_per_hour = config.get("bins_per_hour", 4)
-        hourly_data = self.data_aggregator.get_hourly_aggregates(
-            videos, bins_per_hour=bins_per_hour
-        )
+        hourly_data = self.data_aggregator.get_hourly_aggregates(videos)
 
         # Create all graphs
-        graphs = self.create_graphs(daily_data, hourly_data, config)
+        graphs = self.create_graphs(daily_data, hourly_data)
 
         # Save to file
         self.save_graphs_to_html(graphs, output_file)
@@ -229,15 +216,14 @@ if __name__ == "__main__":
     )
 
     # Get aggregated data
-    dashboard = Dashboard()
-    data_aggregator = VideoDataAggregator()
-    daily_data = data_aggregator.get_daily_aggregates(videos)
     bins_per_hour = 30
-    hourly_data = data_aggregator.get_hourly_aggregates(
-        videos, bins_per_hour=bins_per_hour
-    )
+    dashboard = Dashboard(config={"bins_per_hour": bins_per_hour})
+    data_aggregator = VideoDataAggregator(config={"bins_per_hour": bins_per_hour})
+    daily_data = data_aggregator.get_daily_aggregates(videos)
+    hourly_data = data_aggregator.get_hourly_aggregates(videos)
     graphs = dashboard.create_graphs(
-        daily_data, hourly_data, config={"bins_per_hour": bins_per_hour}
+        daily_data,
+        hourly_data,
     )
     dashboard.save_graphs_to_html(graphs, os.path.join(out_dir, "video_analytics.html"))
 

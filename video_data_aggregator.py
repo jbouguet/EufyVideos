@@ -60,7 +60,7 @@ class VideoDataAggregator:
         # daily_data now contains aggregated metrics by date and device
     """
 
-    def __init__(self, metrics: List[str] = None):
+    def __init__(self, metrics: List[str] = None, config: Dict[str, bool | int] = None):
         """Initialize aggregarator optionally specifying metrics of interest"""
         if metrics is None:
             # By default, aggregate across all metrics
@@ -68,6 +68,12 @@ class VideoDataAggregator:
         else:
             # Only aggregate across a subset of specified metrics
             self.metrics = metrics
+        bins_per_hour = config.get("bins_per_hour", 4)
+        if config is None:
+            self.config = {}
+        else:
+            self.config = config
+        self.config["bins_per_hour"] = bins_per_hour
 
     @staticmethod
     def _aggregate_by_metric(
@@ -157,7 +163,8 @@ class VideoDataAggregator:
         return output
 
     def get_hourly_aggregates(
-        self, videos: List[VideoMetadata], bins_per_hour: int = 4
+        self,
+        videos: List[VideoMetadata],
     ) -> Dict[str, pd.DataFrame]:
         """
         Returns hourly aggregates for all metrics with configurable temporal binning.
@@ -179,6 +186,7 @@ class VideoDataAggregator:
             # Get 15-minute aggregates
             quarter_hour_data = get_hourly_aggregates(videos, bins_per_hour=4)
         """
+        bins_per_hour = self.config.get("bins_per_hour", 4)
         output = {}
         if "activity" in self.metrics:
             output["activity"] = self._aggregate_by_metric(
