@@ -131,7 +131,7 @@ class VideoDatabase:
                 self.video_directories, corrupted_files
             )
             logger.info(
-                f"{len(videos)} videos loaded from {len(self.video_directories)} directories"
+                f"{len(videos):,} videos loaded from {len(self.video_directories)} directories"
             )
             if self.video_metadata_file is not None:
                 logger.info(f"Saving videos to {self.video_metadata_file}")
@@ -142,7 +142,9 @@ class VideoDatabase:
             videos = VideoMetadata.load_videos_from_metadata_files(
                 self.video_metadata_file, corrupted_files
             )
-            logger.info(f"{len(videos)} videos loaded from {self.video_metadata_file}")
+            logger.info(
+                f"{len(videos):,} videos loaded from {self.video_metadata_file}"
+            )
 
         return VideoMetadata.clean_and_sort(videos)
 

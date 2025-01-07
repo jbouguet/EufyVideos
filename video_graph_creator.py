@@ -131,15 +131,53 @@ class VideoGraphCreator:
         fig.update_yaxes(**fig_config["axes"]["grid"], **fig_config["axes"]["yaxis"])
 
         if config.get("is_hourly"):
-            bins_per_hour = config.get("bins_per_hour", 4)
-            total_bins = 24 * bins_per_hour
-            tick_values = [i / bins_per_hour for i in range(total_bins)]
+            # bins_per_hour = config.get("bins_per_hour", 4)
+            # total_bins = 24 * bins_per_hour
+            # tick_values = [i / bins_per_hour for i in range(total_bins)]
 
-            # Create time labels based on bin size
+            # # Create time labels based on bin size
+            # tick_labels = []
+            # for i in range(total_bins):
+            #     hours = int(i / bins_per_hour)
+            #     minutes = int((i % bins_per_hour) * (60 / bins_per_hour))
+            #     time_str = f"{hours:02d}:{minutes:02d}"
+            #     tick_labels.append(time_str)
+
+            # fig.update_xaxes(
+            #     tickmode="array",
+            #     tickvals=tick_values,
+            #     ticktext=tick_labels,
+            #     range=[-0.5 / bins_per_hour, 23.5],
+            #     type="linear",
+            #     tickfont=dict(size=8),
+            #     tickangle=-90,
+            # )
+
+            bins_per_hour = config.get("bins_per_hour", 4)
+
+            # Get the actual range of hours from the data
+            min_hour = min(data[x_column])
+            max_hour = max(data[x_column])
+
+            # Round down min_hour and up max_hour to the nearest bin
+            min_hour_binned = int(min_hour * bins_per_hour) / bins_per_hour
+            max_hour_binned = (int(max_hour * bins_per_hour)) / bins_per_hour
+
+            # Add padding of one bin on each side
+            min_hour_padded = max(0, min_hour_binned - (1 / bins_per_hour))
+            max_hour_padded = min(24, max_hour_binned + (1 / bins_per_hour))
+
+            # Create tick values based on actual data range
+            total_bins = int((max_hour_padded - min_hour_padded) * bins_per_hour)
+            tick_values = [
+                min_hour_padded + (i / bins_per_hour) for i in range(total_bins + 1)
+            ]
+
+            # Create time labels for each tick
             tick_labels = []
-            for i in range(total_bins):
-                hours = int(i / bins_per_hour)
-                minutes = int((i % bins_per_hour) * (60 / bins_per_hour))
+            for val in tick_values:
+                hours = int(val)
+                minutes = int((val - hours) * 60)
                 time_str = f"{hours:02d}:{minutes:02d}"
                 tick_labels.append(time_str)
 
@@ -147,7 +185,7 @@ class VideoGraphCreator:
                 tickmode="array",
                 tickvals=tick_values,
                 ticktext=tick_labels,
-                range=[-0.5 / bins_per_hour, 23.5],
+                range=[min_hour_padded, max_hour_padded],
                 type="linear",
                 tickfont=dict(size=8),
                 tickangle=-90,

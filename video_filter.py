@@ -188,21 +188,21 @@ class VideoSelector:
         """Log the criteria defined in one or more selectors."""
         selectors = [selectors] if isinstance(selectors, VideoSelector) else selectors
         for i, selector in enumerate(selectors, 1):
-            logger.info(f"Selector {i}:")
+            logger.info(f"  - Selector {i}:")
             if selector.devices:
-                logger.info(f"  Devices: {', '.join(selector.devices)}")
+                logger.info(f"     Devices: {', '.join(selector.devices)}")
             if selector.date_range:
                 logger.info(
-                    f"  Date range: {selector.date_range.start} to {selector.date_range.end}"
+                    f"     Date range: {selector.date_range.start} to {selector.date_range.end}"
                 )
             if selector.time_range:
                 logger.info(
-                    f"  Time range: {selector.time_range.start} to {selector.time_range.end}"
+                    f"     Time range: {selector.time_range.start} to {selector.time_range.end}"
                 )
             if selector.filenames:
-                logger.info(f"  Filenames: {', '.join(selector.filenames)}")
+                logger.info(f"     Filenames: {', '.join(selector.filenames)}")
             if selector.weekdays:
-                logger.info(f"  Weekdays: {', '.join(selector.weekdays)}")
+                logger.info(f"     Weekdays: {', '.join(selector.weekdays)}")
 
 
 class VideoFilter:

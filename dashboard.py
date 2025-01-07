@@ -183,9 +183,10 @@ if __name__ == "__main__":
     import logging
     import os
 
+    from config import Config
     from logging_config import set_logger_level_and_format
     from video_database import VideoDatabase, VideoDatabaseList
-    from video_filter import DateRange, VideoFilter, VideoSelector
+    from video_filter import DateRange, TimeRange, VideoFilter, VideoSelector
 
     set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
 
@@ -210,25 +211,34 @@ if __name__ == "__main__":
     min_date = video_database[0].date_str
     max_date = video_database[-1].date_str
 
+    bins_per_hour = 30
+
     start_date = min_date
     end_date = max_date
+    start_time = "13:30:00"
+    end_time = "14:00:00"
+    devices = Config.get_all_devices()  # ["Backyard"]
 
-    logger.debug("Filter:")
-    logger.debug(f"  Date range: {start_date} to {end_date}")
+    logger.debug(f"Date range: {start_date} to {end_date}")
+    logger.debug(f"Time range: {start_time} to {end_time}")
+    logger.debug(f"Time bin size: {60 / bins_per_hour} minutes")
 
     selector = VideoSelector(
         date_range=DateRange(start=start_date, end=end_date),
+        time_range=TimeRange(start=start_time, end=end_time),
+        devices=devices,
     )
 
     # Filter the database
     videos = VideoFilter.by_selectors(video_database, selector)
+
+    logger.debug(f"Number of videos: {len(videos)}")
 
     VideoMetadata.export_videos_to_metadata_file(
         videos, os.path.join(out_dir, "filtered_videos.csv")
     )
 
     # Get aggregated data
-    bins_per_hour = 30
     dashboard = Dashboard(config={"bins_per_hour": bins_per_hour})
     data_aggregator = VideoDataAggregator(config={"bins_per_hour": bins_per_hour})
     daily_data = data_aggregator.get_daily_aggregates(videos)

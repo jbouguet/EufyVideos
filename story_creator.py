@@ -268,7 +268,7 @@ class Story:
         average_fps = (
             num_frames / total_duration_seconds if total_duration_seconds > 0 else 0
         )
-        total_size_gb: float = sum(video.file_size for video in videos) / 1024
+        total_size_mb: float = sum(video.file_size for video in videos)
 
         tags_stats = video_tags.stats
         num_tagged_videos = tags_stats["num_tagged_videos"]
@@ -276,17 +276,19 @@ class Story:
         num_tags = tags_stats["num_tags"]
 
         # Log statistics
-        logger.info("Selectors:")
+        logger.info(f"{colored("Selectors:","light_cyan")}")
         VideoSelector.log(self.selectors)
-        logger.info("Statistics:")
-        logger.info(f"  - Number of videos = {num_videos}")
-        logger.info(f"  - Number of frames = {num_frames}")
-        logger.info(f"  - Size = {total_size_gb:.3f}GB")
-        logger.info(f"  - Duration = {total_duration_seconds} seconds")
-        logger.info(f"  - Average FPS = {average_fps:.3f}")
-        logger.info(f"  - Number of tagged videos = {num_tagged_videos}")
-        logger.info(f"  - Number of tagged frames = {num_tagged_frames}")
-        logger.info(f"  - Number of tags in total = {num_tags}")
+        logger.info(f"{colored("Statistics:","light_cyan")}")
+        logger.info(f"  - Number of videos        = {num_videos:,}")
+        logger.info(f"  - Number of frames        = {num_frames:,}")
+        logger.info(f"  - Size                    = {total_size_mb:,.3f} MB")
+        logger.info(
+            f"  - Duration                = {total_duration_seconds / 60:,.3f} minutes"
+        )
+        logger.info(f"  - Average FPS             = {average_fps:.3f}")
+        logger.info(f"  - Number of tagged videos = {num_tagged_videos:,}")
+        logger.info(f"  - Number of tagged frames = {num_tagged_frames:,}")
+        logger.info(f"  - Number of tags in total = {num_tags:,}")
 
         return videos
 
@@ -322,11 +324,11 @@ class Story:
         dashboard = Dashboard(config={"bins_per_hour": 4})
         dashboard.create_graphs_file(videos, graphs_filename)
 
-        # Log file locations
-        logger.info(f"Story config saved to {config_filename}")
-        logger.info(f"Story metadata saved to {video_metadata_file}")
-        logger.info(f"Story playlist saved to {playlist_filename}")
-        logger.info(f"Story graphs saved to {graphs_filename}")
+        logger.info(f"{colored("Output Files:","light_cyan")}")
+        logger.info(f"  - config file:   {config_filename}")
+        logger.info(f"  - metadata file: {video_metadata_file}")
+        logger.info(f"  - playlist file: {playlist_filename}")
+        logger.info(f"  - graphs file:   {graphs_filename}")
 
     def process_new_tags(
         self, videos: List[VideoMetadata], output_directory: str
@@ -340,6 +342,9 @@ class Story:
             videos: List of videos to process
             output_directory: Directory to save tag files
         """
+
+        logger.info(f"{colored("Tag processing:","light_cyan")}")
+
         tag_filename = os.path.join(
             output_directory,
             f"{self.name}_{self.tagger_config.get_identifier()}{Config.TAGS}",
@@ -357,7 +362,7 @@ class Story:
                 f"Processing tags using {self.tagger_config.model} in {self.tagger_config.task} mode "
                 f"at {tagging_frame_rate}fps with a confidence threshold of {self.tagger_config.conf_threshold}"
             )
-            logger.info(f"Number of frames to be tagged: {num_tagged_frames}")
+            logger.info(f"Number of frames to be tagged: {num_tagged_frames:,}")
             tag_processor = TagProcessor(self.tagger_config)
             video_tags = tag_processor.run(videos).to_file(tag_filename)
             logger.info(
@@ -401,7 +406,7 @@ class Story:
 
         logger.info("")
         logger.info(
-            f"{colored("Story:", "light_green")} {colored(self.name, "light_green")}"
+            f"{colored("Story:", "light_yellow")} {colored(self.name, "light_yellow")}"
         )
 
         # Select relevant videos

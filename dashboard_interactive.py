@@ -83,7 +83,7 @@ class InteractiveDashboard:
         controls = dbc.Card(
             dbc.CardBody(
                 [
-                    # First row with date range, time bins, metric, devices, and weekdays
+                    # First row with date range, devices, weekdays, time bins and metric.
                     dbc.Row(
                         [
                             dbc.Col(
@@ -193,7 +193,7 @@ class InteractiveDashboard:
                         ],
                         className="mb-3",  # Add margin bottom for spacing
                     ),
-                    # Second row with start time
+                    # Second row with start time.
                     dbc.Row(
                         [
                             dbc.Col(
@@ -224,7 +224,7 @@ class InteractiveDashboard:
                         ],
                         className="mb-3",  # Add margin bottom for spacing
                     ),
-                    # Third row with end time
+                    # Third row with end time.
                     dbc.Row(
                         [
                             dbc.Col(
@@ -337,11 +337,12 @@ class InteractiveDashboard:
             start_time_str = self.format_time(start_time)
             end_time_str = self.format_time(end_time)
 
-            logger.debug("Filters:")
-            logger.debug(f"  Date range: {start_date} to {end_date}")
-            logger.debug(f"  Devices: {selected_devices}")
-            logger.debug(f"  Weekdays: {weekdays}")
-            logger.debug(f"  Time range: {start_time_str} to {end_time_str}")
+            logger.debug(f"Date range: {start_date} to {end_date}")
+            logger.debug(f"Devices: {selected_devices}")
+            logger.debug(f"Weekdays: {weekdays}")
+            logger.debug(f"Time range: {start_time_str} to {end_time_str}")
+            logger.debug(f"Time bin size: {60 / bins_per_hour} minutes")
+            logger.debug(f"Metric: {metric_to_graph}")
 
             selector = VideoSelector(
                 devices=selected_devices,
@@ -350,6 +351,7 @@ class InteractiveDashboard:
                 weekdays=weekdays,
             )
             filtered_videos = VideoFilter.by_selectors(self.videos, selector)
+            logger.debug(f"Number of videos: {len(filtered_videos):,}")
 
             # Get aggregated data
             data_aggregator = VideoDataAggregator(

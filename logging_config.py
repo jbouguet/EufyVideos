@@ -17,7 +17,7 @@ def set_handler_record_format(console_handler, extended_format: bool = False):
         )
     else:
         formatter = logging.Formatter(
-            "\x1b[31m%(asctime)s\x1b[0m - %(message)s",
+            "\x1b[31m%(asctime)s\x1b[0m | %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
     console_handler.setFormatter(formatter)
