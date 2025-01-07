@@ -125,6 +125,17 @@ class DashboardConfig:
                     "border-radius": "0.375rem",
                 }
             },
+            "controls_labels": {
+                "style": {
+                    "font-size": "12px",
+                    "font-weight": "bold",
+                }
+            },
+            "controls_items": {
+                "style": {
+                    "font-size": "10px",
+                }
+            },
             "container": {"style": {"padding": "0", "margin": "0"}},
             "title": {
                 "className": "dashboard-title text-center",

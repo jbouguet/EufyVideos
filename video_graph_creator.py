@@ -107,7 +107,7 @@ class VideoGraphCreator:
                 y=total,
                 mode="lines",
                 name="Total",
-                line=dict(color="red", width=1, shape="spline"),
+                line=dict(color="red", width=1, shape="linear"),
                 hovertemplate=hovertemplate,
                 customdata=customdata,
             )

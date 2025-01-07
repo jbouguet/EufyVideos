@@ -43,17 +43,8 @@ class InteractiveDashboard:
     Updates graphs dynamically based on user selections.
     """
 
-    def __init__(self, videos: List[VideoMetadata], metrics: List[str] = None):
+    def __init__(self, videos: List[VideoMetadata]):
         """Initialize dashboard with video data and create Dash app."""
-        if metrics is None:
-            # By default, aggregate across all metrics
-            self.metrics = ["activity", "duration", "filesize"]
-        else:
-            # Only aggregate across a subset of specified metrics
-            self.metrics = metrics
-
-        logger.debug(f"Specified metrics: {self.metrics}")
-
         self.videos = videos
 
         # Get date range from videos
@@ -92,17 +83,14 @@ class InteractiveDashboard:
         controls = dbc.Card(
             dbc.CardBody(
                 [
-                    # First row with date range, time bins, devices, and weekdays
+                    # First row with date range, time bins, metric, devices, and weekdays
                     dbc.Row(
                         [
                             dbc.Col(
                                 [
                                     html.Label(
                                         "Date Range:",
-                                        style={
-                                            "font-size": "12px",
-                                            "font-weight": "bold",
-                                        },
+                                        **styles["controls_labels"],
                                     ),
                                     dcc.DatePickerRange(
                                         id="date-range",
@@ -120,11 +108,46 @@ class InteractiveDashboard:
                             dbc.Col(
                                 [
                                     html.Label(
+                                        "Devices:",
+                                        **styles["controls_labels"],
+                                    ),
+                                    dcc.Dropdown(
+                                        id="device-selector",
+                                        options=[
+                                            {"label": d, "value": d}
+                                            for d in self.all_devices
+                                        ],
+                                        value=self.all_devices.copy(),
+                                        multi=True,
+                                        **styles["controls_items"],
+                                    ),
+                                ],
+                                width=3,
+                            ),
+                            dbc.Col(
+                                [
+                                    html.Label(
+                                        "Week Days:",
+                                        **styles["controls_labels"],
+                                    ),
+                                    dcc.Dropdown(
+                                        id="weekday-selector",
+                                        options=[
+                                            {"label": d.capitalize(), "value": d}
+                                            for d in self.all_weekdays
+                                        ],
+                                        value=self.all_weekdays.copy(),
+                                        multi=True,
+                                        **styles["controls_items"],
+                                    ),
+                                ],
+                                width=3,
+                            ),
+                            dbc.Col(
+                                [
+                                    html.Label(
                                         "Time Bins:",
-                                        style={
-                                            "font-size": "12px",
-                                            "font-weight": "bold",
-                                        },
+                                        **styles["controls_labels"],
                                     ),
                                     dcc.Dropdown(
                                         id="bin-size-selector",
@@ -137,7 +160,7 @@ class InteractiveDashboard:
                                             {"label": "2 mins", "value": 30},
                                         ],
                                         value=4,
-                                        style={"font-size": "10px"},
+                                        **styles["controls_items"],
                                     ),
                                 ],
                                 width=1,
@@ -145,43 +168,27 @@ class InteractiveDashboard:
                             dbc.Col(
                                 [
                                     html.Label(
-                                        "Devices:",
-                                        style={
-                                            "font-size": "12px",
-                                            "font-weight": "bold",
-                                        },
+                                        "Metric:",
+                                        **styles["controls_labels"],
                                     ),
                                     dcc.Dropdown(
-                                        id="device-selector",
+                                        id="metric-selector",
                                         options=[
-                                            {"label": d, "value": d}
-                                            for d in self.all_devices
+                                            {"label": "Activity", "value": "activity"},
+                                            {
+                                                "label": "Duration (in minutes)",
+                                                "value": "duration",
+                                            },
+                                            {
+                                                "label": "File Size (in MB)",
+                                                "value": "filesize",
+                                            },
                                         ],
-                                        value=self.all_devices.copy(),
-                                        multi=True,
-                                        style={"font-size": "10px"},
+                                        value="activity",
+                                        **styles["controls_items"],
                                     ),
                                 ],
-                                width=4,
-                            ),
-                            dbc.Col(
-                                [
-                                    html.Label(
-                                        "Week Days:",
-                                        style={
-                                            "font-size": "12px",
-                                            "font-weight": "bold",
-                                        },
-                                    ),
-                                    dcc.Dropdown(
-                                        id="weekday-selector",
-                                        options=self.all_weekdays.copy(),
-                                        value=self.all_weekdays.copy(),
-                                        multi=True,
-                                        style={"font-size": "10px"},
-                                    ),
-                                ],
-                                width=4,
+                                width=2,
                             ),
                         ],
                         className="mb-3",  # Add margin bottom for spacing
@@ -193,14 +200,10 @@ class InteractiveDashboard:
                                 [
                                     html.Label(
                                         "Start Time:",
-                                        style={
-                                            "font-size": "12px",
-                                            "font-weight": "bold",
-                                        },
+                                        **styles["controls_labels"],
                                     )
                                 ],
                                 width=1,
-                                align="center",
                             ),
                             dbc.Col(
                                 [
@@ -216,7 +219,6 @@ class InteractiveDashboard:
                                         updatemode="mouseup",
                                     ),
                                 ],
-                                align="center",
                                 width=11,
                             ),
                         ],
@@ -229,14 +231,10 @@ class InteractiveDashboard:
                                 [
                                     html.Label(
                                         "End Time:",
-                                        style={
-                                            "font-size": "12px",
-                                            "font-weight": "bold",
-                                        },
+                                        **styles["controls_labels"],
                                     )
                                 ],
                                 width=1,
-                                align="center",
                             ),
                             dbc.Col(
                                 [
@@ -308,6 +306,7 @@ class InteractiveDashboard:
                 Input("device-selector", "value"),
                 Input("weekday-selector", "value"),
                 Input("bin-size-selector", "value"),
+                Input("metric-selector", "value"),
             ],
         )
         def update_graphs(
@@ -318,6 +317,7 @@ class InteractiveDashboard:
             selected_devices,
             weekdays,
             bins_per_hour,
+            metric_to_graph,
         ):
             # Ensure we have valid inputs
             if not start_date or not end_date or start_time is None or end_time is None:
@@ -353,20 +353,13 @@ class InteractiveDashboard:
 
             # Get aggregated data
             data_aggregator = VideoDataAggregator(
-                metrics=self.metrics, config={"bins_per_hour": bins_per_hour}
+                metrics=[metric_to_graph], config={"bins_per_hour": bins_per_hour}
             )
 
             daily_data = data_aggregator.get_daily_aggregates(filtered_videos)
             hourly_data = data_aggregator.get_hourly_aggregates(filtered_videos)
 
-            metric_to_graph = "activity"
-
             # Create figures
-            if metric_to_graph not in self.metrics:
-                logger.error(
-                    f"Metric {metric_to_graph} not in specified metrics {self.metrics}"
-                )
-
             figs = VideoGraphCreator.create_graphs(
                 daily_data, hourly_data, metric_to_graph, bins_per_hour
             )
@@ -418,5 +411,5 @@ if __name__ == "__main__":
     ).load_videos()
 
     # Create and run dashboard
-    dashboard = InteractiveDashboard(video_database, ["activity"])
+    dashboard = InteractiveDashboard(video_database)
     dashboard.run(debug=True)

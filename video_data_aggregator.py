@@ -79,15 +79,15 @@ class VideoDataAggregator:
     def _aggregate_by_metric(
         videos: List[VideoMetadata],
         time_key: Literal["date", "hour"],
-        value_key: Literal["count", "duration", "filesize"],
+        value_key: Literal["activity", "duration", "filesize"],
         bins_per_hour: int = 4,
     ) -> pd.DataFrame:
         """
         Generic aggregation function that processes VideoMetadata objects.
 
         Example usage with different metrics:
-            # For daily video counts
-            df = _aggregate_by_metric(videos, 'date', 'count')
+            # For daily video activity
+            df = _aggregate_by_metric(videos, 'date', 'activity')
 
             # For hourly duration totals
             df = _aggregate_by_metric(videos, 'hour', 'duration')
@@ -110,10 +110,10 @@ class VideoDataAggregator:
 
         def get_metric_value(video: VideoMetadata) -> float:
             # Interface with VideoMetadata's properties for different metrics
-            if value_key == "count":
+            if value_key == "activity":
                 return 1
             elif value_key == "duration":
-                return video.duration.total_seconds() / 3600  # Convert to hours
+                return video.duration.total_seconds() / 60  # Convert to minutes
             else:  # filesize
                 return video.file_size
 
@@ -150,7 +150,7 @@ class VideoDataAggregator:
         output = {}
         if "activity" in self.metrics:
             output["activity"] = self._aggregate_by_metric(
-                videos, "date", "count"
+                videos, "date", "activity"
             ).rename(columns={"TimeKey": "Date"})
         if "duration" in self.metrics:
             output["duration"] = self._aggregate_by_metric(
@@ -190,7 +190,7 @@ class VideoDataAggregator:
         output = {}
         if "activity" in self.metrics:
             output["activity"] = self._aggregate_by_metric(
-                videos, "hour", "count", bins_per_hour
+                videos, "hour", "activity", bins_per_hour
             ).rename(columns={"TimeKey": "Hour"})
         if "duration" in self.metrics:
             output["duration"] = self._aggregate_by_metric(
