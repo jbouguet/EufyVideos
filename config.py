@@ -3,8 +3,6 @@
 import csv
 import os
 
-import plotly.express as px
-
 from logging_config import create_logger
 
 logger = create_logger(__name__)
@@ -48,17 +46,7 @@ class Config:
         return cls()._device_dict
 
     @classmethod
-    def get_device_colors(cls):
-        # Assigns colors to devices based on their order in the CSV file
-        devices = cls().get_device_order()
-        color_palette = cls.COLOR_PALETTES[cls.SELECTED_PALETTE]
-        return {
-            device: color_palette[i % len(color_palette)]
-            for i, device in enumerate(devices)
-        }
-
-    @classmethod
-    def get_device_order(cls):
+    def get_all_devices(cls):
         # Returns the list of unique device names in the order they first appear in the CSV file
         seen = set()
         return [
@@ -66,50 +54,6 @@ class Config:
             for _, device in cls()._devices
             if not (device in seen or seen.add(device))
         ]
-
-    @classmethod
-    def get_all_devices(cls):
-        # Returns all device names in the order they appear in the CSV file
-        return cls().get_device_order()
-
-    @classmethod
-    def get_figure_height(cls):
-        return cls.FIGURE_HEIGHT
-
-    # Color palettes for plotting
-    COLOR_PALETTES = {
-        "light24": px.colors.qualitative.Light24,
-        "alphabet": px.colors.qualitative.Alphabet,
-        "viridis": px.colors.sequential.Viridis,
-        "custom": [
-            "#1f77b4",
-            "#ff7f0e",
-            "#2ca02c",
-            "#d62728",
-            "#9467bd",
-            "#8c564b",
-            "#e377c2",
-            "#7f7f7f",
-            "#bcbd22",
-            "#17becf",
-        ],
-        "colorblind": [
-            "#0072B2",
-            "#E69F00",
-            "#56B4E9",
-            "#009E73",
-            "#F0E442",
-            "#D55E00",
-            "#CC79A7",
-            "#999999",
-        ],
-    }
-
-    # Selected color palette for plotting
-    SELECTED_PALETTE = "light24"
-
-    # Figure height for plots
-    FIGURE_HEIGHT = 600
 
     # File naming conventions
     METADATA = "_videos.csv"

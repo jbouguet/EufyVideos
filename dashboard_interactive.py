@@ -20,6 +20,7 @@ from dash import dcc, html
 from dash.dependencies import Input, Output
 
 from config import Config
+from dashboard_config import DashboardConfig
 from logging_config import create_logger
 from video_data_aggregator import VideoDataAggregator
 from video_filter import DateRange, TimeRange, VideoFilter, VideoSelector
@@ -74,9 +75,6 @@ class InteractiveDashboard:
             "sunday",
         ]
 
-        # Color Scheme:
-        self.tools_color: str = "#f2faff"
-
         # Create Dash app
         self.app = dash.Dash(
             __name__,
@@ -87,218 +85,210 @@ class InteractiveDashboard:
         self.setup_callbacks()
 
     def setup_layout(self):
+        """Create the dashboard layout using shared configuration."""
+        styles = DashboardConfig.get_dash_styles()
+
         """Create the dashboard layout with all UI components."""
+        controls = dbc.Card(
+            dbc.CardBody(
+                [
+                    # First row with date range, time bins, devices, and weekdays
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                [
+                                    html.Label(
+                                        "Date Range:",
+                                        style={
+                                            "font-size": "12px",
+                                            "font-weight": "bold",
+                                        },
+                                    ),
+                                    dcc.DatePickerRange(
+                                        id="date-range",
+                                        min_date_allowed=self.min_date,
+                                        max_date_allowed=self.max_date,
+                                        start_date=self.min_date,
+                                        end_date=self.max_date,
+                                        display_format="YYYY-MM-DD",
+                                        day_size=30,
+                                        calendar_orientation="vertical",
+                                    ),
+                                ],
+                                width=3,
+                            ),
+                            dbc.Col(
+                                [
+                                    html.Label(
+                                        "Time Bins:",
+                                        style={
+                                            "font-size": "12px",
+                                            "font-weight": "bold",
+                                        },
+                                    ),
+                                    dcc.Dropdown(
+                                        id="bin-size-selector",
+                                        options=[
+                                            {"label": "60 mins", "value": 1},
+                                            {"label": "30 mins", "value": 2},
+                                            {"label": "15 mins", "value": 4},
+                                            {"label": "10 mins", "value": 6},
+                                            {"label": "5 mins", "value": 12},
+                                            {"label": "2 mins", "value": 30},
+                                        ],
+                                        value=4,
+                                        style={"font-size": "10px"},
+                                    ),
+                                ],
+                                width=1,
+                            ),
+                            dbc.Col(
+                                [
+                                    html.Label(
+                                        "Devices:",
+                                        style={
+                                            "font-size": "12px",
+                                            "font-weight": "bold",
+                                        },
+                                    ),
+                                    dcc.Dropdown(
+                                        id="device-selector",
+                                        options=[
+                                            {"label": d, "value": d}
+                                            for d in self.all_devices
+                                        ],
+                                        value=self.all_devices.copy(),
+                                        multi=True,
+                                        style={"font-size": "10px"},
+                                    ),
+                                ],
+                                width=4,
+                            ),
+                            dbc.Col(
+                                [
+                                    html.Label(
+                                        "Week Days:",
+                                        style={
+                                            "font-size": "12px",
+                                            "font-weight": "bold",
+                                        },
+                                    ),
+                                    dcc.Dropdown(
+                                        id="weekday-selector",
+                                        options=self.all_weekdays.copy(),
+                                        value=self.all_weekdays.copy(),
+                                        multi=True,
+                                        style={"font-size": "10px"},
+                                    ),
+                                ],
+                                width=4,
+                            ),
+                        ],
+                        className="mb-3",  # Add margin bottom for spacing
+                    ),
+                    # Second row with start time
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                [
+                                    html.Label(
+                                        "Start Time:",
+                                        style={
+                                            "font-size": "12px",
+                                            "font-weight": "bold",
+                                        },
+                                    )
+                                ],
+                                width=1,
+                                align="center",
+                            ),
+                            dbc.Col(
+                                [
+                                    dcc.Slider(
+                                        id="start-time",
+                                        min=0,
+                                        max=24,
+                                        step=1 / 12,  # 5-minute intervals
+                                        value=0,
+                                        marks={
+                                            i: f"{i:02d}:00" for i in range(0, 25, 1)
+                                        },
+                                        updatemode="mouseup",
+                                    ),
+                                ],
+                                align="center",
+                                width=11,
+                            ),
+                        ],
+                        className="mb-3",  # Add margin bottom for spacing
+                    ),
+                    # Third row with end time
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                [
+                                    html.Label(
+                                        "End Time:",
+                                        style={
+                                            "font-size": "12px",
+                                            "font-weight": "bold",
+                                        },
+                                    )
+                                ],
+                                width=1,
+                                align="center",
+                            ),
+                            dbc.Col(
+                                [
+                                    dcc.Slider(
+                                        id="end-time",
+                                        min=0,
+                                        max=24,
+                                        step=1 / 12,  # 5-minute intervals
+                                        value=24,
+                                        marks={
+                                            i: f"{i:02d}:00" for i in range(0, 25, 1)
+                                        },
+                                        updatemode="mouseup",
+                                    ),
+                                ],
+                                width=11,
+                            ),
+                        ],
+                    ),
+                ]
+            ),
+            **styles["controls_card"],
+        )
+
         self.app.layout = dbc.Container(
             [
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            [
-                                html.Label(
-                                    "Date Range:",
-                                    style={
-                                        "font-size": "14px",
-                                        "font-weight": "bold",
-                                    },
-                                ),
-                            ],
-                            width=3,
-                        ),
-                        dbc.Col(
-                            [
-                                html.Label(
-                                    "Time Bins:",
-                                    style={
-                                        "font-size": "14px",
-                                        "font-weight": "bold",
-                                    },
-                                ),
-                            ],
-                            width=1,
-                        ),
-                        dbc.Col(
-                            [
-                                html.Label(
-                                    "Devices:",
-                                    style={
-                                        "font-size": "14px",
-                                        "font-weight": "bold",
-                                    },
-                                ),
-                            ],
-                            width=4,
-                        ),
-                        dbc.Col(
-                            [
-                                html.Label(
-                                    "Week Days:",
-                                    style={
-                                        "font-size": "14px",
-                                        "font-weight": "bold",
-                                    },
-                                ),
-                            ],
-                            width=4,
-                        ),
-                    ],
-                    style={"background-color": self.tools_color},
-                ),
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            [
-                                dcc.DatePickerRange(
-                                    id="date-range",
-                                    min_date_allowed=self.min_date,
-                                    max_date_allowed=self.max_date,
-                                    start_date=self.min_date,
-                                    end_date=self.max_date,
-                                    display_format="YYYY-MM-DD",
-                                    day_size=30,
-                                    calendar_orientation="vertical",
-                                ),
-                            ],
-                            width=3,
-                        ),
-                        dbc.Col(
-                            [
-                                dcc.Dropdown(
-                                    id="bin-size-selector",
-                                    options=[
-                                        {"label": "60 mins", "value": 1},
-                                        {"label": "30 mins", "value": 2},
-                                        {"label": "15 mins", "value": 4},
-                                        {"label": "10 mins", "value": 6},
-                                        {"label": "5 mins", "value": 12},
-                                        {"label": "2 mins", "value": 30},
-                                    ],
-                                    value=4,
-                                    style={"font-size": "10px"},
-                                ),
-                            ],
-                            width=1,
-                        ),
-                        dbc.Col(
-                            [
-                                dcc.Dropdown(
-                                    id="device-selector",
-                                    options=self.all_devices.copy(),
-                                    value=self.all_devices.copy(),
-                                    multi=True,
-                                    style={"font-size": "10px"},
-                                )
-                            ],
-                            width=4,
-                        ),
-                        dbc.Col(
-                            [
-                                dcc.Dropdown(
-                                    id="weekday-selector",
-                                    options=self.all_weekdays.copy(),
-                                    value=self.all_weekdays.copy(),
-                                    multi=True,
-                                    style={"font-size": "10px"},
-                                ),
-                            ],
-                            width=4,
-                        ),
-                    ],
-                    style={"background-color": self.tools_color},
-                ),
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            [
-                                html.Label(
-                                    "Start Time:",
-                                    style={
-                                        "font-size": "14px",
-                                        "font-weight": "bold",
-                                    },
-                                )
-                            ],
-                            width=1,
-                            align="center",
-                        ),
-                        dbc.Col(
-                            [
-                                dcc.Slider(
-                                    id="start-time",
-                                    min=0,
-                                    max=24,
-                                    step=1 / 12,  # 5-minute intervals
-                                    value=0,
-                                    marks={i: f"{i:02d}:00" for i in range(0, 25, 1)},
-                                    updatemode="mouseup",
-                                ),
-                            ],
-                            align="center",
-                            width=11,
-                        ),
-                    ],
-                    style={"background-color": self.tools_color},
-                ),
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            [
-                                html.Label(
-                                    "End Time:",
-                                    style={
-                                        "font-size": "14px",
-                                        "font-weight": "bold",
-                                    },
-                                )
-                            ],
-                            width=1,
-                            align="center",
-                        ),
-                        dbc.Col(
-                            [
-                                dcc.Slider(
-                                    id="end-time",
-                                    min=0,
-                                    max=24,
-                                    step=1 / 12,  # 5-minute intervals
-                                    value=24,
-                                    marks={i: f"{i:02d}:00" for i in range(0, 25, 1)},
-                                    updatemode="mouseup",
-                                ),
-                            ],
-                            width=11,
-                        ),
-                    ],
-                    style={"background-color": self.tools_color},
-                ),
-                # Graphs section
-                html.H2(
-                    "Video Analytics Dashboard",
-                    style={"textAlign": "center"},
-                ),
+                controls,  # Add the card containing all controls
+                html.H2("Video Analytics Dashboard", **styles["title"]),
                 html.Div(
                     [
-                        dcc.Graph(id="daily-count-graph"),
-                        dcc.Graph(id="hourly-count-graph"),
-                        dcc.Graph(id="cumulative-count-graph"),
-                    ]
+                        dcc.Graph(
+                            id="daily-count-graph",
+                            config={"displayModeBar": True},
+                            **styles["graph"],
+                        ),
+                        dcc.Graph(
+                            id="hourly-count-graph",
+                            config={"displayModeBar": True},
+                            **styles["graph"],
+                        ),
+                        dcc.Graph(
+                            id="cumulative-count-graph",
+                            config={"displayModeBar": True},
+                            **styles["graph"],
+                        ),
+                    ],
+                    **styles["graph"],
                 ),
             ],
             fluid=True,
+            **styles["container"],
         )
-
-    def format_time(self, t):
-        """Format time value from slider, rounding to nearest 5 minutes"""
-        if t == 24:
-            return "23:59:59"
-
-        hours = int(t)
-        minutes = int((t % 1) * 60)
-        # Round to nearest 5 minutes
-        minutes = round(minutes / 5) * 5
-        if minutes == 60:
-            hours += 1
-            minutes = 0
-        return f"{hours:02d}:{minutes:02d}:00"
 
     def setup_callbacks(self):
         """Setup all dashboard callbacks for interactivity."""
@@ -380,7 +370,22 @@ class InteractiveDashboard:
             figs = VideoGraphCreator.create_graphs(
                 daily_data, hourly_data, metric_to_graph, bins_per_hour
             )
+
             return figs[0], figs[1], figs[2]
+
+    def format_time(self, t):
+        """Format time value from slider, rounding to nearest 5 minutes"""
+        if t == 24:
+            return "23:59:59"
+
+        hours = int(t)
+        minutes = int((t % 1) * 60)
+        # Round to nearest 5 minutes
+        minutes = round(minutes / 5) * 5
+        if minutes == 60:
+            hours += 1
+            minutes = 0
+        return f"{hours:02d}:{minutes:02d}:00"
 
     def run(self, debug=False, port=8050):
         """Run the dashboard server."""

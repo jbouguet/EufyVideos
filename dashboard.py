@@ -32,7 +32,7 @@ from typing import Dict, List
 import pandas as pd
 import plotly.graph_objects as go
 
-from config import Config
+from dashboard_config import DashboardConfig
 from logging_config import create_logger
 from video_data_aggregator import VideoDataAggregator
 from video_graph_creator import VideoGraphCreator
@@ -50,19 +50,6 @@ class Dashboard:
     2. Uses VideoDataAggregator to process the metadata into aggregated datasets
     3. Uses VideoGraphCreator to generate visualizations
     4. Saves the results to an interactive HTML file
-
-    Example:
-        # Load videos using VideoMetadata's methods
-        videos = VideoMetadata.load_videos_from_directories('videos/')
-
-        # Create dashboard
-        dashboard = Dashboard()
-
-        # Generate graphs file
-        dashboard.create_graphs_file(
-            videos,
-            'video_analytics.html'
-        )
     """
 
     def __init__(self, config: Dict[str, bool | int] = None):
@@ -92,15 +79,16 @@ class Dashboard:
 
     @staticmethod
     def save_graphs_to_html(figures: List[go.Figure], output_file: str):
-        """
-        Saves all graphs to a single HTML file using Bootstrap styling.
-        Maximizes figure real estate by removing padding and borders.
+        """Saves all graphs to a single HTML file using shared configuration."""
+        fig_height = DashboardConfig.get_figure_height()
+        styles = DashboardConfig.get_html_styles()
 
-        Args:
-            figures: List of plotly graph objects to render
-            output_file: Path to save the HTML file
-        """
-        fig_height = Config.get_figure_height()
+        # Convert style dictionaries to CSS strings
+        title_style = "; ".join(f"{k}: {v}" for k, v in styles["title"].items())
+        container_style = "; ".join(f"{k}: {v}" for k, v in styles["container"].items())
+        graph_style = "; ".join(
+            f"{k}: {v}" for k, v in styles["graph_container"].items()
+        )
 
         html_template = f"""
             <!DOCTYPE html>
@@ -109,9 +97,7 @@ class Dashboard:
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Video Analytics</title>
-                <!-- Bootstrap CSS -->
                 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
-                <!-- Plotly.js -->
                 <script src='https://cdn.plot.ly/plotly-2.20.0.min.js'></script>
                 <style>
                     :root {{
@@ -124,36 +110,13 @@ class Dashboard:
                         padding: 0;
                     }}
                     
-                    .dashboard-title {{
-                        color: var(--bs-body-color);
-                        margin: 0.5rem 0;
-                        text-align: center;
-                    }}
-                    
-                    .graph-container {{
-                        margin: 0;
-                        padding: 0;
-                    }}
+                    .dashboard-title {{ {title_style} }}
+                    .container-fluid {{ {container_style} }}
+                    .graph-container {{ {graph_style} }}
                     
                     .plotly-graph-div {{
                         width: 100%;
                         height: {fig_height}px;
-                    }}
-                    
-                    /* Remove default Bootstrap container padding */
-                    .container-fluid {{
-                        padding-left: 0;
-                        padding-right: 0;
-                    }}
-                    
-                    .row {{
-                        margin-left: 0;
-                        margin-right: 0;
-                    }}
-                    
-                    .col-12 {{
-                        padding-left: 0;
-                        padding-right: 0;
                     }}
                 </style>
             </head>
@@ -167,20 +130,16 @@ class Dashboard:
         with open(output_file, "w") as file:
             file.write(html_template)
 
-            # Write each figure without extra containers
             for fig in figures:
                 file.write('<div class="graph-container">')
                 file.write(fig.to_html(full_html=False, include_plotlyjs=False))
                 file.write("</div>")
 
-            # Close all HTML tags
             file.write(
                 """
                         </div>
                     </div>
                 </div>
-                <!-- Bootstrap JS Bundle -->
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
             </body>
             </html>
             """
@@ -223,7 +182,6 @@ if __name__ == "__main__":
     # Testing code for the module.
     import logging
     import os
-    import sys
 
     from logging_config import set_logger_level_and_format
     from video_database import VideoDatabase, VideoDatabaseList
@@ -280,5 +238,3 @@ if __name__ == "__main__":
         hourly_data,
     )
     dashboard.save_graphs_to_html(graphs, os.path.join(out_dir, "video_analytics.html"))
-
-    sys.exit()

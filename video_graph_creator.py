@@ -12,6 +12,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 from config import Config
+from dashboard_config import DashboardConfig
 from logging_config import create_logger
 
 logger = create_logger(__name__)
@@ -23,7 +24,7 @@ class VideoGraphCreator:
 
     While this class doesn't directly interface with VideoMetadata objects,
     it processes the aggregated data that was derived from VideoMetadata properties.
-    It uses Config.get_device_order() and Config.get_device_colors() to maintain
+    It uses Config.get_all_devices() and DashboardConfig.get_device_colors() to maintain
     consistent device representation across graphs.
 
     Example:
@@ -31,17 +32,14 @@ class VideoGraphCreator:
         fig = creator.create_figure(
             daily_data['activity'],
             "Daily Video Count",
-            "Count"
         )
     """
 
     @staticmethod
     def create_figure(
-        data: pd.DataFrame,
-        title: str,
-        config: Dict[str, bool | int] = None,
+        data: pd.DataFrame, title: str, config: Dict[str, bool | int] = None, **kwargs
     ) -> go.Figure:
-        """Creates a plotly figure with consistent styling"""
+        """Creates a plotly figure with consistent styling using shared configuration"""
         if config is None:
             config = {
                 "is_cumulative": False,
@@ -57,8 +55,8 @@ class VideoGraphCreator:
 
         fig = go.Figure()
         x_column = "Hour" if config.get("is_hourly") else "Date"
-        devices = [dev for dev in Config.get_device_order() if dev in data.columns]
-        colors = Config.get_device_colors()
+        devices = [dev for dev in Config.get_all_devices() if dev in data.columns]
+        colors = DashboardConfig.get_device_colors()
 
         # Add device traces
         for device in devices:
@@ -67,15 +65,12 @@ class VideoGraphCreator:
                     "<b>Time:</b> %{customdata}<br>"
                     + f"<b>{device}:</b> %{{y:.0f}}<extra></extra>"
                 )
+                customdata = [decimal_hour_to_time(h) for h in data[x_column]]
             else:
                 hovertemplate = (
                     f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
                     + f"<b>{device}:</b> %{{y:.0f}}<extra></extra>"
                 )
-
-            if config.get("is_hourly"):
-                customdata = [decimal_hour_to_time(h) for h in data[x_column]]
-            else:
                 customdata = None
 
             fig.add_trace(
@@ -96,17 +91,14 @@ class VideoGraphCreator:
         if config.get("is_hourly"):
             hovertemplate = (
                 "<b>Time:</b> %{customdata}<br>"
-                + f"<b>{device}:</b> %{{y:.0f}}<extra></extra>"
+                + "<b>Total:</b> %{y:.0f}<extra></extra>"
             )
+            customdata = [decimal_hour_to_time(h) for h in data[x_column]]
         else:
             hovertemplate = (
                 f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
                 + "<b>Total:</b> %{y:.0f}<extra></extra>"
             )
-
-        if config.get("is_hourly"):
-            customdata = [decimal_hour_to_time(h) for h in data[x_column]]
-        else:
             customdata = None
 
         fig.add_trace(
@@ -121,34 +113,22 @@ class VideoGraphCreator:
             )
         )
 
-        # Update layout and axes
-        fig_height = Config.get_figure_height()
-        fig.update_layout(
-            title=title,
-            xaxis_title="",
-            yaxis_title="",
-            barmode="stack",
-            bargap=0,
-            plot_bgcolor="white",
-            legend=dict(
-                orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
-            ),
-            height=fig_height,
-            margin=dict(l=50, r=50, t=80, b=50),
-        )
+        # Get default figure config
+        fig_config = DashboardConfig.get_figure_config()
 
-        fig.update_xaxes(
-            showgrid=True, gridwidth=1, gridcolor="lightgrey", zeroline=False
-        )
+        # Update layout with defaults plus any custom settings
+        fig_height = DashboardConfig.get_figure_height()
+        layout_config = {
+            "title": title,
+            "height": fig_height,
+            **fig_config["layout"],
+            **kwargs,
+        }
+        fig.update_layout(**layout_config)
 
-        fig.update_yaxes(
-            showgrid=True,
-            gridwidth=1,
-            gridcolor="lightgrey",
-            zeroline=False,
-            rangemode="nonnegative",
-            tickfont=dict(size=8),
-        )
+        # Apply axis styling
+        fig.update_xaxes(**fig_config["axes"]["grid"])
+        fig.update_yaxes(**fig_config["axes"]["grid"], **fig_config["axes"]["yaxis"])
 
         if config.get("is_hourly"):
             bins_per_hour = config.get("bins_per_hour", 4)
@@ -173,14 +153,7 @@ class VideoGraphCreator:
                 tickangle=-90,
             )
         else:
-            fig.update_xaxes(
-                dtick="D1",
-                tickformat="%a %Y/%m/%d",
-                tickangle=-90,
-                tickfont=dict(size=6),
-                rangeslider=dict(visible=False),
-                type="date",
-            )
+            fig.update_xaxes(**fig_config["axes"]["xaxis_date"])
 
         return fig
 
@@ -191,19 +164,19 @@ class VideoGraphCreator:
         metric_to_graph: str = "activity",
         bins_per_hour: int = 4,
     ) -> List[go.Figure]:
-        """
-        Creates daily and hourly activity graphs from aggregated data.
-        """
+        """Creates daily and hourly activity graphs from aggregated data."""
 
         daily_fig = VideoGraphCreator.create_figure(
             daily_data[metric_to_graph],
             title="Daily Video " + metric_to_graph.capitalize(),
         )
+
         hourly_fig = VideoGraphCreator.create_figure(
             hourly_data[metric_to_graph],
             title="Hourly Video " + metric_to_graph.capitalize(),
             config={"is_hourly": True, "bins_per_hour": bins_per_hour},
         )
+
         cumulative_fig = VideoGraphCreator.create_figure(
             daily_data[metric_to_graph].set_index("Date").cumsum().reset_index(),
             title="Cumulative Daily Video " + metric_to_graph.capitalize(),
