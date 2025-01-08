@@ -106,7 +106,9 @@ class VideoDataAggregator:
                 # First determine which bin the minutes fall into
                 minutes_per_bin = 60 / bins_per_hour
                 bin_index = time.minute // minutes_per_bin
-                return time.hour + bin_index / bins_per_hour
+                # Note that the last offset 1/(2 * bins_per_hour) set the mid point of the bin
+                # as representative.
+                return time.hour + bin_index / bins_per_hour + 1 / (2 * bins_per_hour)
 
         def get_metric_value(video: VideoMetadata) -> float:
             # Interface with VideoMetadata's properties for different metrics
