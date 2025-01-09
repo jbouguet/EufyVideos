@@ -35,7 +35,7 @@ from typing import Dict, List, Literal, Tuple
 import pandas as pd
 
 from logging_config import create_logger
-from video_metadata import VideoMetadata  # Main interface point
+from video_metadata import VideoMetadata
 
 logger = create_logger(__name__)
 
@@ -53,10 +53,18 @@ class VideoDataAggregator:
     - duration: For duration metrics
     - filesize: For storage metrics
 
-    Example:
-        videos = VideoMetadata.load_videos_from_directories('videos/')
-        aggregator = VideoDataAggregator()
-        daily_data, hourly_data = aggregator.compute(videos)
+        Example:
+            videos = VideoMetadata.load_videos_from_directories('videos/')
+            metrics = ["activity", "duration", "filesize"]
+            config = {"bins_per_hours": 4} # Temporal binning set to 15 minutes (60/4)
+            aggregator = VideoDataAggregator(metrics, config)
+            daily_data, hourly_data = aggregator.run(videos)
+            activity_by_date = daily_data['activity']  # Videos per day
+            duration_by_date = daily_data['duration']  # Minutes per day
+            storage_by_date = daily_data['filesize']   # MB per day
+            activity_by_15_minutes = hourly_data['activity']  # Videos per 15 minutes
+            duration_by_15_minutes = hourly_data['duration']  # Minutes per 15 minutes
+            storage_by_15_minutes = hourly_data['filesize']   # MB per 15 minutes
     """
 
     def __init__(self, metrics: List[str] = None, config: Dict[str, bool | int] = None):
@@ -87,18 +95,6 @@ class VideoDataAggregator:
                 1: Hour-level bins (00:00, 01:00, etc.)
                 2: 30-minute bins (00:00, 00:30, 01:00, etc.)
                 4: 15-minute bins (00:00, 00:15, 00:30, 00:45, etc.)
-
-        Example:
-            metrics = ["activity", "duration", "filesize"]
-            config = {"bins_per_hours": 4} # Set temporal binning to 15 minutes
-            aggregator = VideoDataAggregator(metrics, config)
-            daily_data, hourly_data = aggregator.compute(videos)
-            activity_by_date = daily_data['activity']  # Videos per day
-            duration_by_date = daily_data['duration']  # Minutes per day
-            storage_by_date = daily_data['filesize']   # MB per day
-            activity_by_15_minutes = hourly_data['activity']  # Videos per 15 minutes
-            duration_by_15_minutes = hourly_data['duration']  # Minutes per 15 minutes
-            storage_by_15_minutes = hourly_data['filesize']   # MB per 15 minutes
         """
         daily_data = {}
         hourly_data = {}
@@ -122,16 +118,6 @@ class VideoDataAggregator:
     ) -> pd.DataFrame:
         """
         Generic aggregation function that processes VideoMetadata objects.
-
-        Example usage with different metrics:
-            # For daily video activity
-            df = _aggregate_by_metric(videos, 'date', 'activity')
-
-            # For hourly duration totals
-            df = _aggregate_by_metric(videos, 'hour', 'duration')
-
-            # For daily storage usage
-            df = _aggregate_by_metric(videos, 'date', 'filesize')
         """
 
         def get_time_value(video: VideoMetadata) -> int | datetime | float:

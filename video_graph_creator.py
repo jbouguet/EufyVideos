@@ -28,10 +28,16 @@ class VideoGraphCreator:
     consistent device representation across graphs.
 
     Example:
-        creator = VideoGraphCreator()
-        fig = creator.create_figure(
-            daily_data['activity'],
-            "Daily Video Count",
+        videos = VideoMetadata.load_videos_from_directories('videos/')
+        config = {"bins_per_hours": 4} # Temporal binning set to 15 minutes (60/4)
+        metrics = ['activity']
+        aggregator = VideoDataAggregator(metrics=metrics, config=config)
+        daily_data, hourly_data = aggregator.run(videos)
+
+        fig = VideoGraphCreator.create_figure(
+            daily_data[metrics[0]],
+            title="Daily Video Count",
+            config=config,
         )
     """
 

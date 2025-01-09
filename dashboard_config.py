@@ -136,6 +136,11 @@ class DashboardConfig:
                     "font-size": "10px",
                 }
             },
+            "controls_spacing": {
+                "style": {
+                    "margin-right": "8px",  # Reduced from 15px to 8px
+                }
+            },
             "container": {"style": {"padding": "0", "margin": "0"}},
             "title": {
                 "className": "dashboard-title text-center",
