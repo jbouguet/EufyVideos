@@ -30,7 +30,7 @@ Example usage:
 """
 
 from datetime import datetime
-from typing import Dict, List, Literal
+from typing import Dict, List, Literal, Tuple
 
 import pandas as pd
 
@@ -51,13 +51,12 @@ class VideoDataAggregator:
     - time(): For hourly grouping
     - device: For device-based grouping
     - duration: For duration metrics
-    - file_size: For storage metrics
+    - filesize: For storage metrics
 
     Example:
         videos = VideoMetadata.load_videos_from_directories('videos/')
         aggregator = VideoDataAggregator()
-        daily_data = aggregator.get_daily_aggregates(videos)
-        # daily_data now contains aggregated metrics by date and device
+        daily_data, hourly_data = aggregator.compute(videos)
     """
 
     def __init__(self, metrics: List[str] = None, config: Dict[str, bool | int] = None):
@@ -68,6 +67,7 @@ class VideoDataAggregator:
         else:
             # Only aggregate across a subset of specified metrics
             self.metrics = metrics
+        # By default, set time interval to 15 minutes = 1 hour / 4 bin_per_hour
         bins_per_hour = config.get("bins_per_hour", 4)
         if config is None:
             self.config = {}
@@ -75,11 +75,49 @@ class VideoDataAggregator:
             self.config = config
         self.config["bins_per_hour"] = bins_per_hour
 
+    def run(
+        self, videos: List[VideoMetadata]
+    ) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
+        """
+        Returns daily and hourly aggregates for all metrics with configurable temporal binning.
+
+        Args:
+            videos: List of VideoMetadata objects to aggregate
+            bins_per_hour: Number of bins per hour (default=1). Common values:
+                1: Hour-level bins (00:00, 01:00, etc.)
+                2: 30-minute bins (00:00, 00:30, 01:00, etc.)
+                4: 15-minute bins (00:00, 00:15, 00:30, 00:45, etc.)
+
+        Example:
+            metrics = ["activity", "duration", "filesize"]
+            config = {"bins_per_hours": 4} # Set temporal binning to 15 minutes
+            aggregator = VideoDataAggregator(metrics, config)
+            daily_data, hourly_data = aggregator.compute(videos)
+            activity_by_date = daily_data['activity']  # Videos per day
+            duration_by_date = daily_data['duration']  # Minutes per day
+            storage_by_date = daily_data['filesize']   # MB per day
+            activity_by_15_minutes = hourly_data['activity']  # Videos per 15 minutes
+            duration_by_15_minutes = hourly_data['duration']  # Minutes per 15 minutes
+            storage_by_15_minutes = hourly_data['filesize']   # MB per 15 minutes
+        """
+        daily_data = {}
+        hourly_data = {}
+        # By default, set time interval to 15 minutes = 1 hour / 4 bin_per_hour
+        bins_per_hour = self.config.get("bins_per_hour", 4)
+        for metric in self.metrics:
+            daily_data[metric] = self._aggregate_by_metric(
+                videos, "date", metric
+            ).rename(columns={"TimeKey": "Date"})
+            hourly_data[metric] = self._aggregate_by_metric(
+                videos, "hour", metric, bins_per_hour
+            ).rename(columns={"TimeKey": "Hour"})
+        return daily_data, hourly_data
+
     @staticmethod
     def _aggregate_by_metric(
         videos: List[VideoMetadata],
         time_key: Literal["date", "hour"],
-        value_key: Literal["activity", "duration", "filesize"],
+        metric: Literal["activity", "duration", "filesize"],
         bins_per_hour: int = 4,
     ) -> pd.DataFrame:
         """
@@ -102,19 +140,21 @@ class VideoDataAggregator:
                 return video.date
             else:
                 time = video.time()
-                # Convert to fractional hour based on bins_per_hour
+                # Convert to fractional hour based on bins_per_hour and set
+                # the value to mid point of the quantized time bin.
                 # First determine which bin the minutes fall into
                 minutes_per_bin = 60 / bins_per_hour
                 bin_index = time.minute // minutes_per_bin
-                # Note that the last offset 1/(2 * bins_per_hour) set the mid point of the bin
-                # as representative.
+                # Returns a decimal representation of the temporal quantized bin
+                # with the last offset 1 / (2 * bins_per_hour) setting the value
+                # to the mid point of the quantized bin.
                 return time.hour + bin_index / bins_per_hour + 1 / (2 * bins_per_hour)
 
         def get_metric_value(video: VideoMetadata) -> float:
             # Interface with VideoMetadata's properties for different metrics
-            if value_key == "activity":
+            if metric == "activity":
                 return 1
-            elif value_key == "duration":
+            elif metric == "duration":
                 return video.duration.total_seconds() / 60  # Convert to minutes
             else:  # filesize
                 return video.file_size
@@ -136,70 +176,3 @@ class VideoDataAggregator:
             .unstack(fill_value=0)
             .reset_index()
         )
-
-    def get_daily_aggregates(
-        self, videos: List[VideoMetadata]
-    ) -> Dict[str, pd.DataFrame]:
-        """
-        Returns daily aggregates for all metrics.
-
-        Example:
-            daily_data = get_daily_aggregates(videos)
-            activity_by_date = daily_data['activity']  # Videos per day
-            duration_by_date = daily_data['duration']  # Hours per day
-            storage_by_date = daily_data['filesize']   # MB per day
-        """
-        output = {}
-        if "activity" in self.metrics:
-            output["activity"] = self._aggregate_by_metric(
-                videos, "date", "activity"
-            ).rename(columns={"TimeKey": "Date"})
-        if "duration" in self.metrics:
-            output["duration"] = self._aggregate_by_metric(
-                videos, "date", "duration"
-            ).rename(columns={"TimeKey": "Date"})
-        if "filesize" in self.metrics:
-            output["filesize"] = self._aggregate_by_metric(
-                videos, "date", "filesize"
-            ).rename(columns={"TimeKey": "Date"})
-        return output
-
-    def get_hourly_aggregates(
-        self,
-        videos: List[VideoMetadata],
-    ) -> Dict[str, pd.DataFrame]:
-        """
-        Returns hourly aggregates for all metrics with configurable temporal binning.
-
-        Args:
-            videos: List of VideoMetadata objects to aggregate
-            bins_per_hour: Number of bins per hour (default=1). Common values:
-                1: Hour-level bins (00:00, 01:00, etc.)
-                2: 30-minute bins (00:00, 00:30, 01:00, etc.)
-                4: 15-minute bins (00:00, 00:15, 00:30, 00:45, etc.)
-
-        Example:
-            # Get standard hourly aggregates
-            hourly_data = get_hourly_aggregates(videos)
-
-            # Get 30-minute aggregates
-            half_hour_data = get_hourly_aggregates(videos, bins_per_hour=2)
-
-            # Get 15-minute aggregates
-            quarter_hour_data = get_hourly_aggregates(videos, bins_per_hour=4)
-        """
-        bins_per_hour = self.config.get("bins_per_hour", 4)
-        output = {}
-        if "activity" in self.metrics:
-            output["activity"] = self._aggregate_by_metric(
-                videos, "hour", "activity", bins_per_hour
-            ).rename(columns={"TimeKey": "Hour"})
-        if "duration" in self.metrics:
-            output["duration"] = self._aggregate_by_metric(
-                videos, "hour", "duration", bins_per_hour
-            ).rename(columns={"TimeKey": "Hour"})
-        if "filesize" in self.metrics:
-            output["filesize"] = self._aggregate_by_metric(
-                videos, "hour", "filesize", bins_per_hour
-            ).rename(columns={"TimeKey": "Hour"})
-        return output

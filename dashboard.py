@@ -54,6 +54,7 @@ class Dashboard:
 
     def __init__(self, config: Dict[str, bool | int] = None):
         """Initialize with data aggregator and graph creator instances"""
+        # By default, set time interval to 15 minutes = 1 hour / 4 bin_per_hour
         bins_per_hour = config.get("bins_per_hour", 4)
         if config is None:
             self.config = {}
@@ -71,6 +72,7 @@ class Dashboard:
         Creates daily and hourly activity graphs from aggregated data.
         """
         metric_to_graph = "activity"
+        # By default, set time interval to 15 minutes = 1 hour / 4 bin_per_hour
         bins_per_hour = self.config.get("bins_per_hour", 4)
 
         return VideoGraphCreator.create_graphs(
@@ -167,8 +169,7 @@ class Dashboard:
             dashboard.create_graphs_file(videos, 'video_analytics.html')
         """
         # Get aggregated data
-        daily_data = self.data_aggregator.get_daily_aggregates(videos)
-        hourly_data = self.data_aggregator.get_hourly_aggregates(videos)
+        daily_data, hourly_data = self.data_aggregator.run(videos)
 
         # Create all graphs
         graphs = self.create_graphs(daily_data, hourly_data)
@@ -211,7 +212,7 @@ if __name__ == "__main__":
     min_date = video_database[0].date_str
     max_date = video_database[-1].date_str
 
-    bins_per_hour = 30
+    bins_per_hour = 12
 
     start_date = min_date
     end_date = max_date
@@ -241,8 +242,7 @@ if __name__ == "__main__":
     # Get aggregated data
     dashboard = Dashboard(config={"bins_per_hour": bins_per_hour})
     data_aggregator = VideoDataAggregator(config={"bins_per_hour": bins_per_hour})
-    daily_data = data_aggregator.get_daily_aggregates(videos)
-    hourly_data = data_aggregator.get_hourly_aggregates(videos)
+    daily_data, hourly_data = data_aggregator.run(videos)
     graphs = dashboard.create_graphs(
         daily_data,
         hourly_data,

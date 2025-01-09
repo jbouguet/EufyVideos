@@ -358,8 +358,7 @@ class InteractiveDashboard:
                 metrics=[metric_to_graph], config={"bins_per_hour": bins_per_hour}
             )
 
-            daily_data = data_aggregator.get_daily_aggregates(filtered_videos)
-            hourly_data = data_aggregator.get_hourly_aggregates(filtered_videos)
+            daily_data, hourly_data = data_aggregator.run(filtered_videos)
 
             # Create figures
             figs = VideoGraphCreator.create_graphs(

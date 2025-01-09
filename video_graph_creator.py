@@ -131,6 +131,7 @@ class VideoGraphCreator:
         fig.update_yaxes(**fig_config["axes"]["grid"], **fig_config["axes"]["yaxis"])
 
         if config.get("is_hourly"):
+            # By default, set time interval to 15 minutes = 1 hour / 4 bin_per_hour
             bins_per_hour = config.get("bins_per_hour", 4)
 
             # Get the actual range of hours from the data
