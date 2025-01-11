@@ -235,7 +235,7 @@ class InteractiveDashboard:
                                         id="start-time",
                                         min=0,
                                         max=24,
-                                        step=1 / 12,  # 5-minute intervals
+                                        step=1 / 60,  # 1-minute intervals
                                         value=0,
                                         marks={
                                             i: f"{i:02d}:00" for i in range(0, 25, 1)
@@ -266,7 +266,7 @@ class InteractiveDashboard:
                                         id="end-time",
                                         min=0,
                                         max=24,
-                                        step=1 / 12,  # 5-minute intervals
+                                        step=1 / 60,  # 1-minute intervals
                                         value=24,
                                         marks={
                                             i: f"{i:02d}:00" for i in range(0, 25, 1)
@@ -292,15 +292,6 @@ class InteractiveDashboard:
                 [
                     dbc.Row(
                         [
-                            dbc.Col(
-                                [
-                                    html.Label(
-                                        "Story Export / Loading:",
-                                        **styles["controls_labels"],
-                                    )
-                                ],
-                                width=2,
-                            ),
                             dbc.Col(
                                 [
                                     dcc.Dropdown(
@@ -579,14 +570,13 @@ class InteractiveDashboard:
             return ""
 
     def slider_to_time(self, t):
-        """Format time value from slider, rounding to nearest 5 minutes"""
+        """Format time value from slider, rounding to nearest minute and turning 24:00:00 to 23:59:59"""
         if t == 24:
             return "23:59:59"
 
         hours = int(t)
-        minutes = int((t % 1) * 60)
-        # Round to nearest 5 minutes
-        minutes = round(minutes / 5) * 5
+        # Round to nearest integer minute
+        minutes = round((t - hours) * 60)  # int((t % 1) * 60)
         if minutes == 60:
             hours += 1
             minutes = 0
@@ -594,8 +584,20 @@ class InteractiveDashboard:
 
     def time_to_slider(self, time_str: str):
         _time = datetime.strptime(time_str, "%H:%M:%S").time()
-
-        return _time.hour + (_time.minute / 60) + (_time.second / 3600)
+        hour = _time.hour
+        minute = _time.minute
+        second = _time.second
+        # The following code successfully map 13:59:45 to 14:00:00
+        # Increment minute by one if second is larger than 30, then set second to 0
+        if second > 30.0:
+            minute += 1
+        second = 0
+        # If minute get to 60, increment hour by one and reset minute to 0.
+        if minute == 60:
+            hour += 1
+            minute = minute - 60
+        # The case hour = 24, minute = 0, second = 0 is dealt with by slider_to_time.
+        return hour + (minute / 60)
 
     def run(self, debug=False, port=8050):
         """Run the dashboard server."""
