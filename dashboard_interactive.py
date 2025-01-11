@@ -12,6 +12,7 @@ This module extends dashboard.py by providing an interactive web interface for:
 The graphs update dynamically based on user selections.
 """
 
+from datetime import datetime
 from typing import List
 
 import dash
@@ -49,6 +50,27 @@ class InteractiveDashboard:
         self.videos = videos
         self.stories_output = stories_output
 
+        # Add predefined directory options
+        self.directory_options = [
+            {"label": self.stories_output, "value": self.stories_output},
+            {
+                "label": os.path.join(self.stories_output, "dashboards"),
+                "value": os.path.join(self.stories_output, "dashboards"),
+            },
+            {
+                "label": os.path.join(self.stories_output, "daily"),
+                "value": os.path.join(self.stories_output, "daily"),
+            },
+            {
+                "label": os.path.join(self.stories_output, "weekly"),
+                "value": os.path.join(self.stories_output, "weekly"),
+            },
+            {
+                "label": os.path.join(self.stories_output, "monthly"),
+                "value": os.path.join(self.stories_output, "monthly"),
+            },
+        ]
+
         # Get date range from videos
         dates = [v.date for v in videos]
         self.min_date = min(dates).strftime("%Y-%m-%d")
@@ -82,7 +104,7 @@ class InteractiveDashboard:
         styles = DashboardConfig.get_dash_styles()
 
         """Create the dashboard layout with all UI components."""
-        controls = dbc.Card(
+        main_controls = dbc.Card(
             dbc.CardBody(
                 [
                     # First row with date range, devices, weekdays, time bins and metric.
@@ -257,24 +279,39 @@ class InteractiveDashboard:
                         ],
                         className="mb-3",  # Add margin bottom for spacing
                     ),
-                    # Fourth Row: Export as Story
+                ]
+            ),
+            **{
+                **styles["controls_card"],
+                "className": "rounded-b-none border-b-0 mb-0",
+            },
+        )
+
+        story_controls = dbc.Card(
+            dbc.CardBody(
+                [
                     dbc.Row(
                         [
                             dbc.Col(
                                 [
-                                    dbc.Button(
-                                        "Export As Story",
-                                        id="export-button",
-                                        color="primary",
-                                        disabled=True,
-                                        style={
-                                            **styles["controls_items"]["style"],
-                                            **styles["controls_spacing"]["style"],
-                                        },
+                                    html.Label(
+                                        "Story Export / Loading:",
+                                        **styles["controls_labels"],
+                                    )
+                                ],
+                                width=2,
+                            ),
+                            dbc.Col(
+                                [
+                                    dcc.Dropdown(
+                                        id="story-dir-input",
+                                        options=self.directory_options,
+                                        value=self.stories_output,
+                                        clearable=False,
+                                        **styles["controls_items"],
                                     ),
                                 ],
-                                width="auto",  # Changed to auto width
-                                className="pe-0",  # Remove padding on right
+                                width=4,
                             ),
                             dbc.Col(
                                 [
@@ -285,20 +322,44 @@ class InteractiveDashboard:
                                         style=styles["controls_items"]["style"],
                                     ),
                                 ],
-                                width=3,
-                                className="ps-2",  # Add small padding on left
+                                width=1,
+                            ),
+                            dbc.Col(
+                                [
+                                    dbc.Button(
+                                        "Save",
+                                        id="save-button",
+                                        color="primary",
+                                        disabled=True,
+                                        style={
+                                            **styles["controls_items"]["style"],
+                                            **styles["controls_spacing"]["style"],
+                                        },
+                                    ),
+                                    dbc.Button(
+                                        "Load",
+                                        id="load-button",
+                                        color="primary",
+                                        disabled=True,
+                                        style={
+                                            **styles["controls_items"]["style"],
+                                            **styles["controls_spacing"]["style"],
+                                        },
+                                    ),
+                                ],
+                                width=2,
                             ),
                         ],
-                        # className="mb-3 g-0",  # Remove gutter spacing
                     ),
                 ]
             ),
-            **styles["controls_card"],
+            **{**styles["controls_card"], "className": "rounded-t-none"},
         )
 
         self.app.layout = dbc.Container(
             [
-                controls,  # Add the card containing all controls
+                main_controls,
+                story_controls,
                 html.H2("Video Analytics Dashboard", **styles["title"]),
                 html.Div(
                     [
@@ -328,7 +389,62 @@ class InteractiveDashboard:
     def setup_callbacks(self):
         """Setup all dashboard callbacks for interactivity."""
 
-        # Graphs update callback
+        # load button enable/disable callback
+        @self.app.callback(
+            Output("load-button", "disabled"), Input("story-name-input", "value")
+        )
+        def update_load_button_state(input_value):
+            return not (input_value and input_value.strip())
+
+        # First callback updates the store when load button is clicked
+        @self.app.callback(
+            [
+                Output("date-range", "start_date"),
+                Output("date-range", "end_date"),
+                Output("start-time", "value"),
+                Output("end-time", "value"),
+                Output("device-selector", "value"),
+                Output("weekday-selector", "value"),
+            ],
+            Input("load-button", "n_clicks"),
+            State("story-name-input", "value"),
+            State("story-dir-input", "value"),
+            prevent_initial_call=True,
+        )
+        def load_story(n_clicks, story_name, story_dir):
+            if n_clicks is None:
+                return dash.no_update
+
+            story_config_filename = os.path.join(
+                story_dir, f"{story_name}{Config.CONFIG}"
+            )
+            if not os.path.exists(story_config_filename):
+                return dash.no_update
+
+            story = Story.from_file(story_config_filename)
+            if not story.selectors:
+                return dash.no_update
+
+            selector = story.selectors[0]
+            devices = selector.devices or Config.get_all_devices()
+            date_range = selector.date_range or DateRange(
+                start=self.min_date, end=self.max_date
+            )
+            time_range = selector.time_range or TimeRange(
+                start="00:00:00", end="23:59:59"
+            )
+            weekdays = selector.weekdays or self.all_weekdays
+
+            return (
+                date_range.start,
+                date_range.end,
+                self.time_to_slider(time_range.start),
+                self.time_to_slider(time_range.end),
+                devices,
+                weekdays,
+            )
+
+        # Second callback updates graphs based on all inputs including the trigger
         @self.app.callback(
             [
                 Output("daily-count-graph", "figure"),
@@ -371,8 +487,8 @@ class InteractiveDashboard:
                 logger.debug("No weekdays selected, using all weekdays")
                 weekdays = self.all_weekdays.copy()
 
-            start_time_str = self.format_time(start_time)
-            end_time_str = self.format_time(end_time)
+            start_time_str = self.slider_to_time(start_time)
+            end_time_str = self.slider_to_time(end_time)
 
             logger.debug(f"Date range: {start_date} to {end_date}")
             logger.debug(f"Devices: {selected_devices}")
@@ -399,51 +515,50 @@ class InteractiveDashboard:
 
             # Create figures
             figs = VideoGraphCreator.create_graphs(
-                daily_data, hourly_data, metric_to_graph, bins_per_hour
+                daily_data,
+                hourly_data,
+                metrics=[metric_to_graph],
+                bins_per_hour=bins_per_hour,
             )
 
             return figs[0], figs[1], figs[2]
 
-        # Export button enable/disable callback
+        # save button enable/disable callback
         @self.app.callback(
-            Output("export-button", "disabled"), Input("story-name-input", "value")
+            Output("save-button", "disabled"), Input("story-name-input", "value")
         )
-        def update_export_button_state(input_value):
-            if input_value and input_value.strip():
-                return False
-            return True
+        def update_save_button_state(input_value):
+            return not (input_value and input_value.strip())
 
-        # Export button click callback
+        # save button click callback
         @self.app.callback(
             Output("story-name-input", "value"),
-            Input("export-button", "n_clicks"),
+            Input("save-button", "n_clicks"),
             State("story-name-input", "value"),
+            State("story-dir-input", "value"),
             State("date-range", "start_date"),
             State("date-range", "end_date"),
             State("start-time", "value"),
             State("end-time", "value"),
             State("device-selector", "value"),
             State("weekday-selector", "value"),
-            State("bin-size-selector", "value"),
-            State("metric-selector", "value"),
             prevent_initial_call=True,
         )
-        def export_story(
+        def save_story(
             n_clicks,
             story_name,
+            story_dir,
             start_date,
             end_date,
             start_time,
             end_time,
             selected_devices,
             weekdays,
-            bins_per_hour,
-            metric_to_graph,
         ):
             if n_clicks is None:
                 return dash.no_update
 
-            # TODO: Configure Story to display the dashboard with a custom metric and temporal bin.
+            os.makedirs(story_dir, exist_ok=True)
 
             Story(
                 name=story_name,
@@ -452,18 +567,18 @@ class InteractiveDashboard:
                         devices=selected_devices,
                         date_range=DateRange(start=start_date, end=end_date),
                         time_range=TimeRange(
-                            start=self.format_time(start_time),
-                            end=self.format_time(end_time),
+                            start=self.slider_to_time(start_time),
+                            end=self.slider_to_time(end_time),
                         ),
                         weekdays=weekdays,
                     )
                 ],
-            ).process(videos_database=self.videos, output_directory=self.stories_output)
+            ).process(videos_database=self.videos, output_directory=story_dir)
 
-            # Clear the input after export
+            # Clear the input after save
             return ""
 
-    def format_time(self, t):
+    def slider_to_time(self, t):
         """Format time value from slider, rounding to nearest 5 minutes"""
         if t == 24:
             return "23:59:59"
@@ -476,6 +591,11 @@ class InteractiveDashboard:
             hours += 1
             minutes = 0
         return f"{hours:02d}:{minutes:02d}:00"
+
+    def time_to_slider(self, time_str: str):
+        _time = datetime.strptime(time_str, "%H:%M:%S").time()
+
+        return _time.hour + (_time.minute / 60) + (_time.second / 3600)
 
     def run(self, debug=False, port=8050):
         """Run the dashboard server."""
@@ -496,7 +616,7 @@ if __name__ == "__main__":
     root_database = (
         "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"
     )
-    # Output directory to export Stories:
+    # Output directory to save Stories:
     stories_output = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
 
     metadata_files = [

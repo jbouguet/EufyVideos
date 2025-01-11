@@ -53,6 +53,17 @@ from video_metadata import VideoMetadata
 logger = create_logger(__name__)
 
 
+def clean_none_values(d):
+    """Remove None values from dict and convert tuples to lists."""
+    if isinstance(d, dict):
+        return {k: clean_none_values(v) for k, v in d.items() if v is not None}
+    elif isinstance(d, list):
+        return [clean_none_values(item) for item in d]
+    elif isinstance(d, tuple):
+        return list(d)
+    return d
+
+
 @dataclass
 class Story:
     """
@@ -158,7 +169,7 @@ class Story:
             story_filename: Path where to save the configuration
         """
         with open(story_filename, "w") as f:
-            yaml.dump(asdict(self), f)
+            yaml.dump(clean_none_values(asdict(self)), f, default_flow_style=False)
 
     @staticmethod
     def validate_story_dict(story_dict: Dict[str, Any]) -> None:
@@ -321,8 +332,7 @@ class Story:
         VideoMetadata.export_videos_to_metadata_file(videos, video_metadata_file)
         VideoMetadata.export_videos_to_playlist_file(videos, playlist_filename)
 
-        dashboard = Dashboard(config={"bins_per_hour": 4})
-        dashboard.create_graphs_file(videos, graphs_filename)
+        Dashboard().create_graphs_file(videos, graphs_filename)
 
         logger.info(f"{colored("Output Files:","light_cyan")}")
         logger.info(f"  - config file:   {config_filename}")

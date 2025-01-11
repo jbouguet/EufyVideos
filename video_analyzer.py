@@ -272,8 +272,7 @@ class VideoAnalyzer:
             self.videos_database, playlist_filename
         )
         logger.info(f"  - graphs file:   {graphs_filename}")
-        dashboard = Dashboard(config={"bins_per_hour": 4})
-        dashboard.create_graphs_file(self.videos_database, graphs_filename)
+        Dashboard().create_graphs_file(self.videos_database, graphs_filename)
 
     def _process_stories(self) -> None:
         if self.config.process_stories and self.config.stories:

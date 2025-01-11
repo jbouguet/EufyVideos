@@ -192,26 +192,36 @@ class VideoGraphCreator:
     def create_graphs(
         daily_data: Dict[str, pd.DataFrame],
         hourly_data: Dict[str, pd.DataFrame],
-        metric_to_graph: str = "activity",
+        metrics: List[str] = None,
         bins_per_hour: int = 4,
     ) -> List[go.Figure]:
         """Creates daily and hourly activity graphs from aggregated data."""
+        if metrics is None:
+            # By default, display all metrics
+            metrics = ["activity", "duration", "filesize"]
 
-        daily_fig = VideoGraphCreator.create_figure(
-            daily_data[metric_to_graph],
-            title="Daily Video " + metric_to_graph.capitalize(),
-        )
+        figs = []
 
-        hourly_fig = VideoGraphCreator.create_figure(
-            hourly_data[metric_to_graph],
-            title="Hourly Video " + metric_to_graph.capitalize(),
-            config={"is_hourly": True, "bins_per_hour": bins_per_hour},
-        )
+        for metric in metrics:
+            figs.append(
+                VideoGraphCreator.create_figure(
+                    daily_data[metric],
+                    title="Daily Video " + metric.capitalize(),
+                )
+            )
+            figs.append(
+                VideoGraphCreator.create_figure(
+                    hourly_data[metric],
+                    title="Hourly Video " + metric.capitalize(),
+                    config={"is_hourly": True, "bins_per_hour": bins_per_hour},
+                )
+            )
+            figs.append(
+                VideoGraphCreator.create_figure(
+                    daily_data[metric].set_index("Date").cumsum().reset_index(),
+                    title="Cumulative Daily Video " + metric.capitalize(),
+                    config={"is_cumulative": True},
+                )
+            )
 
-        cumulative_fig = VideoGraphCreator.create_figure(
-            daily_data[metric_to_graph].set_index("Date").cumsum().reset_index(),
-            title="Cumulative Daily Video " + metric_to_graph.capitalize(),
-            config={"is_cumulative": True},
-        )
-
-        return [daily_fig, hourly_fig, cumulative_fig]
+        return figs

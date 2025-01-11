@@ -52,16 +52,24 @@ class Dashboard:
     4. Saves the results to an interactive HTML file
     """
 
-    def __init__(self, config: Dict[str, bool | int] = None):
-        """Initialize with data aggregator and graph creator instances"""
+    def __init__(self, metrics: List[str] = None, config: Dict[str, bool | int] = None):
+        """Initialize dashboard optionally specifying metrics of interest"""
+        if metrics is None:
+            # By default, aggregate across all metrics
+            self.metrics = ["activity", "duration", "filesize"]
+        else:
+            # Only aggregate across a subset of specified metrics
+            self.metrics = metrics
         # By default, set time interval to 15 minutes = 1 hour / 4 bin_per_hour
-        bins_per_hour = config.get("bins_per_hour", 4)
         if config is None:
-            self.config = {}
+            self.config = {"bins_per_hour": 4}
         else:
             self.config = config
+        bins_per_hour = self.config.get("bins_per_hour", 4)
         self.config["bins_per_hour"] = bins_per_hour
-        self.data_aggregator = VideoDataAggregator(config=self.config)
+        self.data_aggregator = VideoDataAggregator(
+            metrics=self.metrics, config=self.config
+        )
 
     def create_graphs(
         self,
@@ -71,12 +79,11 @@ class Dashboard:
         """
         Creates daily and hourly activity graphs from aggregated data.
         """
-        metric_to_graph = "activity"
         # By default, set time interval to 15 minutes = 1 hour / 4 bin_per_hour
         bins_per_hour = self.config.get("bins_per_hour", 4)
 
         return VideoGraphCreator.create_graphs(
-            daily_data, hourly_data, metric_to_graph, bins_per_hour
+            daily_data, hourly_data, metrics=self.metrics, bins_per_hour=bins_per_hour
         )
 
     @staticmethod
@@ -168,13 +175,8 @@ class Dashboard:
             dashboard = Dashboard()
             dashboard.create_graphs_file(videos, 'video_analytics.html')
         """
-        # Get aggregated data
         daily_data, hourly_data = self.data_aggregator.run(videos)
-
-        # Create all graphs
         graphs = self.create_graphs(daily_data, hourly_data)
-
-        # Save to file
         self.save_graphs_to_html(graphs, output_file)
 
 

@@ -76,11 +76,11 @@ class VideoDataAggregator:
             # Only aggregate across a subset of specified metrics
             self.metrics = metrics
         # By default, set time interval to 15 minutes = 1 hour / 4 bin_per_hour
-        bins_per_hour = config.get("bins_per_hour", 4)
         if config is None:
-            self.config = {}
+            self.config = {"bins_per_hour": 4}
         else:
             self.config = config
+        bins_per_hour = self.config.get("bins_per_hour", 4)
         self.config["bins_per_hour"] = bins_per_hour
 
     def run(
