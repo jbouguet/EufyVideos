@@ -103,7 +103,7 @@ class VideoTags:
     """
 
     timestamp: str = None
-    tagger_config: TaggerConfig = None
+    tag_processing_config: TaggerConfig = None
     tags: Dict[str, Dict[int, Dict[int, Dict[str, Any]]]] = field(default_factory=list)
 
     @property
@@ -131,23 +131,23 @@ class VideoTags:
     def from_tags(
         cls,
         tags: Dict[str, Dict[int, Dict[int, Dict[str, Any]]]],
-        tagger_config: TaggerConfig = None,
+        tag_processing_config: TaggerConfig = None,
     ) -> "VideoTags":
         """Create VideoTags instance from raw tag data."""
         return cls(
             timestamp=datetime.now().isoformat(),
-            tagger_config=tagger_config,
+            tag_processing_config=tag_processing_config,
             tags=tags,
         )
 
     def to_file(self, tag_file: str) -> "VideoTags":
         """Save tags to file with lossless serialization."""
-        tagger_config_dict = None
-        if self.tagger_config is not None:
-            tagger_config_dict = asdict(self.tagger_config)
+        tag_processing_config_dict = None
+        if self.tag_processing_config is not None:
+            tag_processing_config_dict = asdict(self.tag_processing_config)
         batch_data = {
             "timestamp": self.timestamp,
-            "tagger_config": tagger_config_dict,
+            "tag_processing_config": tag_processing_config_dict,
             "tags": self.tags,
         }
         with open(tag_file, "w") as jsonfile:
@@ -158,14 +158,16 @@ class VideoTags:
     def from_file(cls, tag_file: str) -> "VideoTags":
         """Load tags from file with lossless restoration."""
         timestamp = None
-        tagger_config = None
+        tag_processing_config = None
         tags = {}
         if os.path.exists(tag_file):
             with open(tag_file, "r") as f:
                 tag_data = json.load(f)
                 timestamp = tag_data.get("timestamp")
-                if tag_data.get("tagger_config"):
-                    tagger_config = TaggerConfig.from_dict(tag_data["tagger_config"])
+                if tag_data.get("tag_processing_config"):
+                    tag_processing_config = TaggerConfig.from_dict(
+                        tag_data["tag_processing_config"]
+                    )
                 raw_tags = tag_data.get("tags", {})
 
                 # Apply type casting and sorting to the loaded tags
@@ -184,7 +186,7 @@ class VideoTags:
 
         return cls(
             timestamp=timestamp,
-            tagger_config=tagger_config,
+            tag_processing_config=tag_processing_config,
             tags=tags,
         )
 
@@ -264,7 +266,7 @@ class VideoTags:
     def from_videos(
         cls,
         videos: Union[VideoMetadata, List[VideoMetadata]],
-        tagger_config: TaggerConfig = None,
+        tag_processing_config: TaggerConfig = None,
     ) -> "VideoTags":
         """Create VideoTags instance from existing tags in VideoMetadata objects."""
         videos = [videos] if isinstance(videos, VideoMetadata) else videos
@@ -277,7 +279,7 @@ class VideoTags:
                         video.tags.items(), key=lambda x: int(x[0])
                     )
                 }
-        return cls.from_tags(tags=tags, tagger_config=tagger_config)
+        return cls.from_tags(tags=tags, tag_processing_config=tag_processing_config)
 
     @staticmethod
     def clear_tags_in_videos(
@@ -391,12 +393,12 @@ class VideoTags:
 class TagProcessor:
     """Main interface for computing video tags using object detection models."""
 
-    def __init__(self, tagger_config: TaggerConfig = None):
+    def __init__(self, tag_processing_config: TaggerConfig = None):
         """Initialize processor with configuration."""
-        self.tagger_config = tagger_config or TaggerConfig()
+        self.tag_processing_config = tag_processing_config or TaggerConfig()
         self.object_detector = ObjectDetectorFactory.create_detector(
-            model=self.tagger_config.model,
-            conf_threshold=self.tagger_config.conf_threshold,
+            model=self.tag_processing_config.model,
+            conf_threshold=self.tag_processing_config.conf_threshold,
         )
 
     def run(self, videos: Union[VideoMetadata, List[VideoMetadata]]) -> VideoTags:
@@ -404,7 +406,7 @@ class TagProcessor:
         videos = [videos] if isinstance(videos, VideoMetadata) else videos
         return VideoTags.from_tags(
             tags=self._compute_video_tags(videos),
-            tagger_config=self.tagger_config,
+            tag_processing_config=self.tag_processing_config,
         )
 
     def _compute_video_tags(
@@ -461,9 +463,10 @@ class TagProcessor:
     def _compute_task_specific_tags(self, video: VideoMetadata) -> List[Dict[str, Any]]:
         """Compute tags based on configured task (detect or track)."""
         num_frames = ceil(
-            self.tagger_config.num_frames_per_second * video.duration.total_seconds()
+            self.tag_processing_config.num_frames_per_second
+            * video.duration.total_seconds()
         )
-        match self.tagger_config.task:
+        match self.tag_processing_config.task:
             case Task.DETECT.value:
                 return self.object_detector.detect_objects(
                     video.full_path, num_frames=num_frames
@@ -474,7 +477,7 @@ class TagProcessor:
                 )
             case _:
                 raise ValueError(
-                    f"Invalid task: {self.tagger_config.task}. Must be one of {[dt.value for dt in Task]}"
+                    f"Invalid task: {self.tag_processing_config.task}. Must be one of {[dt.value for dt in Task]}"
                 )
 
 

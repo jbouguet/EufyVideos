@@ -172,10 +172,10 @@ class TagVisualizer:
 
         Args:
             config: TagVisualizerConfig object for visualization settings
-            **kwargs: Backward compatibility for tag_visualizer_config parameter
+            **kwargs: Backward compatibility for tag_video_generation_config parameter
         """
-        if config is None and "tag_visualizer_config" in kwargs:
-            config = kwargs["tag_visualizer_config"]
+        if config is None and "tag_video_generation_config" in kwargs:
+            config = kwargs["tag_video_generation_config"]
         self.config = config if config else TagVisualizerConfig()
 
     def run(

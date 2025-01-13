@@ -73,7 +73,7 @@ stories:
           end: '13:47:59'
 
   - name: 'Every Other Day'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-11-01'
@@ -81,7 +81,7 @@ stories:
         weekdays: ['monday', 'wednesday', 'friday', 'sunday']
 
   - name: 'Trash Pickups'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-11-07'
@@ -100,7 +100,7 @@ stories:
         devices: ['Garage']
 
   - name: 'HotTub Installation'
-    skip: true
+    skip: false
     selectors:
       # Delivery and Installation
       - date_range:
@@ -134,7 +134,7 @@ stories:
           start: '19:12:00'
           end: '19:57:00'
         devices: ['Backyard']
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 20
@@ -144,7 +144,7 @@ stories:
         width: 1600
 
   - name: '2024-11-27'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-11-27'
@@ -152,23 +152,23 @@ stories:
         devices: ['Front Entrance']
 
   - name: '2024-11-20'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-11-20'
           end: '2024-11-20'
-    process_tags: false
-    tagger_config:
+    tag_processing: false
+    tag_processing_config:
       model: "Yolo11x"
       task: "Track"
       num_frames_per_second: 0.05
       conf_threshold: 0.2
-    generate_tags_video: false
-    tag_visualizer_config:
+    tag_video_generation: false
+    tag_video_generation_config:
       output_size:
         width: 1600
         height: 900
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 1
@@ -180,21 +180,21 @@ stories:
   # TAGS DATABASE - START
 
   - name: '2024-11-18 - Backyard Planning - 5 videos'
-    skip: true
+    skip: false
     selectors:
       - filenames: ['T8600P1024260D5E_20241118084615.mp4', 'T8600P1024260D5E_20241118084819.mp4', 'T8600P1024260D5E_20241118084902.mp4', 'T8600P1024260D5E_20241118085102.mp4', 'T8600P1024260D5E_20241118085306.mp4']
-    process_tags: false
-    tagger_config:
+    tag_processing: false
+    tag_processing_config:
       model: "Yolo11x"
       task: "Track"
       num_frames_per_second: 15
       conf_threshold: 0.2
-    generate_tags_video: false
-    tag_visualizer_config:
+    tag_video_generation: false
+    tag_video_generation_config:
       output_size:
         width: 1600
         height: 900
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 1
@@ -204,7 +204,7 @@ stories:
         width: 800
 
   - name: '2024-11-18 - Backyard Planning'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-11-18'
@@ -213,37 +213,37 @@ stories:
           start: '08:40:00'
           end: '09:10:00'
         devices: ['Backyard']
-    process_tags: false
-    tagger_config:
+    tag_processing: false
+    tag_processing_config:
       model: "Yolo11x"
       task: "Track"
       num_frames_per_second: 0.15
       conf_threshold: 0.2
-    generate_tags_video: false
-    tag_visualizer_config:
+    tag_video_generation: false
+    tag_video_generation_config:
       output_size:
         width: 1600
         height: 900
 
   - name: 'T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809'
-    skip: true
+    skip: false
     selectors:
       - filenames: [ 'T8600P102338033E_20240930085536.mp4' , 'T8600P1024260D5E_20241119181809.mp4']
-    process_tags: false
-    tagger_config:
+    tag_processing: false
+    tag_processing_config:
       model: "Yolo11x"
       task: "Track"
       num_frames_per_second: 15
       conf_threshold: 0.2
-    generate_tags_video: false
-    tag_visualizer_config:
+    tag_video_generation: false
+    tag_video_generation_config:
       output_size:
         width: 1600
         height: 900
   # TAGS DATABASE - END
 
   - name: '2024-11-18_to_2024-11-20 - Outdoor Shower'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-11-18'
@@ -252,18 +252,18 @@ stories:
           start: '07:00:00'
           end: '18:00:00'
         devices: ['Back Alleyway']
-    process_tags: false
-    tagger_config:
+    tag_processing: false
+    tag_processing_config:
       model: "Yolo11x"
       task: "Track"
       num_frames_per_second: 0.1
       conf_threshold: 0.2
-    generate_tags_video: false
-    tag_visualizer_config:
+    tag_video_generation: false
+    tag_video_generation_config:
       output_size:
         width: 1600
         height: 900
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 2
@@ -274,21 +274,21 @@ stories:
         width: 600
 
   - name: 'Audio Failures'
-    skip: true
+    skip: false
     selectors:
       - filenames: ["T8160T1224250195_20241118111259.mp4", "T8600P1024260D5E_20241118112043.mp4", "T8160P1123332B02_20241118140843.mp4", "T8160P1123332B02_20241118145352.mp4", "T8160P1123332B02_20241118150336.mp4", "T8160T1224250195_20241118150422.mp4"]
-    process_tags: false
-    tagger_config:
+    tag_processing: false
+    tag_processing_config:
       model: "Yolo11x"
       task: "Track"
       num_frames_per_second: 0.05
       conf_threshold: 0.2
-    generate_tags_video: false
-    tag_visualizer_config:
+    tag_video_generation: false
+    tag_video_generation_config:
       output_size:
         width: 1600
         height: 900
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 4
@@ -298,7 +298,7 @@ stories:
         width: 1600
 
   - name: 'test_selector'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-11-10'
@@ -315,10 +315,10 @@ stories:
           end: '09:00:00'
         devices: ['Garage', 'Front Door', 'Backyard']
       - filenames: ['T8600P1023450AFB_20240831130618.mp4','T8600P1023450AFB_20240831124041.mp4']
-    generate_tags_video: false
+    tag_video_generation: false
 
   - name: 'test_selector2'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-11-10'
@@ -329,10 +329,10 @@ stories:
           end: '2024-06-20'
         devices: ['Garage', 'Front Door', 'Backyard']
       - filenames: ['T8600P1023450AFB_20240831130618.mp4','T8600P1023450AFB_20240831124041.mp4']
-    generate_tags_video: false
+    tag_video_generation: false
 
   - name: '2024-11-20 1pm-8am'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-11-20'
@@ -343,7 +343,7 @@ stories:
         devices: ['Backyard', 'Back Alleyway']
 
   - name: '2024-11-20 8am-1m'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-11-20'
@@ -354,7 +354,7 @@ stories:
         devices: ['Backyard', 'Back Alleyway']
 
   - name: 'Front Yard Cleaning - 2024-11-17'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-11-17'
@@ -365,7 +365,7 @@ stories:
         devices: ['Front Yard']
 
   - name: 'Backyard Cleaning - 2024-11-17'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-11-17'
@@ -376,7 +376,7 @@ stories:
         devices: ['Backyard']
 
   - name: 'Stolen Moped '
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-11-14'
@@ -384,14 +384,14 @@ stories:
         devices: ['Back Alleyway', 'Garage']
 
   - name: 'New Backyard Camera'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-11-16'
           end: '2024-11-16'
 
   - name: 'New Patio Cover Installation - Gateway'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-10-09'
@@ -414,14 +414,14 @@ stories:
         time_range:
           start: '07:49:00'
           end: '15:00:00'
-    process_tags: false
-    generate_tags_video: false
-    tagger_config:
+    tag_processing: false
+    tag_video_generation: false
+    tag_processing_config:
       model: "Yolo11x"
       task: "Track"
       num_frames_per_second: 1
       conf_threshold: 0.2
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 7
@@ -430,7 +430,7 @@ stories:
         width: 800
 
   - name: 'Tracking Tests'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-10-09'
@@ -439,21 +439,21 @@ stories:
         time_range:
           start: '13:03:00'
           end: '13:15:00'
-    process_tags: false
-    generate_tags_video: false
-    tagger_config:
+    tag_processing: false
+    tag_video_generation: false
+    tag_processing_config:
       model: "Yolo11x"
       task: "Track"
       num_frames_per_second: 4
       conf_threshold: 0.2
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 6
         enforce_16_9_aspect_ratio: true
 
   - name: 'New Patio Cover Installation - Small'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-10-11'
@@ -462,21 +462,21 @@ stories:
         time_range:
           start: '08:00:00'
           end: '08:30:00'
-    process_tags: false
-    generate_tags_video: false
-    tagger_config:
+    tag_processing: false
+    tag_video_generation: false
+    tag_processing_config:
       model: "Yolo11x"
       task: "Track"
       num_frames_per_second: 2
       conf_threshold: 0.2
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 6
         enforce_16_9_aspect_ratio: true
 
   - name: 'New Patio Cover Installation'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-10-09'
@@ -499,16 +499,16 @@ stories:
         time_range:
           start: '07:49:00'
           end: '15:00:00'
-    process_tags: false
-    generate_tags_video: false
-    tagger_config:
+    tag_processing: false
+    tag_video_generation: false
+    tag_processing_config:
       model: "Yolo11x"
       task: "Detect"
       num_frames_per_second: 0.1
       conf_threshold: 0.2
 
   - name: 'Stupid Mailman - 2024-10-07'
-    skip: true
+    skip: false
     selectors:
       - devices: ['Front Yard', 'Walkway', 'Front Door']
         date_range:
@@ -517,14 +517,14 @@ stories:
         time_range:
           start: '15:00:00'
           end: '15:10:00'
-    process_tags: false
-    generate_tags_video: false
-    tagger_config:
+    tag_processing: false
+    tag_video_generation: false
+    tag_processing_config:
       model: "Yolo11x"
       task: "Detect"
       num_frames_per_second: 15
       conf_threshold: 0.2
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 20
@@ -533,7 +533,7 @@ stories:
         width: 800
 
   - name: '2024-10-12 - Grandparents'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-10-12'
@@ -541,23 +541,23 @@ stories:
         time_range:
           start: '10:05:00'
           end: '10:15:00'
-    process_tags: false
-    generate_tags_video: false
-    tagger_config:
+    tag_processing: false
+    tag_video_generation: false
+    tag_processing_config:
       model: "Yolo11x"
       task: "Detect"
       num_frames_per_second: 2
       conf_threshold: 0.2
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 6
         enforce_16_9_aspect_ratio: true
 
   - name: 'corrupted_files'
-    skip: true
-    process_tags: false
-    generate_tags_video: false
+    skip: false
+    tag_processing: false
+    tag_video_generation: false
     selectors:
       - filenames: ['T8600P10233811B3_20240714141009.mp4',
                     'T8410P4224024456_20240831132933.mp4',
@@ -569,10 +569,10 @@ stories:
                     ]
 
   - name: 'Raccoon'
-    skip: true
-    process_tags: false
-    generate_tags_video: false
-    tagger_config:
+    skip: false
+    tag_processing: false
+    tag_video_generation: false
+    tag_processing_config:
       model: "Yolo11x"
       task: "Detect"
       num_frames_per_second: 1
@@ -585,7 +585,7 @@ stories:
         time_range:
           start: '03:00:00'
           end: '05:00:00'
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 20
@@ -594,9 +594,9 @@ stories:
         width: 800
 
   - name: 'Rat'
-    skip: true
-    process_tags: false
-    generate_tags_video: false
+    skip: false
+    tag_processing: false
+    tag_video_generation: false
     selectors:
       - devices: ['Gateway']
         date_range:
@@ -605,16 +605,16 @@ stories:
         time_range:
           start: '03:00:00'
           end: '06:00:00'
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 10
         normalized_crop_roi: [0.75, 0.4, 1, 0.75]
 
   - name: 'Suspicious Trash Guy - 2024-09-26'
-    skip: true
-    process_tags: false
-    generate_tags_video: false
+    skip: false
+    tag_processing: false
+    tag_video_generation: false
     selectors:
       - date_range:
           start: '2024-09-26'
@@ -623,7 +623,7 @@ stories:
           start: '10:50:00'
           end: '11:00:00'
         devices: ['Garage']
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 16
@@ -631,9 +631,9 @@ stories:
         normalized_crop_roi: [0.0, 0.2, 0.9, 1.0]
 
   - name: 'Neighbor Umbrella'
-    skip: true
-    process_tags: false
-    generate_tags_video: false
+    skip: false
+    tag_processing: false
+    tag_video_generation: false
     selectors:
       - devices: ['Back Alleyway']
         time_range:
@@ -644,9 +644,9 @@ stories:
           end: '2024-09-07'
 
   - name: 'Patio cover installation and removal'
-    skip: true
-    process_tags: false
-    generate_tags_video: false
+    skip: false
+    tag_processing: false
+    tag_video_generation: false
     selectors:
       # Installation
       - devices: ['Backyard', 'Garage']
@@ -664,7 +664,7 @@ stories:
         time_range:
           start: '10:10:00'
           end: '12:05:00'
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 7
@@ -673,9 +673,9 @@ stories:
         width: 1600
 
   - name: 'Plant Flowering Timelapse'
-    skip: true
-    process_tags: false
-    generate_tags_video: false
+    skip: false
+    tag_processing: false
+    tag_video_generation: false
     selectors:
       - devices: ['Front Yard']
         date_range:
@@ -684,15 +684,15 @@ stories:
         time_range:
           start: '05:00:00'
           end: '19:30:00'
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         normalized_crop_roi: [0.0458, 0.4856, 0.3841, 0.9764]
 
   - name: 'Plant Growth Timelapse'
-    skip: true
-    process_tags: false
-    generate_tags_video: false
+    skip: false
+    tag_processing: false
+    tag_video_generation: false
     selectors:
       - devices: ['Front Yard']
         date_range:
@@ -701,7 +701,7 @@ stories:
         time_range:
           start: '05:00:00'
           end: '19:30:00'
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 1
@@ -709,9 +709,9 @@ stories:
         normalized_crop_roi: [0.23802, 0.3037, 0.8589, 1.0]
 
   - name: 'Suspicious Trash Dump From Neighbor on 2024-05-26'
-    skip: true
-    process_tags: false
-    generate_tags_video: false
+    skip: false
+    tag_processing: false
+    tag_video_generation: false
     selectors:
       - devices: ['Garage']
         date_range:
@@ -720,22 +720,22 @@ stories:
         time_range:
           start: '22:35:00'
           end: '22:45:00'
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 13.33
         enforce_16_9_aspect_ratio: false
 
   - name: 'Test'
-    skip: true
-    process_tags: false
-    generate_tags_video: false
+    skip: false
+    tag_processing: false
+    tag_video_generation: false
     selectors:
       - devices: ['Back Alleyway']
         date_range:
           start: '2024-07-22'
           end: '2024-07-22'
-    generate_video: false
+    video_generation: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 6

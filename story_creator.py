@@ -28,8 +28,8 @@ Example Usage:
       - devices: ["camera1", "camera2"]
         start_time: "07:00"
         end_time: "09:00"
-    generate_video: true
-    process_tags: true
+    video_generation: true
+    tag_processing: true
     '''
 """
 
@@ -73,25 +73,25 @@ class Story:
         name (str): Unique identifier for the story
         skip (bool): Flag to skip processing this story
         selectors (List[VideoSelector]): Criteria for selecting videos
-        generate_video (bool): Whether to create a composite video
+        video_generation (bool): Whether to create a composite video
         video_generation_config (VideoGenerationConfig): Settings for video generation
-        process_tags (bool): Whether to analyze and generate tags
-        tagger_config (TaggerConfig): Settings for tag processing
-        generate_tags_video (bool): Whether to create a visualization of tagged frames
-        tag_visualizer_config (TagVisualizerConfig): Settings for tag visualization
+        tag_processing (bool): Whether to analyze and generate tags
+        tag_processing_config (TaggerConfig): Settings for tag processing
+        tag_video_generation (bool): Whether to create a visualization of tagged frames
+        tag_video_generation_config (TagVisualizerConfig): Settings for tag visualization
     """
 
     name: str
     skip: bool = False
     selectors: Optional[List[VideoSelector]] = None
-    generate_video: bool = False
+    video_generation: bool = False
     video_generation_config: VideoGenerationConfig = field(
         default_factory=VideoGenerationConfig
     )
-    process_tags: bool = False
-    tagger_config: TaggerConfig = field(default_factory=TaggerConfig)
-    generate_tags_video: bool = False
-    tag_visualizer_config: TagVisualizerConfig = field(
+    tag_processing: bool = False
+    tag_processing_config: TaggerConfig = field(default_factory=TaggerConfig)
+    tag_video_generation: bool = False
+    tag_video_generation_config: TagVisualizerConfig = field(
         default_factory=TagVisualizerConfig
     )
 
@@ -134,17 +134,19 @@ class Story:
         return cls(
             name=story_dict["name"],
             selectors=selectors,
-            generate_video=story_dict.get("generate_video", False),
+            video_generation=story_dict.get("video_generation", False),
             video_generation_config=VideoGenerationConfig.from_dict(
                 story_dict.get("video_generation_config", {})
             ),
-            tag_visualizer_config=TagVisualizerConfig.from_dict(
-                story_dict.get("tag_visualizer_config", {})
+            tag_video_generation_config=TagVisualizerConfig.from_dict(
+                story_dict.get("tag_video_generation_config", {})
             ),
             skip=story_dict.get("skip", False),
-            process_tags=story_dict.get("process_tags", False),
-            generate_tags_video=story_dict.get("generate_tags_video", False),
-            tagger_config=TaggerConfig.from_dict(story_dict.get("tagger_config", {})),
+            tag_processing=story_dict.get("tag_processing", False),
+            tag_video_generation=story_dict.get("tag_video_generation", False),
+            tag_processing_config=TaggerConfig.from_dict(
+                story_dict.get("tag_processing_config", {})
+            ),
         )
 
     @classmethod
@@ -218,16 +220,16 @@ class Story:
                         f"'filenames' must be a list or a string in a selector of story: {story_dict['name']}"
                     )
 
-        # Validate process_tags
-        if "process_tags" in story_dict and not isinstance(
-            story_dict["process_tags"], bool
+        # Validate tag_processing
+        if "tag_processing" in story_dict and not isinstance(
+            story_dict["tag_processing"], bool
         ):
             raise ValueError(
-                f"'process_tags' must be a boolean value in story: {story_dict['name']}"
+                f"'tag_processing' must be a boolean value in story: {story_dict['name']}"
             )
 
         # Validate video generation settings
-        if story_dict.get("generate_video", False):
+        if story_dict.get("video_generation", False):
             all_devices = set()
             if "selectors" in story_dict:
                 for selector in story_dict["selectors"]:
@@ -357,23 +359,23 @@ class Story:
 
         tag_filename = os.path.join(
             output_directory,
-            f"{self.name}_{self.tagger_config.get_identifier()}{Config.TAGS}",
+            f"{self.name}_{self.tag_processing_config.get_identifier()}{Config.TAGS}",
         )
         video_tags = VideoTags()
 
-        if self.process_tags:
+        if self.tag_processing:
             # Process new tags
-            tagging_frame_rate = self.tagger_config.num_frames_per_second
+            tagging_frame_rate = self.tag_processing_config.num_frames_per_second
             num_tagged_frames = sum(
                 ceil(video.duration.total_seconds() * tagging_frame_rate)
                 for video in videos
             )
             logger.info(
-                f"Processing tags using {self.tagger_config.model} in {self.tagger_config.task} mode "
-                f"at {tagging_frame_rate}fps with a confidence threshold of {self.tagger_config.conf_threshold}"
+                f"Processing tags using {self.tag_processing_config.model} in {self.tag_processing_config.task} mode "
+                f"at {tagging_frame_rate}fps with a confidence threshold of {self.tag_processing_config.conf_threshold}"
             )
             logger.info(f"Number of frames to be tagged: {num_tagged_frames:,}")
-            tag_processor = TagProcessor(self.tagger_config)
+            tag_processor = TagProcessor(self.tag_processing_config)
             video_tags = tag_processor.run(videos).to_file(tag_filename)
             logger.info(
                 f"{video_tags.stats} newly computed tags are saved to {tag_filename}."
@@ -429,19 +431,19 @@ class Story:
         self.process_new_tags(videos, output_directory)
 
         # Generate tag visualization video if requested
-        if self.generate_tags_video:
+        if self.tag_video_generation:
             video_tag_file = os.path.join(
                 output_directory, f"{self.name}{Config.MOVIE_TAGS}"
             )
             logger.info(
                 f"Generating the video {video_tag_file} of all of the tagged frames"
             )
-            tag_visualizer = TagVisualizer(self.tag_visualizer_config)
+            tag_visualizer = TagVisualizer(self.tag_video_generation_config)
             tag_visualizer.run(videos, video_tag_file)
             logger.info(f"Video saved to {video_tag_file}")
 
         # Generate composite video if requested
-        if self.generate_video:
+        if self.video_generation:
             video_file = os.path.join(output_directory, f"{self.name}{Config.MOVIE}")
             fragment_duration = (
                 self.video_generation_config.input_fragments.duration_in_seconds

@@ -130,7 +130,7 @@ class VideoDataAggregator:
                 # the value to mid point of the quantized time bin.
                 # First determine which bin the minutes fall into
                 minutes_per_bin = 60 / bins_per_hour
-                bin_index = time.minute // minutes_per_bin
+                bin_index = (time.minute + (time.second / 60.0)) // minutes_per_bin
                 # Returns a decimal representation of the temporal quantized bin
                 # with the last offset 1 / (2 * bins_per_hour) setting the value
                 # to the mid point of the quantized bin.
