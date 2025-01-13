@@ -300,6 +300,15 @@ class InteractiveDashboard:
                         [
                             dbc.Col(
                                 [
+                                    html.Label(
+                                        "Story:",
+                                        **styles["controls_labels"],
+                                    ),
+                                ],
+                                width=1,
+                            ),
+                            dbc.Col(
+                                [
                                     dcc.Dropdown(
                                         id="story-dir-input",
                                         options=self.directory_options,
