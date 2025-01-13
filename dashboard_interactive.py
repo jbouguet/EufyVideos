@@ -215,17 +215,20 @@ class InteractiveDashboard:
                                 width=2,
                             ),
                         ],
-                        className="mb-3",  # Add margin bottom for spacing
+                        # className="mb-3",  # Add margin bottom for spacing
                     ),
                     # Second row with start time.
                     dbc.Row(
                         [
                             dbc.Col(
                                 [
-                                    html.Label(
-                                        "Start Time:",
-                                        **styles["controls_labels"],
-                                    )
+                                    html.Div(
+                                        id="start-time-display",
+                                        style={
+                                            "fontSize": "12px",
+                                            "fontWeight": "bold",
+                                        },
+                                    ),
                                 ],
                                 width=1,
                             ),
@@ -253,10 +256,13 @@ class InteractiveDashboard:
                         [
                             dbc.Col(
                                 [
-                                    html.Label(
-                                        "End Time:",
-                                        **styles["controls_labels"],
-                                    )
+                                    html.Div(
+                                        id="end-time-display",
+                                        style={
+                                            "fontSize": "12px",
+                                            "fontWeight": "bold",
+                                        },
+                                    ),
                                 ],
                                 width=1,
                             ),
@@ -277,7 +283,7 @@ class InteractiveDashboard:
                                 width=11,
                             ),
                         ],
-                        className="mb-3",  # Add margin bottom for spacing
+                        # className="mb-3",  # Add margin bottom for spacing
                     ),
                 ]
             ),
@@ -379,6 +385,22 @@ class InteractiveDashboard:
 
     def setup_callbacks(self):
         """Setup all dashboard callbacks for interactivity."""
+
+        @self.app.callback(
+            Output("start-time-display", "children"), Input("start-time", "value")
+        )
+        def update_start_time_display(value):
+            if value is None:
+                return ""
+            return f"Start Time: {self.slider_to_time(value)}"
+
+        @self.app.callback(
+            Output("end-time-display", "children"), Input("end-time", "value")
+        )
+        def update_end_time_display(value):
+            if value is None:
+                return ""
+            return f"End Time: {self.slider_to_time(value)}"
 
         # load button enable/disable callback
         @self.app.callback(

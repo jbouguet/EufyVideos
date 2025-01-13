@@ -213,7 +213,7 @@ stories:
           start: '08:40:00'
           end: '09:10:00'
         devices: ['Backyard']
-    process_tags: true
+    process_tags: false
     tagger_config:
       model: "Yolo11x"
       task: "Track"
@@ -235,7 +235,7 @@ stories:
       task: "Track"
       num_frames_per_second: 15
       conf_threshold: 0.2
-    generate_tags_video: true
+    generate_tags_video: false
     tag_visualizer_config:
       output_size:
         width: 1600
@@ -258,7 +258,7 @@ stories:
       task: "Track"
       num_frames_per_second: 0.1
       conf_threshold: 0.2
-    generate_tags_video: true
+    generate_tags_video: false
     tag_visualizer_config:
       output_size:
         width: 1600
@@ -288,7 +288,7 @@ stories:
       output_size:
         width: 1600
         height: 900
-    generate_video: true
+    generate_video: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 4
@@ -315,7 +315,7 @@ stories:
           end: '09:00:00'
         devices: ['Garage', 'Front Door', 'Backyard']
       - filenames: ['T8600P1023450AFB_20240831130618.mp4','T8600P1023450AFB_20240831124041.mp4']
-    generate_tags_video: true
+    generate_tags_video: false
 
   - name: 'test_selector2'
     skip: true
@@ -329,7 +329,7 @@ stories:
           end: '2024-06-20'
         devices: ['Garage', 'Front Door', 'Backyard']
       - filenames: ['T8600P1023450AFB_20240831130618.mp4','T8600P1023450AFB_20240831124041.mp4']
-    generate_tags_video: true
+    generate_tags_video: false
 
   - name: '2024-11-20 1pm-8am'
     skip: true
@@ -439,8 +439,8 @@ stories:
         time_range:
           start: '13:03:00'
           end: '13:15:00'
-    process_tags: true
-    generate_tags_video: true
+    process_tags: false
+    generate_tags_video: false
     tagger_config:
       model: "Yolo11x"
       task: "Track"
@@ -462,8 +462,8 @@ stories:
         time_range:
           start: '08:00:00'
           end: '08:30:00'
-    process_tags: true
-    generate_tags_video: true
+    process_tags: false
+    generate_tags_video: false
     tagger_config:
       model: "Yolo11x"
       task: "Track"
@@ -517,8 +517,8 @@ stories:
         time_range:
           start: '15:00:00'
           end: '15:10:00'
-    process_tags: true
-    generate_tags_video: true
+    process_tags: false
+    generate_tags_video: false
     tagger_config:
       model: "Yolo11x"
       task: "Detect"
@@ -541,8 +541,8 @@ stories:
         time_range:
           start: '10:05:00'
           end: '10:15:00'
-    process_tags: true
-    generate_tags_video: true
+    process_tags: false
+    generate_tags_video: false
     tagger_config:
       model: "Yolo11x"
       task: "Detect"
@@ -570,8 +570,8 @@ stories:
 
   - name: 'Raccoon'
     skip: true
-    process_tags: true
-    generate_tags_video: true
+    process_tags: false
+    generate_tags_video: false
     tagger_config:
       model: "Yolo11x"
       task: "Detect"
@@ -585,7 +585,7 @@ stories:
         time_range:
           start: '03:00:00'
           end: '05:00:00'
-    generate_video: true
+    generate_video: false
     video_generation_config:
       input_fragments:
         duration_in_seconds: 20

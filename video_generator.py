@@ -32,7 +32,7 @@ Example Usage:
 
     # Initialize generator and create video
     generator = VideoGenerator(config=config)
-    generator.generate_video(
+    generator.run(
         videos=[video1, video2, video3],
         output_file="summary.mp4"
     )
@@ -241,7 +241,7 @@ class VideoGenerator:
     Example:
         ```python
         generator = VideoGenerator(config=VideoGenerationConfig())
-        generator.generate_video(
+        generator.run(
             videos=[video1, video2],
             output_file="output.mp4"
         )

@@ -121,7 +121,7 @@ class DashboardConfig:
             "controls_card": {
                 "style": {
                     "background-color": "#f2faff",
-                    # "margin-bottom": "1rem",
+                    "margin-bottom": "1rem",
                     "border-radius": "0.375rem",
                 }
             },
