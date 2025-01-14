@@ -125,9 +125,10 @@ class InteractiveDashboard:
                                         display_format="YYYY-MM-DD",
                                         day_size=30,
                                         calendar_orientation="vertical",
+                                        show_outside_days=True,  # Show days from adjacent months
                                     ),
                                 ],
-                                width=3,
+                                width=2,
                             ),
                             dbc.Col(
                                 [
@@ -143,10 +144,11 @@ class InteractiveDashboard:
                                         ],
                                         value=self.all_devices.copy(),
                                         multi=True,
+                                        optionHeight=16,
                                         **styles["controls_items"],
                                     ),
                                 ],
-                                width=3,
+                                width=4,
                             ),
                             dbc.Col(
                                 [
@@ -162,6 +164,7 @@ class InteractiveDashboard:
                                         ],
                                         value=self.all_weekdays.copy(),
                                         multi=True,
+                                        optionHeight=16,  # Control height of each option
                                         **styles["controls_items"],
                                     ),
                                 ],
@@ -184,6 +187,8 @@ class InteractiveDashboard:
                                             {"label": "2 mins", "value": 30},
                                         ],
                                         value=4,
+                                        optionHeight=16,
+                                        clearable=False,
                                         **styles["controls_items"],
                                     ),
                                 ],
@@ -209,13 +214,14 @@ class InteractiveDashboard:
                                             },
                                         ],
                                         value="activity",
+                                        optionHeight=16,
+                                        clearable=False,
                                         **styles["controls_items"],
                                     ),
                                 ],
                                 width=2,
                             ),
                         ],
-                        # className="mb-3",  # Add margin bottom for spacing
                     ),
                     # Second row with start time.
                     dbc.Row(
@@ -223,11 +229,16 @@ class InteractiveDashboard:
                             dbc.Col(
                                 [
                                     html.Div(
-                                        id="start-time-display",
-                                        style={
-                                            "fontSize": "12px",
-                                            "fontWeight": "bold",
-                                        },
+                                        [
+                                            html.Span(
+                                                "Start Time: ",
+                                                **styles["controls_labels"],
+                                            ),
+                                            html.Span(
+                                                id="start-time-display",
+                                                **styles["controls_text"],
+                                            ),
+                                        ]
                                     ),
                                 ],
                                 width=1,
@@ -244,12 +255,12 @@ class InteractiveDashboard:
                                             i: f"{i:02d}:00" for i in range(0, 25, 1)
                                         },
                                         updatemode="mouseup",
+                                        included=True,
                                     ),
                                 ],
                                 width=11,
                             ),
                         ],
-                        className="mb-3",  # Add margin bottom for spacing
                     ),
                     # Third row with end time.
                     dbc.Row(
@@ -257,11 +268,16 @@ class InteractiveDashboard:
                             dbc.Col(
                                 [
                                     html.Div(
-                                        id="end-time-display",
-                                        style={
-                                            "fontSize": "12px",
-                                            "fontWeight": "bold",
-                                        },
+                                        [
+                                            html.Span(
+                                                "End Time: ",
+                                                **styles["controls_labels"],
+                                            ),
+                                            html.Span(
+                                                id="end-time-display",
+                                                **styles["controls_text"],
+                                            ),
+                                        ]
                                     ),
                                 ],
                                 width=1,
@@ -278,24 +294,13 @@ class InteractiveDashboard:
                                             i: f"{i:02d}:00" for i in range(0, 25, 1)
                                         },
                                         updatemode="mouseup",
+                                        included=True,
                                     ),
                                 ],
                                 width=11,
                             ),
                         ],
-                        # className="mb-3",  # Add margin bottom for spacing
                     ),
-                ]
-            ),
-            **{
-                **styles["controls_card"],
-                "className": "rounded-b-none border-b-0 mb-0",
-            },
-        )
-
-        story_controls = dbc.Card(
-            dbc.CardBody(
-                [
                     dbc.Row(
                         [
                             dbc.Col(
@@ -314,6 +319,7 @@ class InteractiveDashboard:
                                         options=self.directory_options,
                                         value=self.stories_output,
                                         clearable=False,
+                                        optionHeight=16,
                                         **styles["controls_items"],
                                     ),
                                 ],
@@ -328,7 +334,7 @@ class InteractiveDashboard:
                                         style=styles["controls_items"]["style"],
                                     ),
                                 ],
-                                width=1,
+                                width=2,
                             ),
                             dbc.Col(
                                 [
@@ -359,13 +365,12 @@ class InteractiveDashboard:
                     ),
                 ]
             ),
-            **{**styles["controls_card"], "className": "rounded-t-none"},
+            **styles["controls_card"],
         )
 
         self.app.layout = dbc.Container(
             [
                 main_controls,
-                story_controls,
                 html.H2("Video Analytics Dashboard", **styles["title"]),
                 html.Div(
                     [
@@ -401,7 +406,7 @@ class InteractiveDashboard:
         def update_start_time_display(value):
             if value is None:
                 return ""
-            return f"Start Time: {self.slider_to_time(value)}"
+            return self.slider_to_time(value)
 
         @self.app.callback(
             Output("end-time-display", "children"), Input("end-time", "value")
@@ -409,7 +414,7 @@ class InteractiveDashboard:
         def update_end_time_display(value):
             if value is None:
                 return ""
-            return f"End Time: {self.slider_to_time(value)}"
+            return self.slider_to_time(value)
 
         # load button enable/disable callback
         @self.app.callback(
@@ -526,7 +531,8 @@ class InteractiveDashboard:
                 weekdays=weekdays,
             )
             filtered_videos = VideoFilter.by_selectors(self.videos, selector)
-            logger.debug(f"Number of videos: {len(filtered_videos):,}")
+            num_videos = len(filtered_videos)
+            logger.debug(f"Number of videos: {num_videos:,}")
 
             # Get aggregated data
             data_aggregator = VideoDataAggregator(

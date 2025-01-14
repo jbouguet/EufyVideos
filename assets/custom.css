@@ -1,0 +1,273 @@
+/* =================== DATE PICKER STYLES =================== */
+.DateRangePickerInput {
+    font-size: 11px !important;
+    border: 1px solid #307ac0 !important;
+    background-color: white !important;
+}
+
+.DateInput_input {
+    font-size: 11px !important;
+    padding: 0px 2px !important;
+    color: #307ac0 !important;
+    background-color: white !important;
+}
+
+.DateInput {
+    width: 70px !important;
+}
+
+.CalendarMonth_caption {
+    font-size: 14px !important;
+}
+
+.CalendarMonth {
+    font-size: 12px !important;
+}
+
+.CalendarMonth_weekHeader {
+    font-size: 11px !important;
+}
+
+.CalendarDay__selected {
+    font-weight: normal !important;
+}
+
+.DateRangePickerInput_arrow {
+    font-size: 10px !important;
+    padding: 0px 0px !important;
+}
+
+.DateRangePickerInput_arrow_svg {
+    height: 20px !important;
+    width: 10px !important;
+    vertical-align: middle !important;
+}
+
+/* =================== SLIDER STYLES =================== */
+.rc-slider {
+    margin: 8px 0px !important;
+}
+
+.rc-slider-mark-text {
+    font-size: 10px !important;
+    color: #307ac0 !important;
+}
+
+.rc-slider-mark {
+    top: 18px !important;
+}
+
+.rc-slider-handle {
+    width: 14px !important;
+    height: 14px !important;
+    border: solid 2px #307ac0 !important;
+    background-color: white !important;
+    margin-top: -5px !important;
+}
+
+.rc-slider-handle:hover {
+    border-color: #8366f9 !important;
+}
+
+.rc-slider-handle:active,
+.rc-slider-handle:focus {
+    border-color: #ef30ac !important;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25) !important;
+}
+
+/* Start-time slider */
+#start-time .rc-slider-dot {
+    border: 2px solid #307ac0 !important;
+    background-color: #307ac0 !important;
+    width: 8px !important;
+    height: 8px !important;
+    bottom: -2px !important;
+}
+
+#start-time .rc-slider-dot-active {
+    border-color: #d5e3f3 !important;
+    background-color: #d5e3f3 !important;
+}
+
+#start-time .rc-slider-track {
+    background-color: #d5e3f3 !important;
+}
+
+#start-time .rc-slider-rail {
+    background-color: #307ac0 !important;
+}
+
+/* End-time slider */
+#end-time .rc-slider-dot {
+    border: 2px solid #d5e3f3 !important;
+    background-color: #d5e3f3 !important;
+    width: 8px !important;
+    height: 8px !important;
+    bottom: -2px !important;
+}
+
+#end-time .rc-slider-dot-active {
+    border-color: #307ac0 !important;
+    background-color: #307ac0 !important;
+}
+
+#end-time .rc-slider-track {
+    background-color: #307ac0 !important;
+}
+
+#end-time .rc-slider-rail {
+    background-color: #d5e3f3 !important;
+}
+
+/* =================== DROPDOWN STYLES =================== */
+/* Main container and control */
+.Select-control {
+    border: 1px solid #307ac0 !important;
+    border-radius: 3px !important;
+    height: 15px !important;
+    min-height: 15px !important;
+    background-color: white !important;
+    padding-top: 0px !important;
+}
+
+/* Selected value text color */
+.Select-value-label {
+    font-size: 10px !important;
+    color: #307ac0 !important;  /* Main blue */
+}
+
+/* Multi-select specific styles */
+.Select--multi .Select-value {
+    background-color: white !important;
+    border: 1px solid #307ac0 !important;
+    border-radius: 2px !important;
+    margin: 1px 1px !important;
+    line-height: 1 !important;
+    height: 15px !important;
+}
+
+/* Multi-select specific value text color */
+.Select--multi .Select-value-label {
+    font-size: 10px !important;
+    padding: 1px 2px !important;
+    line-height: 1 !important;
+    height: 15px !important;
+    color: #307ac0 !important;  /* Explicitly set the same blue */
+}
+
+/* Selected option in dropdown menu */
+.Select-option.is-selected {
+    background-color: #307ac0 !important;  /* Blue background */
+    color: white !important;  /* White text for contrast */
+}
+
+.Select--multi .Select-value-icon {
+    border-right: 0px solid #307ac0 !important;
+    padding: 0px 2px !important;
+    line-height: 1 !important;
+    height: 13px !important;
+    vertical-align: middle !important;
+}
+
+.Select--multi .Select-value-icon:hover {
+    background-color: #307ac0 !important;
+    color: white !important;
+}
+
+/* Dropdown menu */
+.Select-menu-outer {
+    border: 1px solid #307ac0 !important;
+    border-radius: 4px !important;
+    margin-top: 2px !important;
+    max-height: 200px !important;
+}
+
+.ReactVirtualized__Grid__innerScrollContainer > div {
+    height: 16px !important;
+}
+
+.VirtualizedSelectOption {
+    padding: 0px 4px !important;
+    line-height: 16px !important;
+    font-size: 10px !important;
+    height: 16px !important;
+}
+
+/* Disable input interaction in multi-select */
+.Select--multi .Select-input {
+    display: none !important;
+}
+
+.Select--multi .Select-multi-value-wrapper {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    flex: 1 !important;
+    padding: 0px !important;
+}
+
+/* =================== INPUT STYLES =================== */
+/* Input control */
+.form-control {
+    font-size: 10px !important;
+    height: 30px !important;
+    padding: 2px 6px !important;
+    border: 1px solid #307ac0 !important;
+    background-color: white !important;
+    color: #307ac0 !important;
+}
+
+/* Input placeholder */
+.form-control::placeholder {
+    color: #666 !important;
+    font-size: 10px !important;
+}
+
+/* Input when focused */
+.form-control:focus {
+    border-color: #307ac0 !important;
+    box-shadow: 0 0 0 0.2rem rgba(48, 122, 192, 0.25) !important;
+    background-color: white !important;
+}
+
+/* Placeholder text styling options */
+.form-control::placeholder {
+    font-size: 10px !important;
+    /* Choose one of these colors: */
+    color: #bbb !important;    /* Very light gray */
+    /* color: #999 !important;    /* Light gray */
+    /* color: #888 !important;    /* Medium light gray */
+    /* color: #666 !important;    /* Medium gray */
+}
+
+/* =================== BUTTON STYLES =================== */
+/* Basic button style */
+.btn-primary {
+    font-size: 10px !important;
+    height: 30px !important;
+    padding: 2px 8px !important;
+    background-color: #307ac0 !important;
+    border-color: #307ac0 !important;
+    color: white !important;
+}
+
+/* Button hover state */
+.btn-primary:hover {
+    background-color: #2668a5 !important;
+    border-color: #2668a5 !important;
+}
+
+/* Button active/pressed state */
+.btn-primary:active, 
+.btn-primary:focus {
+    background-color: #1f5584 !important;
+    border-color: #1f5584 !important;
+    box-shadow: 0 0 0 0.2rem rgba(48, 122, 192, 0.25) !important;
+}
+
+/* Disabled button state */
+.btn-primary:disabled {
+    background-color: #9dc3e6 !important;
+    border-color: #9dc3e6 !important;
+    color: #f0f0f0 !important;
+    cursor: not-allowed !important;
+}

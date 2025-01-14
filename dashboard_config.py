@@ -131,6 +131,11 @@ class DashboardConfig:
                     "font-weight": "bold",
                 }
             },
+            "controls_text": {
+                "style": {
+                    "font-size": "11px",
+                }
+            },
             "controls_items": {
                 "style": {
                     "font-size": "10px",
