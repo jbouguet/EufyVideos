@@ -17,8 +17,7 @@ from typing import List
 
 import dash
 import dash_bootstrap_components as dbc
-from dash import dcc, html
-from dash.dependencies import Input, Output, State
+from dash import Input, Output, State, dcc, html
 
 from config import Config
 from dashboard_config import DashboardConfig
@@ -89,6 +88,9 @@ class InteractiveDashboard:
             "saturday",
             "sunday",
         ]
+
+        self.num_videos = len(self.videos)
+        self.num_days = (self.videos[-1].date - self.videos[0].date).days + 1
 
         # Create Dash app
         self.app = dash.Dash(
@@ -168,7 +170,7 @@ class InteractiveDashboard:
                                         **styles["controls_items"],
                                     ),
                                 ],
-                                width=3,
+                                width=4,
                             ),
                             dbc.Col(
                                 [
@@ -179,12 +181,12 @@ class InteractiveDashboard:
                                     dcc.Dropdown(
                                         id="bin-size-selector",
                                         options=[
-                                            {"label": "60 mins", "value": 1},
-                                            {"label": "30 mins", "value": 2},
-                                            {"label": "15 mins", "value": 4},
-                                            {"label": "10 mins", "value": 6},
-                                            {"label": "5 mins", "value": 12},
-                                            {"label": "2 mins", "value": 30},
+                                            {"label": "60 minutes", "value": 1},
+                                            {"label": "30 minutes", "value": 2},
+                                            {"label": "15 minutes", "value": 4},
+                                            {"label": "10 minutes", "value": 6},
+                                            {"label": "5 minutes", "value": 12},
+                                            {"label": "2 minutes", "value": 30},
                                         ],
                                         value=4,
                                         optionHeight=16,
@@ -219,7 +221,7 @@ class InteractiveDashboard:
                                         **styles["controls_items"],
                                     ),
                                 ],
-                                width=2,
+                                width=1,
                             ),
                         ],
                     ),
@@ -241,7 +243,7 @@ class InteractiveDashboard:
                                         ]
                                     ),
                                 ],
-                                width=1,
+                                width=2,
                             ),
                             dbc.Col(
                                 [
@@ -258,7 +260,7 @@ class InteractiveDashboard:
                                         included=True,
                                     ),
                                 ],
-                                width=11,
+                                width=10,
                             ),
                         ],
                     ),
@@ -280,7 +282,7 @@ class InteractiveDashboard:
                                         ]
                                     ),
                                 ],
-                                width=1,
+                                width=2,
                             ),
                             dbc.Col(
                                 [
@@ -297,7 +299,7 @@ class InteractiveDashboard:
                                         included=True,
                                     ),
                                 ],
-                                width=11,
+                                width=10,
                             ),
                         ],
                     ),
@@ -361,6 +363,37 @@ class InteractiveDashboard:
                                 ],
                                 width=2,
                             ),
+                            dbc.Col(
+                                [
+                                    html.Div(
+                                        [
+                                            html.Span(
+                                                "Videos: ",
+                                                **styles["controls_labels"],
+                                            ),
+                                            html.Span(
+                                                id="num-videos-display",
+                                                **styles["controls_text"],
+                                            ),
+                                        ],
+                                        style={"marginBottom": "0px"},
+                                    ),
+                                    html.Div(
+                                        [
+                                            html.Span(
+                                                "Days: ",
+                                                **styles["controls_labels"],
+                                            ),
+                                            html.Span(
+                                                id="num-days-display",
+                                                **styles["controls_text"],
+                                            ),
+                                        ],
+                                    ),
+                                ],
+                                width=2,
+                                className="d-flex flex-column align-items-start",
+                            ),
                         ],
                     ),
                 ]
@@ -370,6 +403,8 @@ class InteractiveDashboard:
 
         self.app.layout = dbc.Container(
             [
+                dcc.Store(id="num-videos-store", data=self.num_videos),
+                dcc.Store(id="num-days-store", data=self.num_days),
                 main_controls,
                 html.H2("Video Analytics Dashboard", **styles["title"]),
                 html.Div(
@@ -477,6 +512,8 @@ class InteractiveDashboard:
                 Output("daily-count-graph", "figure"),
                 Output("hourly-count-graph", "figure"),
                 Output("cumulative-count-graph", "figure"),
+                Output("num-videos-store", "data"),
+                Output("num-days-store", "data"),
             ],
             [
                 Input("date-range", "start_date"),
@@ -517,6 +554,7 @@ class InteractiveDashboard:
             start_time_str = self.slider_to_time(start_time)
             end_time_str = self.slider_to_time(end_time)
 
+            logger.debug("----------------------------------------------------")
             logger.debug(f"Date range: {start_date} to {end_date}")
             logger.debug(f"Devices: {selected_devices}")
             logger.debug(f"Weekdays: {weekdays}")
@@ -531,8 +569,18 @@ class InteractiveDashboard:
                 weekdays=weekdays,
             )
             filtered_videos = VideoFilter.by_selectors(self.videos, selector)
-            num_videos = len(filtered_videos)
-            logger.debug(f"Number of videos: {num_videos:,}")
+            self.num_videos = len(filtered_videos)
+            logger.debug(f"Number of videos: {self.num_videos:,}")
+            self.num_days = 0
+            if self.num_videos > 0:
+                self.num_days = (
+                    filtered_videos[-1].date - filtered_videos[0].date
+                ).days + 1
+            logger.debug(f"Number of days: {self.num_days :,}")
+            if self.num_days > 0:
+                logger.debug(
+                    f"Average number of videos per day: {self.num_videos / self.num_days :.2f}"
+                )
 
             # Get aggregated data
             data_aggregator = VideoDataAggregator(
@@ -549,7 +597,21 @@ class InteractiveDashboard:
                 bins_per_hour=bins_per_hour,
             )
 
-            return figs[0], figs[1], figs[2]
+            return figs[0], figs[1], figs[2], self.num_videos, self.num_days
+
+        # Update num-videos-display from store
+        @self.app.callback(
+            Output("num-videos-display", "children"), Input("num-videos-store", "data")
+        )
+        def update_num_videos_display(num_videos):
+            return f"{num_videos:,}" if num_videos is not None else "0"
+
+        # Update num-days-display from store
+        @self.app.callback(
+            Output("num-days-display", "children"), Input("num-days-store", "data")
+        )
+        def update_num_days_display(num_days):
+            return f"{num_days:,}" if num_days is not None else "0"
 
         # save button enable/disable callback
         @self.app.callback(

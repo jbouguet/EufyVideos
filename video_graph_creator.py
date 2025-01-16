@@ -48,7 +48,7 @@ class VideoGraphCreator:
         """Creates a plotly figure with consistent styling using shared configuration"""
         if config is None:
             config = {
-                "is_cumulative": False,
+                # "is_cumulative": False,
                 "is_hourly": False,
                 "bins_per_hour": 4,
             }
@@ -63,6 +63,23 @@ class VideoGraphCreator:
         x_column = "Hour" if config.get("is_hourly") else "Date"
         devices = [dev for dev in Config.get_all_devices() if dev in data.columns]
         colors = DashboardConfig.get_device_colors()
+
+        # For date-based charts, ensure all dates are present with zeros for missing dates
+        if not config.get("is_hourly"):
+            # Convert Date column to datetime
+            data[x_column] = pd.to_datetime(data[x_column])
+
+            # Get min and max dates
+            min_date = data[x_column].min()
+            max_date = data[x_column].max()
+
+            # Create a complete date range DataFrame
+            complete_dates = pd.date_range(start=min_date, end=max_date, freq="D")
+            complete_df = pd.DataFrame({x_column: complete_dates})
+
+            # Merge with original data, filling NaN with 0
+            data = pd.merge(complete_df, data, on=x_column, how="left")
+            data = data.fillna(0)
 
         # Add device traces
         for device in devices:
@@ -92,8 +109,11 @@ class VideoGraphCreator:
                 )
             )
 
-        # Add total line
+        # Add total line with gaps for zero values
         total = data[devices].sum(axis=1)
+        # Replace zeros with None to create discontinuities in the line
+        total_with_gaps = total.replace(0, None)
+
         if config.get("is_hourly"):
             hovertemplate = (
                 "<b>Time:</b> %{customdata}<br>"
@@ -110,12 +130,13 @@ class VideoGraphCreator:
         fig.add_trace(
             go.Scatter(
                 x=data[x_column],
-                y=total,
+                y=total_with_gaps,  # Use the version with None values
                 mode="lines",
                 name="Total",
                 line=dict(color="red", width=1, shape="linear"),
                 hovertemplate=hovertemplate,
                 customdata=customdata,
+                connectgaps=False,  # Don't connect across null values
             )
         )
 
@@ -184,7 +205,23 @@ class VideoGraphCreator:
                 tickangle=-90,
             )
         else:
-            fig.update_xaxes(**fig_config["axes"]["xaxis_date"])
+            # Get min and max dates from the data
+            min_date = data[x_column].min()
+            max_date = data[x_column].max()
+            logger.debug(f"min_date = {min_date}")
+            logger.debug(f"max_date = {max_date}")
+            logger.debug(f"Number of days = {(max_date - min_date).days + 1}")
+
+            # Generate all dates between min and max
+            all_dates = pd.date_range(start=min_date, end=max_date, freq="D")
+
+            # Configure x-axis with explicit ticks for all dates
+            fig.update_xaxes(
+                tickmode="array",
+                tickvals=all_dates,
+                ticktext=[d.strftime("%a %Y-%m-%d") for d in all_dates],
+                **fig_config["axes"]["xaxis_date"],
+            )
 
         return fig
 
@@ -220,8 +257,92 @@ class VideoGraphCreator:
                 VideoGraphCreator.create_figure(
                     daily_data[metric].set_index("Date").cumsum().reset_index(),
                     title="Cumulative Daily Video " + metric.capitalize(),
-                    config={"is_cumulative": True},
+                    # config={"is_cumulative": True},
                 )
             )
 
         return figs
+
+
+if __name__ == "__main__":
+
+    # Testing code for the module.
+    import logging
+    import os
+
+    from config import Config
+    from logging_config import set_logger_level_and_format
+    from video_data_aggregator import VideoDataAggregator
+    from video_database import VideoDatabase, VideoDatabaseList
+    from video_filter import DateRange, TimeRange, VideoFilter, VideoSelector
+
+    set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
+
+    # Load video database
+    root_database = (
+        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"
+    )
+    metadata_files = [
+        os.path.join(root_database, "videos_in_batches.csv"),
+        os.path.join(root_database, "videos_in_backup.csv"),
+        # Add more metadata files as needed
+    ]
+    out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
+
+    video_database = VideoDatabaseList(
+        [
+            VideoDatabase(video_directories=None, video_metadata_file=file)
+            for file in metadata_files
+        ]
+    ).load_videos()
+
+    bins_per_hour = 1
+
+    start_date = "2024-12-30"
+    end_date = "2025-01-05"
+    start_time = "00:00:00"
+    end_time = "23:59:59"
+    devices = Config.get_all_devices()
+    weekdays = [
+        "monday",
+        "wednesday",
+        "friday",
+        "sunday",
+    ]
+
+    logger.debug(f"Date range: {start_date} to {end_date}")
+    logger.debug(f"Time range: {start_time} to {end_time}")
+    logger.debug(f"Devices: {devices}")
+    logger.debug(f"Weekdays: {weekdays}")
+
+    selector = VideoSelector(
+        date_range=DateRange(start=start_date, end=end_date),
+        time_range=TimeRange(start=start_time, end=end_time),
+        devices=devices,
+        weekdays=weekdays,
+    )
+    # Filter the database
+    videos = VideoFilter.by_selectors(video_database, selector)
+
+    logger.debug(f"Number of videos: {len(videos)}")
+
+    metric = "activity"
+    metrics = [metric]
+
+    # Get aggregated data
+    data_aggregator = VideoDataAggregator(
+        metrics=metrics, config={"bins_per_hour": bins_per_hour}
+    )
+
+    daily_data, hourly_data = data_aggregator.run(videos)
+
+    print(daily_data[metric])
+
+    df: pd.DataFrame = daily_data[metric]
+
+    fig_daily = VideoGraphCreator.create_figure(
+        df,
+        title="Daily Video " + metric.capitalize(),
+    )
+
+    # fig_daily.show()

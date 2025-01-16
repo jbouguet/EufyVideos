@@ -1,19 +1,19 @@
 /* =================== DATE PICKER STYLES =================== */
 .DateRangePickerInput {
-    font-size: 11px !important;
-    border: 1px solid #307ac0 !important;
-    background-color: white !important;
+    border: 1px solid #f2faff !important;
+    background-color: #f2faff !important;
 }
 
 .DateInput_input {
-    font-size: 11px !important;
+    font-size: 10px !important;
     padding: 0px 2px !important;
-    color: #307ac0 !important;
+    color: black!important;
+    border: 1px solid black!important;
     background-color: white !important;
 }
 
 .DateInput {
-    width: 70px !important;
+    width: 64px !important;
 }
 
 .CalendarMonth_caption {
@@ -34,12 +34,12 @@
 
 .DateRangePickerInput_arrow {
     font-size: 10px !important;
-    padding: 0px 0px !important;
+    padding: 0px 1px !important;
 }
 
 .DateRangePickerInput_arrow_svg {
-    height: 20px !important;
-    width: 10px !important;
+    height: 18px !important;
+    width: 0px !important; /* Make the arrow disappear */
     vertical-align: middle !important;
 }
 
@@ -50,7 +50,7 @@
 
 .rc-slider-mark-text {
     font-size: 10px !important;
-    color: #307ac0 !important;
+    color: black !important;
 }
 
 .rc-slider-mark {
@@ -60,7 +60,7 @@
 .rc-slider-handle {
     width: 14px !important;
     height: 14px !important;
-    border: solid 2px #307ac0 !important;
+    border: solid 2px black !important;
     background-color: white !important;
     margin-top: -5px !important;
 }
@@ -77,8 +77,8 @@
 
 /* Start-time slider */
 #start-time .rc-slider-dot {
-    border: 2px solid #307ac0 !important;
-    background-color: #307ac0 !important;
+    border: 2px solid black !important;
+    background-color: black !important;
     width: 8px !important;
     height: 8px !important;
     bottom: -2px !important;
@@ -94,7 +94,7 @@
 }
 
 #start-time .rc-slider-rail {
-    background-color: #307ac0 !important;
+    background-color: black !important;
 }
 
 /* End-time slider */
@@ -107,12 +107,12 @@
 }
 
 #end-time .rc-slider-dot-active {
-    border-color: #307ac0 !important;
-    background-color: #307ac0 !important;
+    border-color: black !important;
+    background-color: black !important;
 }
 
 #end-time .rc-slider-track {
-    background-color: #307ac0 !important;
+    background-color: black !important;
 }
 
 #end-time .rc-slider-rail {
@@ -122,7 +122,7 @@
 /* =================== DROPDOWN STYLES =================== */
 /* Main container and control */
 .Select-control {
-    border: 1px solid #307ac0 !important;
+    border: 1px solid black !important;
     border-radius: 3px !important;
     height: 15px !important;
     min-height: 15px !important;
@@ -133,13 +133,13 @@
 /* Selected value text color */
 .Select-value-label {
     font-size: 10px !important;
-    color: #307ac0 !important;  /* Main blue */
+    color: black !important;  /* Main blue */
 }
 
 /* Multi-select specific styles */
 .Select--multi .Select-value {
     background-color: white !important;
-    border: 1px solid #307ac0 !important;
+    border: 1px solid black !important;
     border-radius: 2px !important;
     margin: 1px 1px !important;
     line-height: 1 !important;
@@ -152,17 +152,17 @@
     padding: 1px 2px !important;
     line-height: 1 !important;
     height: 15px !important;
-    color: #307ac0 !important;  /* Explicitly set the same blue */
+    color: black !important;  /* Explicitly set the same blue */
 }
 
 /* Selected option in dropdown menu */
 .Select-option.is-selected {
-    background-color: #307ac0 !important;  /* Blue background */
+    background-color: black !important;  /* Blue background */
     color: white !important;  /* White text for contrast */
 }
 
 .Select--multi .Select-value-icon {
-    border-right: 0px solid #307ac0 !important;
+    border-right: 0px solid black !important;
     padding: 0px 2px !important;
     line-height: 1 !important;
     height: 13px !important;
@@ -170,13 +170,13 @@
 }
 
 .Select--multi .Select-value-icon:hover {
-    background-color: #307ac0 !important;
+    background-color: black !important;
     color: white !important;
 }
 
 /* Dropdown menu */
 .Select-menu-outer {
-    border: 1px solid #307ac0 !important;
+    border: 1px solid black !important;
     border-radius: 4px !important;
     margin-top: 2px !important;
     max-height: 200px !important;
@@ -211,9 +211,9 @@
     font-size: 10px !important;
     height: 30px !important;
     padding: 2px 6px !important;
-    border: 1px solid #307ac0 !important;
+    border: 1px solid black !important;
     background-color: white !important;
-    color: #307ac0 !important;
+    color: black !important;
 }
 
 /* Input placeholder */
@@ -224,7 +224,7 @@
 
 /* Input when focused */
 .form-control:focus {
-    border-color: #307ac0 !important;
+    border-color: black !important;
     box-shadow: 0 0 0 0.2rem rgba(48, 122, 192, 0.25) !important;
     background-color: white !important;
 }
@@ -246,7 +246,7 @@
     height: 30px !important;
     padding: 2px 8px !important;
     background-color: #307ac0 !important;
-    border-color: #307ac0 !important;
+    border-color: black !important;
     color: white !important;
 }
 

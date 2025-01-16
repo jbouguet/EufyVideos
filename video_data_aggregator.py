@@ -162,3 +162,77 @@ class VideoDataAggregator:
             .unstack(fill_value=0)
             .reset_index()
         )
+
+
+if __name__ == "__main__":
+
+    # Testing code for the module.
+    import logging
+    import os
+
+    from config import Config
+    from logging_config import set_logger_level_and_format
+    from video_database import VideoDatabase, VideoDatabaseList
+    from video_filter import DateRange, TimeRange, VideoFilter, VideoSelector
+
+    set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
+
+    # Load video database
+    root_database = (
+        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"
+    )
+    metadata_files = [
+        os.path.join(root_database, "videos_in_batches.csv"),
+        os.path.join(root_database, "videos_in_backup.csv"),
+        # Add more metadata files as needed
+    ]
+    out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
+
+    video_database = VideoDatabaseList(
+        [
+            VideoDatabase(video_directories=None, video_metadata_file=file)
+            for file in metadata_files
+        ]
+    ).load_videos()
+
+    bins_per_hour = 1
+
+    start_date = "2024-12-30"
+    end_date = "2025-01-05"
+    start_time = "00:00:00"
+    end_time = "23:59:59"
+    devices = Config.get_all_devices()
+    weekdays = [
+        "monday",
+        "wednesday",
+        "friday",
+        "sunday",
+    ]
+
+    logger.debug(f"Date range: {start_date} to {end_date}")
+    logger.debug(f"Time range: {start_time} to {end_time}")
+    logger.debug(f"Devices: {devices}")
+    logger.debug(f"Weekdays: {weekdays}")
+
+    selector = VideoSelector(
+        date_range=DateRange(start=start_date, end=end_date),
+        time_range=TimeRange(start=start_time, end=end_time),
+        devices=devices,
+        weekdays=weekdays,
+    )
+    # Filter the database
+    videos = VideoFilter.by_selectors(video_database, selector)
+
+    logger.debug(f"Number of videos: {len(videos)}")
+
+    metrics = ["activity"]
+
+    # Get aggregated data
+    data_aggregator = VideoDataAggregator(
+        metrics=metrics, config={"bins_per_hour": bins_per_hour}
+    )
+
+    daily_data, hourly_data = data_aggregator.run(videos)
+
+    print(hourly_data["activity"])
+    print(daily_data["activity"])
