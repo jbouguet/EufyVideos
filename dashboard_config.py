@@ -145,7 +145,7 @@ class DashboardConfig:
             },
             "controls_spacing": {
                 "style": {
-                    "margin-right": "8px",  # Reduced from 15px to 8px
+                    "margin-right": "6px",  # Reduced from 15px to 8px
                 }
             },
             "container": {"style": {"padding": "0", "margin": "0"}},

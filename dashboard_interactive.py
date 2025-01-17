@@ -243,7 +243,7 @@ class InteractiveDashboard:
                                         ]
                                     ),
                                 ],
-                                width=2,
+                                width=1,
                             ),
                             dbc.Col(
                                 [
@@ -260,7 +260,7 @@ class InteractiveDashboard:
                                         included=True,
                                     ),
                                 ],
-                                width=10,
+                                width=11,
                             ),
                         ],
                     ),
@@ -282,7 +282,7 @@ class InteractiveDashboard:
                                         ]
                                     ),
                                 ],
-                                width=2,
+                                width=1,
                             ),
                             dbc.Col(
                                 [
@@ -299,7 +299,7 @@ class InteractiveDashboard:
                                         included=True,
                                     ),
                                 ],
-                                width=10,
+                                width=11,
                             ),
                         ],
                     ),
