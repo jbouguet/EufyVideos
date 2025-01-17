@@ -129,13 +129,13 @@ class DashboardConfig:
                 "style": {
                     "font-size": "12px",
                     "font-weight": "bold",
-                    "color": "black",
+                    "color": "rgb(150, 150, 150)",
                 }
             },
             "controls_text": {
                 "style": {
                     "font-size": "12px",
-                    "color": "black",
+                    "color": "rgb(150, 150, 150)",
                 }
             },
             "controls_items": {

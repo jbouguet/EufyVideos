@@ -7,8 +7,8 @@
 .DateInput_input {
     font-size: 10px !important;
     padding: 0px 2px !important;
-    color: black!important;
-    border: 1px solid black!important;
+    color: rgb(150, 150, 150)!important;
+    border: 1px solid rgb(216, 216, 216)!important;
     background-color: white !important;
 }
 
@@ -50,7 +50,7 @@
 
 .rc-slider-mark-text {
     font-size: 10px !important;
-    color: black !important;
+    color: rgb(150, 150, 150) !important;
 }
 
 .rc-slider-mark {
@@ -60,7 +60,7 @@
 .rc-slider-handle {
     width: 14px !important;
     height: 14px !important;
-    border: solid 2px black !important;
+    border: solid 2px rgb(150, 150, 150) !important;
     background-color: white !important;
     margin-top: -5px !important;
 }
@@ -77,52 +77,52 @@
 
 /* Start-time slider */
 #start-time .rc-slider-dot {
-    border: 2px solid black !important;
-    background-color: black !important;
+    border: 2px solid rgb(150, 150, 150) !important;
+    background-color: rgb(150, 150, 150) !important;
     width: 8px !important;
     height: 8px !important;
     bottom: -2px !important;
 }
 
 #start-time .rc-slider-dot-active {
-    border-color: #d5e3f3 !important;
-    background-color: #d5e3f3 !important;
+    border-color: rgb(230, 230, 230) !important;
+    background-color: rgb(230, 230, 230) !important;
 }
 
 #start-time .rc-slider-track {
-    background-color: #d5e3f3 !important;
+    background-color: rgb(230, 230, 230) !important;
 }
 
 #start-time .rc-slider-rail {
-    background-color: black !important;
+    background-color: rgb(150, 150, 150) !important;
 }
 
 /* End-time slider */
 #end-time .rc-slider-dot {
-    border: 2px solid #d5e3f3 !important;
-    background-color: #d5e3f3 !important;
+    border: 2px solid rgb(230, 230, 230) !important;
+    background-color: rgb(230, 230, 230) !important;
     width: 8px !important;
     height: 8px !important;
     bottom: -2px !important;
 }
 
 #end-time .rc-slider-dot-active {
-    border-color: black !important;
-    background-color: black !important;
+    border-color: rgb(150, 150, 150) !important;
+    background-color: rgb(150, 150, 150) !important;
 }
 
 #end-time .rc-slider-track {
-    background-color: black !important;
+    background-color: rgb(150, 150, 150) !important;
 }
 
 #end-time .rc-slider-rail {
-    background-color: #d5e3f3 !important;
+    background-color: rgb(230, 230, 230) !important;
 }
 
 /* =================== DROPDOWN STYLES =================== */
 /* Main container and control */
 .Select-control {
-    border: 1px solid black !important;
+    border: 1px solid rgb(216, 216, 216) !important;
     border-radius: 3px !important;
     height: 15px !important;
     min-height: 15px !important;
@@ -133,13 +133,13 @@
 /* Selected value text color */
 .Select-value-label {
     font-size: 10px !important;
-    color: black !important;  /* Main blue */
+    color: rgb(150, 150, 150) !important;  /* Main blue */
 }
 
 /* Multi-select specific styles */
 .Select--multi .Select-value {
     background-color: white !important;
-    border: 1px solid black !important;
+    border: 1px solid rgb(216, 216, 216) !important;
     border-radius: 2px !important;
     margin: 1px 1px !important;
     line-height: 1 !important;
@@ -152,17 +152,17 @@
     padding: 1px 2px !important;
     line-height: 1 !important;
     height: 15px !important;
-    color: black !important;  /* Explicitly set the same blue */
+    color: rgb(150, 150, 150) !important;  /* Explicitly set the same blue */
 }
 
 /* Selected option in dropdown menu */
 .Select-option.is-selected {
-    background-color: black !important;  /* Blue background */
+    background-color: rgb(150, 150, 150) !important;  /* Blue background */
     color: white !important;  /* White text for contrast */
 }
 
 .Select--multi .Select-value-icon {
-    border-right: 0px solid black !important;
+    border-right: 0px solid rgb(216, 216, 216) !important;
     padding: 0px 2px !important;
     line-height: 1 !important;
     height: 13px !important;
@@ -170,13 +170,13 @@
 }
 
 .Select--multi .Select-value-icon:hover {
-    background-color: black !important;
+    background-color: rgb(150, 150, 150) !important;
     color: white !important;
 }
 
 /* Dropdown menu */
 .Select-menu-outer {
-    border: 1px solid black !important;
+    border: 1px solid rgb(216, 216, 216) !important;
     border-radius: 4px !important;
     margin-top: 2px !important;
     max-height: 200px !important;
@@ -211,9 +211,9 @@
     font-size: 10px !important;
     height: 30px !important;
     padding: 2px 6px !important;
-    border: 1px solid black !important;
+    border: 1px solid rgb(216, 216, 216) !important;
     background-color: white !important;
-    color: black !important;
+    color: rgb(150, 150, 150) !important;
 }
 
 /* Input placeholder */
@@ -224,7 +224,7 @@
 
 /* Input when focused */
 .form-control:focus {
-    border-color: black !important;
+    border-color: rgb(216, 216, 216) !important;
     box-shadow: 0 0 0 0.2rem rgba(48, 122, 192, 0.25) !important;
     background-color: white !important;
 }
@@ -246,7 +246,7 @@
     height: 30px !important;
     padding: 2px 8px !important;
     background-color: #307ac0 !important;
-    border-color: black !important;
+    border-color: rgb(216, 216, 216) !important;
     color: white !important;
 }
 
@@ -261,7 +261,7 @@
 .btn-primary:focus {
     background-color: #1f5584 !important;
     border-color: #1f5584 !important;
-    box-shadow: 0 0 0 0.2rem rgba(48, 122, 192, 0.25) !important;
+    box-shadow: 0 0 0 0.2rem #307ac040 !important;
 }
 
 /* Disabled button state */

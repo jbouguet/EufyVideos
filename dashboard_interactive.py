@@ -115,7 +115,7 @@ class InteractiveDashboard:
                             dbc.Col(
                                 [
                                     html.Label(
-                                        "Date Range:",
+                                        "Date Range: ",
                                         **styles["controls_labels"],
                                     ),
                                     dcc.DatePickerRange(
@@ -155,7 +155,7 @@ class InteractiveDashboard:
                             dbc.Col(
                                 [
                                     html.Label(
-                                        "Week Days:",
+                                        "Week Days: ",
                                         **styles["controls_labels"],
                                     ),
                                     dcc.Dropdown(
@@ -175,7 +175,7 @@ class InteractiveDashboard:
                             dbc.Col(
                                 [
                                     html.Label(
-                                        "Time Bins:",
+                                        "Time Bins: ",
                                         **styles["controls_labels"],
                                     ),
                                     dcc.Dropdown(
@@ -307,8 +307,39 @@ class InteractiveDashboard:
                         [
                             dbc.Col(
                                 [
+                                    html.Div(
+                                        [
+                                            html.Span(
+                                                "Number of videos: ",
+                                                **styles["controls_labels"],
+                                            ),
+                                            html.Span(
+                                                id="num-videos-display",
+                                                **styles["controls_text"],
+                                            ),
+                                        ],
+                                        style={"marginBottom": "0px"},
+                                    ),
+                                    html.Div(
+                                        [
+                                            html.Span(
+                                                "Number of days: ",
+                                                **styles["controls_labels"],
+                                            ),
+                                            html.Span(
+                                                id="num-days-display",
+                                                **styles["controls_text"],
+                                            ),
+                                        ],
+                                    ),
+                                ],
+                                width=2,
+                                className="d-flex flex-column align-items-start",
+                            ),
+                            dbc.Col(
+                                [
                                     html.Label(
-                                        "Story:",
+                                        "Output directory:",
                                         **styles["controls_labels"],
                                     ),
                                 ],
@@ -326,6 +357,15 @@ class InteractiveDashboard:
                                     ),
                                 ],
                                 width=4,
+                            ),
+                            dbc.Col(
+                                [
+                                    html.Label(
+                                        "Story name:",
+                                        **styles["controls_labels"],
+                                    ),
+                                ],
+                                width=1,
                             ),
                             dbc.Col(
                                 [
@@ -362,37 +402,6 @@ class InteractiveDashboard:
                                     ),
                                 ],
                                 width=2,
-                            ),
-                            dbc.Col(
-                                [
-                                    html.Div(
-                                        [
-                                            html.Span(
-                                                "Videos: ",
-                                                **styles["controls_labels"],
-                                            ),
-                                            html.Span(
-                                                id="num-videos-display",
-                                                **styles["controls_text"],
-                                            ),
-                                        ],
-                                        style={"marginBottom": "0px"},
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.Span(
-                                                "Days: ",
-                                                **styles["controls_labels"],
-                                            ),
-                                            html.Span(
-                                                id="num-days-display",
-                                                **styles["controls_text"],
-                                            ),
-                                        ],
-                                    ),
-                                ],
-                                width=2,
-                                className="d-flex flex-column align-items-start",
                             ),
                         ],
                     ),
