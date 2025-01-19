@@ -1,14 +1,14 @@
 /* =================== DATE PICKER STYLES =================== */
 .DateRangePickerInput {
-    border: 1px solid #f2faff !important;
-    background-color: #f2faff !important;
+    border: 1px solid rgb(245, 250, 255) !important;
+    background-color: rgb(245, 250, 255) !important;
 }
 
 .DateInput_input {
     font-size: 10px !important;
     padding: 0px 2px !important;
-    color: rgb(150, 150, 150)!important;
-    border: 1px solid rgb(216, 216, 216)!important;
+    color: rgb(100, 100, 100)!important;
+    border: 1px solid rgb(230, 230, 230)!important;
     background-color: white !important;
 }
 
@@ -50,7 +50,7 @@
 
 .rc-slider-mark-text {
     font-size: 10px !important;
-    color: rgb(150, 150, 150) !important;
+    color: rgb(100, 100, 100) !important;
 }
 
 .rc-slider-mark {
@@ -60,8 +60,8 @@
 .rc-slider-handle {
     width: 14px !important;
     height: 14px !important;
-    border: solid 2px rgb(150, 150, 150) !important;
-    background-color: white !important;
+    border: solid 2px rgb(100, 100, 100) !important;
+    background-color: rgb(230, 230, 230) !important;
     margin-top: -5px !important;
 }
 
@@ -77,8 +77,8 @@
 
 /* Start-time slider */
 #start-time .rc-slider-dot {
-    border: 2px solid rgb(150, 150, 150) !important;
-    background-color: rgb(150, 150, 150) !important;
+    border: 2px solid rgb(100, 100, 100) !important;
+    background-color: rgb(100, 100, 100) !important;
     width: 8px !important;
     height: 8px !important;
     bottom: -2px !important;
@@ -94,7 +94,7 @@
 }
 
 #start-time .rc-slider-rail {
-    background-color: rgb(150, 150, 150) !important;
+    background-color: rgb(100, 100, 100) !important;
 }
 
 /* End-time slider */
@@ -107,12 +107,12 @@
 }
 
 #end-time .rc-slider-dot-active {
-    border-color: rgb(150, 150, 150) !important;
-    background-color: rgb(150, 150, 150) !important;
+    border-color: rgb(100, 100, 100) !important;
+    background-color: rgb(100, 100, 100) !important;
 }
 
 #end-time .rc-slider-track {
-    background-color: rgb(150, 150, 150) !important;
+    background-color: rgb(100, 100, 100) !important;
 }
 
 #end-time .rc-slider-rail {
@@ -122,10 +122,10 @@
 /* =================== DROPDOWN STYLES =================== */
 /* Main container and control */
 .Select-control {
-    border: 1px solid rgb(216, 216, 216) !important;
+    border: 1px solid rgb(230, 230, 230) !important;
     border-radius: 3px !important;
-    height: 15px !important;
-    min-height: 15px !important;
+    height: 13px !important;
+    min-height: 13px !important;
     background-color: white !important;
     padding-top: 0px !important;
 }
@@ -133,17 +133,17 @@
 /* Selected value text color */
 .Select-value-label {
     font-size: 10px !important;
-    color: rgb(150, 150, 150) !important;  /* Main blue */
+    color: rgb(100, 100, 100) !important;  /* Main blue */
 }
 
 /* Multi-select specific styles */
 .Select--multi .Select-value {
     background-color: white !important;
-    border: 1px solid rgb(216, 216, 216) !important;
+    border: 1px solid rgb(230, 230, 230) !important;
     border-radius: 2px !important;
     margin: 1px 1px !important;
     line-height: 1 !important;
-    height: 15px !important;
+    height: 13px !important;
 }
 
 /* Multi-select specific value text color */
@@ -151,18 +151,18 @@
     font-size: 10px !important;
     padding: 1px 2px !important;
     line-height: 1 !important;
-    height: 15px !important;
-    color: rgb(150, 150, 150) !important;  /* Explicitly set the same blue */
+    height: 13px !important;
+    color: rgb(100, 100, 100) !important;  /* Explicitly set the same blue */
 }
 
 /* Selected option in dropdown menu */
 .Select-option.is-selected {
-    background-color: rgb(150, 150, 150) !important;  /* Blue background */
+    background-color: rgb(100, 100, 100) !important;  /* Blue background */
     color: white !important;  /* White text for contrast */
 }
 
 .Select--multi .Select-value-icon {
-    border-right: 0px solid rgb(216, 216, 216) !important;
+    border-right: 0px solid rgb(230, 230, 230) !important;
     padding: 0px 2px !important;
     line-height: 1 !important;
     height: 13px !important;
@@ -170,27 +170,27 @@
 }
 
 .Select--multi .Select-value-icon:hover {
-    background-color: rgb(150, 150, 150) !important;
+    background-color: rgb(100, 100, 100) !important;
     color: white !important;
 }
 
 /* Dropdown menu */
 .Select-menu-outer {
-    border: 1px solid rgb(216, 216, 216) !important;
+    border: 1px solid rgb(230, 230, 230) !important;
     border-radius: 4px !important;
     margin-top: 2px !important;
     max-height: 200px !important;
 }
 
 .ReactVirtualized__Grid__innerScrollContainer > div {
-    height: 16px !important;
+    height: 13px !important;
 }
 
 .VirtualizedSelectOption {
     padding: 0px 4px !important;
-    line-height: 16px !important;
+    line-height: 13px !important;
     font-size: 10px !important;
-    height: 16px !important;
+    height: 13px !important;
 }
 
 /* Disable input interaction in multi-select */
@@ -211,15 +211,9 @@
     font-size: 10px !important;
     height: 30px !important;
     padding: 2px 6px !important;
-    border: 1px solid rgb(216, 216, 216) !important;
+    border: 1px solid rgb(230, 230, 230) !important;
     background-color: white !important;
-    color: rgb(150, 150, 150) !important;
-}
-
-/* Input placeholder */
-.form-control::placeholder {
-    color: #666 !important;
-    font-size: 10px !important;
+    color: rgb(100, 100, 100) !important;
 }
 
 /* Input when focused */
@@ -232,8 +226,9 @@
 /* Placeholder text styling options */
 .form-control::placeholder {
     font-size: 10px !important;
+    color: rgb(230, 230, 230) !important;    /* Very very light gray */
     /* Choose one of these colors: */
-    color: #bbb !important;    /* Very light gray */
+    /* color: #bbb !important;    /* Very light gray */
     /* color: #999 !important;    /* Light gray */
     /* color: #888 !important;    /* Medium light gray */
     /* color: #666 !important;    /* Medium gray */
@@ -246,7 +241,7 @@
     height: 30px !important;
     padding: 2px 8px !important;
     background-color: #307ac0 !important;
-    border-color: rgb(216, 216, 216) !important;
+    border-color: rgb(230, 230, 230) !important;
     color: white !important;
 }
 

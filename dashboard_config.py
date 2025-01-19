@@ -120,7 +120,8 @@ class DashboardConfig:
         return {
             "controls_card": {
                 "style": {
-                    "background-color": "#f2faff",
+                    # "background-color": "white",
+                    "background-color": "rgb(245, 250, 255)",
                     "margin-bottom": "1rem",
                     "border-radius": "0.375rem",
                 }
@@ -128,14 +129,15 @@ class DashboardConfig:
             "controls_labels": {
                 "style": {
                     "font-size": "12px",
+                    "font-style": "italic",
                     "font-weight": "bold",
-                    "color": "rgb(150, 150, 150)",
+                    "color": "rgb(100, 100, 100)",
                 }
             },
             "controls_text": {
                 "style": {
                     "font-size": "12px",
-                    "color": "rgb(150, 150, 150)",
+                    "color": "rgb(100, 100, 100)",
                 }
             },
             "controls_items": {

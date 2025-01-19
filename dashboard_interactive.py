@@ -91,6 +91,11 @@ class InteractiveDashboard:
 
         self.num_videos = len(self.videos)
         self.num_days = (self.videos[-1].date - self.videos[0].date).days + 1
+        self.num_frames = sum(video.frame_count for video in self.videos)
+        self.total_size_mb = sum(video.file_size for video in self.videos)
+        self.total_duration_seconds = sum(
+            video.duration.total_seconds() for video in self.videos
+        )
 
         # Create Dash app
         self.app = dash.Dash(
@@ -130,7 +135,7 @@ class InteractiveDashboard:
                                         show_outside_days=True,  # Show days from adjacent months
                                     ),
                                 ],
-                                width=2,
+                                width=1,
                             ),
                             dbc.Col(
                                 [
@@ -207,7 +212,7 @@ class InteractiveDashboard:
                                         options=[
                                             {"label": "Activity", "value": "activity"},
                                             {
-                                                "label": "Duration (in minutes)",
+                                                "label": "Duration (in mins)",
                                                 "value": "duration",
                                             },
                                             {
@@ -221,7 +226,7 @@ class InteractiveDashboard:
                                         **styles["controls_items"],
                                     ),
                                 ],
-                                width=1,
+                                width=2,
                             ),
                         ],
                     ),
@@ -310,6 +315,18 @@ class InteractiveDashboard:
                                     html.Div(
                                         [
                                             html.Span(
+                                                "Number of days: ",
+                                                **styles["controls_labels"],
+                                            ),
+                                            html.Span(
+                                                id="num-days-display",
+                                                **styles["controls_text"],
+                                            ),
+                                        ],
+                                    ),
+                                    html.Div(
+                                        [
+                                            html.Span(
                                                 "Number of videos: ",
                                                 **styles["controls_labels"],
                                             ),
@@ -323,45 +340,50 @@ class InteractiveDashboard:
                                     html.Div(
                                         [
                                             html.Span(
-                                                "Number of days: ",
+                                                "Number of frames: ",
                                                 **styles["controls_labels"],
                                             ),
                                             html.Span(
-                                                id="num-days-display",
+                                                id="num-frames-display",
                                                 **styles["controls_text"],
                                             ),
                                         ],
+                                        style={"marginBottom": "0px"},
+                                    ),
+                                    html.Div(
+                                        [
+                                            html.Span(
+                                                "Duration: ",
+                                                **styles["controls_labels"],
+                                            ),
+                                            html.Span(
+                                                id="total-duration-display",
+                                                **styles["controls_text"],
+                                            ),
+                                        ],
+                                        style={"marginBottom": "0px"},
+                                    ),
+                                    html.Div(
+                                        [
+                                            html.Span(
+                                                "Size: ",
+                                                **styles["controls_labels"],
+                                            ),
+                                            html.Span(
+                                                id="total-size-display",
+                                                **styles["controls_text"],
+                                            ),
+                                        ],
+                                        style={"marginBottom": "0px"},
                                     ),
                                 ],
-                                width=2,
+                                width=3,
                                 className="d-flex flex-column align-items-start",
                             ),
                             dbc.Col(
                                 [
                                     html.Label(
-                                        "Output directory:",
-                                        **styles["controls_labels"],
-                                    ),
-                                ],
-                                width=1,
-                            ),
-                            dbc.Col(
-                                [
-                                    dcc.Dropdown(
-                                        id="story-dir-input",
-                                        options=self.directory_options,
-                                        value=self.stories_output,
-                                        clearable=False,
-                                        optionHeight=16,
-                                        **styles["controls_items"],
-                                    ),
-                                ],
-                                width=4,
-                            ),
-                            dbc.Col(
-                                [
-                                    html.Label(
-                                        "Story name:",
+                                        "Story:",
                                         **styles["controls_labels"],
                                     ),
                                 ],
@@ -403,6 +425,28 @@ class InteractiveDashboard:
                                 ],
                                 width=2,
                             ),
+                            dbc.Col(
+                                [
+                                    html.Label(
+                                        "Directory:",
+                                        **styles["controls_labels"],
+                                    ),
+                                ],
+                                width=1,
+                            ),
+                            dbc.Col(
+                                [
+                                    dcc.Dropdown(
+                                        id="story-dir-input",
+                                        options=self.directory_options,
+                                        value=self.stories_output,
+                                        clearable=False,
+                                        optionHeight=16,
+                                        **styles["controls_items"],
+                                    ),
+                                ],
+                                width=3,
+                            ),
                         ],
                     ),
                 ]
@@ -414,6 +458,9 @@ class InteractiveDashboard:
             [
                 dcc.Store(id="num-videos-store", data=self.num_videos),
                 dcc.Store(id="num-days-store", data=self.num_days),
+                dcc.Store(id="num-frames-store", data=self.num_frames),
+                dcc.Store(id="total-duration-store", data=self.total_duration_seconds),
+                dcc.Store(id="total-size-store", data=self.total_size_mb),
                 main_controls,
                 html.H2("Video Analytics Dashboard", **styles["title"]),
                 html.Div(
@@ -523,6 +570,9 @@ class InteractiveDashboard:
                 Output("cumulative-count-graph", "figure"),
                 Output("num-videos-store", "data"),
                 Output("num-days-store", "data"),
+                Output("num-frames-store", "data"),
+                Output("total-duration-store", "data"),
+                Output("total-size-store", "data"),
             ],
             [
                 Input("date-range", "start_date"),
@@ -579,7 +629,17 @@ class InteractiveDashboard:
             )
             filtered_videos = VideoFilter.by_selectors(self.videos, selector)
             self.num_videos = len(filtered_videos)
+            self.num_frames = sum(video.frame_count for video in filtered_videos)
+            self.total_size_mb = sum(video.file_size for video in filtered_videos)
+            self.total_duration_seconds = sum(
+                video.duration.total_seconds() for video in filtered_videos
+            )
+
             logger.debug(f"Number of videos: {self.num_videos:,}")
+            logger.debug(f"Number of frames: {self.num_frames:,}")
+            logger.debug(f"Duration: {self.total_duration_seconds / 60.0:,.3f} minutes")
+            logger.debug(f"Size: {self.total_size_mb:,.3f} MB")
+
             self.num_days = 0
             if self.num_videos > 0:
                 self.num_days = (
@@ -606,7 +666,16 @@ class InteractiveDashboard:
                 bins_per_hour=bins_per_hour,
             )
 
-            return figs[0], figs[1], figs[2], self.num_videos, self.num_days
+            return (
+                figs[0],
+                figs[1],
+                figs[2],
+                self.num_videos,
+                self.num_days,
+                self.num_frames,
+                self.total_duration_seconds,
+                self.total_size_mb,
+            )
 
         # Update num-videos-display from store
         @self.app.callback(
@@ -621,6 +690,32 @@ class InteractiveDashboard:
         )
         def update_num_days_display(num_days):
             return f"{num_days:,}" if num_days is not None else "0"
+
+        # Update num-frames-display from store
+        @self.app.callback(
+            Output("num-frames-display", "children"), Input("num-frames-store", "data")
+        )
+        def update_num_frames_display(num_frames):
+            return f"{num_frames:,}" if num_frames is not None else "0"
+
+        # Update total-duration-display from store
+        @self.app.callback(
+            Output("total-duration-display", "children"),
+            Input("total-duration-store", "data"),
+        )
+        def update_total_duration_display(total_duration):
+            return (
+                f"{total_duration / 60.0:,.3f} minutes"
+                if total_duration is not None
+                else "0"
+            )
+
+        # Update total-size-display from store
+        @self.app.callback(
+            Output("total-size-display", "children"), Input("total-size-store", "data")
+        )
+        def update_total_size_display(total_size):
+            return f"{total_size:,.3f} MB" if total_size is not None else "0"
 
         # save button enable/disable callback
         @self.app.callback(
