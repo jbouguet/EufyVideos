@@ -10,7 +10,7 @@ from termcolor import colored
 from config import Config
 from dashboard import Dashboard
 from logging_config import create_logger
-from story_creator import Story
+from story_creator import Story, clean_none_values
 from tag_processor import VideoTags
 from video_database import VideoDatabase, VideoDatabaseList
 from video_metadata import VideoMetadata
@@ -156,7 +156,7 @@ class AnalysisConfig:
 
     def to_file(self, config_file: str) -> None:
         with open(config_file, "w") as f:
-            yaml.dump(asdict(self), f)
+            yaml.dump(clean_none_values(asdict(self)), f, default_flow_style=False)
 
 
 class VideoAnalyzer:

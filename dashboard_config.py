@@ -120,10 +120,9 @@ class DashboardConfig:
         return {
             "controls_card": {
                 "style": {
-                    # "background-color": "white",
                     "background-color": "rgb(245, 250, 255)",
-                    "margin-bottom": "1rem",
-                    "border-radius": "0.375rem",
+                    "margin": "2px",
+                    "border-radius": "5px",
                 }
             },
             "controls_labels": {
@@ -147,7 +146,8 @@ class DashboardConfig:
             },
             "controls_spacing": {
                 "style": {
-                    "margin-right": "6px",  # Reduced from 15px to 8px
+                    "margin-right": "4px",
+                    "margin-top": "4px",
                 }
             },
             "container": {"style": {"padding": "0", "margin": "0"}},
@@ -163,4 +163,12 @@ class DashboardConfig:
                 },
             },
             "graph": {"style": {"margin": "0", "padding": "0"}},
+            "div_groups": {
+                "style": {
+                    # "bottom": "0",
+                    "margin": "0px",
+                    "padding": "0",
+                    # "outline": "1px dashed green",
+                }
+            },
         }

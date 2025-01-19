@@ -9,6 +9,7 @@
     padding: 0px 2px !important;
     color: rgb(100, 100, 100)!important;
     border: 1px solid rgb(230, 230, 230)!important;
+    border-radius: 5px !important;
     background-color: white !important;
 }
 
@@ -123,7 +124,7 @@
 /* Main container and control */
 .Select-control {
     border: 1px solid rgb(230, 230, 230) !important;
-    border-radius: 3px !important;
+    border-radius: 5px !important;
     height: 13px !important;
     min-height: 13px !important;
     background-color: white !important;
@@ -140,7 +141,7 @@
 .Select--multi .Select-value {
     background-color: white !important;
     border: 1px solid rgb(230, 230, 230) !important;
-    border-radius: 2px !important;
+    border-radius: 5px !important;
     margin: 1px 1px !important;
     line-height: 1 !important;
     height: 13px !important;
@@ -177,7 +178,7 @@
 /* Dropdown menu */
 .Select-menu-outer {
     border: 1px solid rgb(230, 230, 230) !important;
-    border-radius: 4px !important;
+    border-radius: 5px !important;
     margin-top: 2px !important;
     max-height: 200px !important;
 }

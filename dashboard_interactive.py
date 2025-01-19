@@ -119,111 +119,142 @@ class InteractiveDashboard:
                         [
                             dbc.Col(
                                 [
-                                    html.Label(
-                                        "Date Range: ",
-                                        **styles["controls_labels"],
-                                    ),
-                                    dcc.DatePickerRange(
-                                        id="date-range",
-                                        min_date_allowed=self.min_date,
-                                        max_date_allowed=self.max_date,
-                                        start_date=self.min_date,
-                                        end_date=self.max_date,
-                                        display_format="YYYY-MM-DD",
-                                        day_size=30,
-                                        calendar_orientation="vertical",
-                                        show_outside_days=True,  # Show days from adjacent months
+                                    html.Div(
+                                        [
+                                            html.Label(
+                                                "Date Range: ",
+                                                **styles["controls_labels"],
+                                            ),
+                                            dcc.DatePickerRange(
+                                                id="date-range",
+                                                min_date_allowed=self.min_date,
+                                                max_date_allowed=self.max_date,
+                                                start_date=self.min_date,
+                                                end_date=self.max_date,
+                                                display_format="YYYY-MM-DD",
+                                                day_size=30,
+                                                calendar_orientation="vertical",
+                                                show_outside_days=True,  # Show days from adjacent months
+                                            ),
+                                        ],
+                                        **styles["div_groups"],
                                     ),
                                 ],
                                 width=1,
                             ),
                             dbc.Col(
                                 [
-                                    html.Label(
-                                        "Devices:",
-                                        **styles["controls_labels"],
-                                    ),
-                                    dcc.Dropdown(
-                                        id="device-selector",
-                                        options=[
-                                            {"label": d, "value": d}
-                                            for d in self.all_devices
+                                    html.Div(
+                                        [
+                                            html.Label(
+                                                "Devices:",
+                                                **styles["controls_labels"],
+                                            ),
+                                            dcc.Dropdown(
+                                                id="device-selector",
+                                                options=[
+                                                    {"label": d, "value": d}
+                                                    for d in self.all_devices
+                                                ],
+                                                value=self.all_devices.copy(),
+                                                multi=True,
+                                                optionHeight=16,
+                                                **styles["controls_items"],
+                                            ),
                                         ],
-                                        value=self.all_devices.copy(),
-                                        multi=True,
-                                        optionHeight=16,
-                                        **styles["controls_items"],
+                                        **styles["div_groups"],
                                     ),
                                 ],
                                 width=4,
                             ),
                             dbc.Col(
                                 [
-                                    html.Label(
-                                        "Week Days: ",
-                                        **styles["controls_labels"],
-                                    ),
-                                    dcc.Dropdown(
-                                        id="weekday-selector",
-                                        options=[
-                                            {"label": d.capitalize(), "value": d}
-                                            for d in self.all_weekdays
+                                    html.Div(
+                                        [
+                                            html.Label(
+                                                "Week Days: ",
+                                                **styles["controls_labels"],
+                                            ),
+                                            dcc.Dropdown(
+                                                id="weekday-selector",
+                                                options=[
+                                                    {
+                                                        "label": d.capitalize(),
+                                                        "value": d,
+                                                    }
+                                                    for d in self.all_weekdays
+                                                ],
+                                                value=self.all_weekdays.copy(),
+                                                multi=True,
+                                                optionHeight=16,  # Control height of each option
+                                                **styles["controls_items"],
+                                            ),
                                         ],
-                                        value=self.all_weekdays.copy(),
-                                        multi=True,
-                                        optionHeight=16,  # Control height of each option
-                                        **styles["controls_items"],
+                                        **styles["div_groups"],
                                     ),
                                 ],
                                 width=4,
                             ),
                             dbc.Col(
                                 [
-                                    html.Label(
-                                        "Time Bins: ",
-                                        **styles["controls_labels"],
-                                    ),
-                                    dcc.Dropdown(
-                                        id="bin-size-selector",
-                                        options=[
-                                            {"label": "60 minutes", "value": 1},
-                                            {"label": "30 minutes", "value": 2},
-                                            {"label": "15 minutes", "value": 4},
-                                            {"label": "10 minutes", "value": 6},
-                                            {"label": "5 minutes", "value": 12},
-                                            {"label": "2 minutes", "value": 30},
+                                    html.Div(
+                                        [
+                                            html.Label(
+                                                "Time Bins: ",
+                                                **styles["controls_labels"],
+                                            ),
+                                            dcc.Dropdown(
+                                                id="bin-size-selector",
+                                                options=[
+                                                    {"label": "60 minutes", "value": 1},
+                                                    {"label": "30 minutes", "value": 2},
+                                                    {"label": "15 minutes", "value": 4},
+                                                    {"label": "10 minutes", "value": 6},
+                                                    {"label": "5 minutes", "value": 12},
+                                                    {"label": "2 minutes", "value": 30},
+                                                ],
+                                                value=4,
+                                                optionHeight=16,
+                                                clearable=False,
+                                                **styles["controls_items"],
+                                            ),
                                         ],
-                                        value=4,
-                                        optionHeight=16,
-                                        clearable=False,
-                                        **styles["controls_items"],
+                                        **styles["div_groups"],
                                     ),
                                 ],
                                 width=1,
                             ),
                             dbc.Col(
                                 [
-                                    html.Label(
-                                        "Metric:",
-                                        **styles["controls_labels"],
-                                    ),
-                                    dcc.Dropdown(
-                                        id="metric-selector",
-                                        options=[
-                                            {"label": "Activity", "value": "activity"},
-                                            {
-                                                "label": "Duration (in mins)",
-                                                "value": "duration",
-                                            },
-                                            {
-                                                "label": "File Size (in MB)",
-                                                "value": "filesize",
-                                            },
+                                    html.Div(
+                                        [
+                                            html.Label(
+                                                "Metric:",
+                                                **styles["controls_labels"],
+                                            ),
+                                            dcc.Dropdown(
+                                                id="metric-selector",
+                                                options=[
+                                                    {
+                                                        "label": "Activity",
+                                                        "value": "activity",
+                                                    },
+                                                    {
+                                                        "label": "Duration (in mins)",
+                                                        "value": "duration",
+                                                    },
+                                                    {
+                                                        "label": "File Size (in MB)",
+                                                        "value": "filesize",
+                                                    },
+                                                ],
+                                                value="activity",
+                                                optionHeight=16,
+                                                clearable=False,
+                                                **styles["controls_items"],
+                                            ),
                                         ],
-                                        value="activity",
-                                        optionHeight=16,
-                                        clearable=False,
-                                        **styles["controls_items"],
+                                        **styles["div_groups"],
                                     ),
                                 ],
                                 width=2,
@@ -245,24 +276,31 @@ class InteractiveDashboard:
                                                 id="start-time-display",
                                                 **styles["controls_text"],
                                             ),
-                                        ]
+                                        ],
+                                        **styles["div_groups"],
                                     ),
                                 ],
                                 width=1,
                             ),
                             dbc.Col(
                                 [
-                                    dcc.Slider(
-                                        id="start-time",
-                                        min=0,
-                                        max=24,
-                                        step=1 / 60,  # 1-minute intervals
-                                        value=0,
-                                        marks={
-                                            i: f"{i:02d}:00" for i in range(0, 25, 1)
-                                        },
-                                        updatemode="mouseup",
-                                        included=True,
+                                    html.Div(
+                                        [
+                                            dcc.Slider(
+                                                id="start-time",
+                                                min=0,
+                                                max=24,
+                                                step=1 / 60,  # 1-minute intervals
+                                                value=0,
+                                                marks={
+                                                    i: f"{i:02d}:00"
+                                                    for i in range(0, 25, 1)
+                                                },
+                                                updatemode="mouseup",
+                                                included=True,
+                                            ),
+                                        ],
+                                        **styles["div_groups"],
                                     ),
                                 ],
                                 width=11,
@@ -284,24 +322,31 @@ class InteractiveDashboard:
                                                 id="end-time-display",
                                                 **styles["controls_text"],
                                             ),
-                                        ]
+                                        ],
+                                        **styles["div_groups"],
                                     ),
                                 ],
                                 width=1,
                             ),
                             dbc.Col(
                                 [
-                                    dcc.Slider(
-                                        id="end-time",
-                                        min=0,
-                                        max=24,
-                                        step=1 / 60,  # 1-minute intervals
-                                        value=24,
-                                        marks={
-                                            i: f"{i:02d}:00" for i in range(0, 25, 1)
-                                        },
-                                        updatemode="mouseup",
-                                        included=True,
+                                    html.Div(
+                                        [
+                                            dcc.Slider(
+                                                id="end-time",
+                                                min=0,
+                                                max=24,
+                                                step=1 / 60,  # 1-minute intervals
+                                                value=24,
+                                                marks={
+                                                    i: f"{i:02d}:00"
+                                                    for i in range(0, 25, 1)
+                                                },
+                                                updatemode="mouseup",
+                                                included=True,
+                                            ),
+                                        ],
+                                        **styles["div_groups"],
                                     ),
                                 ],
                                 width=11,
@@ -323,6 +368,7 @@ class InteractiveDashboard:
                                                 **styles["controls_text"],
                                             ),
                                         ],
+                                        **styles["div_groups"],
                                     ),
                                     html.Div(
                                         [
@@ -335,7 +381,7 @@ class InteractiveDashboard:
                                                 **styles["controls_text"],
                                             ),
                                         ],
-                                        style={"marginBottom": "0px"},
+                                        **styles["div_groups"],
                                     ),
                                     html.Div(
                                         [
@@ -348,25 +394,12 @@ class InteractiveDashboard:
                                                 **styles["controls_text"],
                                             ),
                                         ],
-                                        style={"marginBottom": "0px"},
+                                        **styles["div_groups"],
                                     ),
                                     html.Div(
                                         [
                                             html.Span(
-                                                "Duration: ",
-                                                **styles["controls_labels"],
-                                            ),
-                                            html.Span(
-                                                id="total-duration-display",
-                                                **styles["controls_text"],
-                                            ),
-                                        ],
-                                        style={"marginBottom": "0px"},
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.Span(
-                                                "Size: ",
+                                                "Total file size: ",
                                                 **styles["controls_labels"],
                                             ),
                                             html.Span(
@@ -374,75 +407,88 @@ class InteractiveDashboard:
                                                 **styles["controls_text"],
                                             ),
                                         ],
-                                        style={"marginBottom": "0px"},
+                                        **styles["div_groups"],
+                                    ),
+                                    html.Div(
+                                        [
+                                            html.Span(
+                                                "Total duration: ",
+                                                **styles["controls_labels"],
+                                            ),
+                                            html.Span(
+                                                id="total-duration-display",
+                                                **styles["controls_text"],
+                                            ),
+                                        ],
+                                        **styles["div_groups"],
                                     ),
                                 ],
-                                width=3,
-                                className="d-flex flex-column align-items-start",
+                                width=4,
                             ),
+                            # Output Directory to load and save stories.
                             dbc.Col(
                                 [
-                                    html.Label(
-                                        "Story:",
-                                        **styles["controls_labels"],
+                                    html.Div(
+                                        [
+                                            html.Label(
+                                                "Output Directory:",
+                                                **styles["controls_labels"],
+                                            ),
+                                            dcc.Dropdown(
+                                                id="story-dir-input",
+                                                options=self.directory_options,
+                                                value=self.stories_output,
+                                                clearable=False,
+                                                optionHeight=16,
+                                                **styles["controls_items"],
+                                            ),
+                                        ],
+                                        **styles["div_groups"],
                                     ),
                                 ],
-                                width=1,
+                                width=4,
                             ),
+                            # Story name for Loading and Saving:
                             dbc.Col(
                                 [
-                                    dbc.Input(
-                                        id="story-name-input",
-                                        type="text",
-                                        placeholder="Story name",
-                                        style=styles["controls_items"]["style"],
-                                    ),
-                                ],
-                                width=2,
-                            ),
-                            dbc.Col(
-                                [
-                                    dbc.Button(
-                                        "Save",
-                                        id="save-button",
-                                        color="primary",
-                                        disabled=True,
-                                        style={
-                                            **styles["controls_items"]["style"],
-                                            **styles["controls_spacing"]["style"],
-                                        },
-                                    ),
-                                    dbc.Button(
-                                        "Load",
-                                        id="load-button",
-                                        color="primary",
-                                        disabled=True,
-                                        style={
-                                            **styles["controls_items"]["style"],
-                                            **styles["controls_spacing"]["style"],
-                                        },
-                                    ),
-                                ],
-                                width=2,
-                            ),
-                            dbc.Col(
-                                [
-                                    html.Label(
-                                        "Directory:",
-                                        **styles["controls_labels"],
-                                    ),
-                                ],
-                                width=1,
-                            ),
-                            dbc.Col(
-                                [
-                                    dcc.Dropdown(
-                                        id="story-dir-input",
-                                        options=self.directory_options,
-                                        value=self.stories_output,
-                                        clearable=False,
-                                        optionHeight=16,
-                                        **styles["controls_items"],
+                                    html.Div(
+                                        [
+                                            html.Label(
+                                                "Story Name:",
+                                                **styles["controls_labels"],
+                                            ),
+                                            dbc.Input(
+                                                id="story-name-input",
+                                                type="text",
+                                                placeholder="Story name",
+                                                style=styles["controls_items"]["style"],
+                                            ),
+                                            dbc.Button(
+                                                "Save",
+                                                id="save-button",
+                                                color="primary",
+                                                disabled=True,
+                                                style={
+                                                    **styles["controls_items"]["style"],
+                                                    **styles["controls_spacing"][
+                                                        "style"
+                                                    ],
+                                                },
+                                            ),
+                                            dbc.Button(
+                                                "Load",
+                                                id="load-button",
+                                                color="primary",
+                                                disabled=True,
+                                                style={
+                                                    **styles["controls_items"]["style"],
+                                                    **styles["controls_spacing"][
+                                                        "style"
+                                                    ],
+                                                },
+                                            ),
+                                        ],
+                                        **styles["div_groups"],
                                     ),
                                 ],
                                 width=3,
@@ -704,8 +750,11 @@ class InteractiveDashboard:
             Input("total-duration-store", "data"),
         )
         def update_total_duration_display(total_duration):
+            days, seconds = divmod(total_duration, 86400)
+            hours, seconds = divmod(seconds, 3600)
+            minutes, seconds = divmod(seconds, 60)
             return (
-                f"{total_duration / 60.0:,.3f} minutes"
+                f"{total_duration / 60.0:,.2f} minutes = {int(days)} days {int(hours)} hours {int(minutes)} mins {seconds:.2f} secs"
                 if total_duration is not None
                 else "0"
             )
@@ -715,7 +764,11 @@ class InteractiveDashboard:
             Output("total-size-display", "children"), Input("total-size-store", "data")
         )
         def update_total_size_display(total_size):
-            return f"{total_size:,.3f} MB" if total_size is not None else "0"
+            return (
+                f"{total_size:,.2f} MB = {total_size / 1024.0 :,.2f} GB"
+                if total_size is not None
+                else "0"
+            )
 
         # save button enable/disable callback
         @self.app.callback(
