@@ -644,17 +644,24 @@ class InteractiveDashboard:
             # Ensure we have valid inputs
             if not start_date or not end_date or start_time is None or end_time is None:
                 logger.debug("Missing required date/time inputs")
-                return dash.no_update, dash.no_update, dash.no_update
+                return (
+                    dash.no_update,
+                    dash.no_update,
+                    dash.no_update,
+                    dash.no_update,
+                    dash.no_update,
+                    dash.no_update,
+                    dash.no_update,
+                    dash.no_update,
+                )
 
             # Handle device selection
-            if selected_devices is None or len(selected_devices) == 0:
-                logger.debug("No devices selected, using all devices")
-                selected_devices = self.all_devices.copy()
+            if selected_devices is None:
+                selected_devices = []
 
             # Handle weekday selection
-            if weekdays is None or len(weekdays) == 0:
-                logger.debug("No weekdays selected, using all weekdays")
-                weekdays = self.all_weekdays.copy()
+            if weekdays is None:
+                weekdays = []
 
             start_time_str = self.slider_to_time(start_time)
             end_time_str = self.slider_to_time(end_time)
@@ -695,6 +702,19 @@ class InteractiveDashboard:
             if self.num_days > 0:
                 logger.debug(
                     f"Average number of videos per day: {self.num_videos / self.num_days :.2f}"
+                )
+
+            if self.num_videos == 0:
+                logger.warning("No video selected. Figures not updated")
+                return (
+                    dash.no_update,
+                    dash.no_update,
+                    dash.no_update,
+                    self.num_videos,
+                    self.num_days,
+                    self.num_frames,
+                    self.total_duration_seconds,
+                    self.total_size_mb,
                 )
 
             # Get aggregated data

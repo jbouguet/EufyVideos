@@ -67,14 +67,14 @@ process_stories: true
 stories:
 
   - name: 'Busiest few minutes'
-    skip: true
+    skip: false
     selectors:
       - time_range:
           start: '13:46:00'
           end: '13:47:59'
 
   - name: 'Every Other Day'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-11-01'
@@ -82,7 +82,7 @@ stories:
         weekdays: ['monday', 'wednesday', 'friday', 'sunday']
 
   - name: 'Trash Pickups'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-11-07'
@@ -101,7 +101,7 @@ stories:
         devices: ['Garage']
 
   - name: 'HotTub Installation'
-    skip: true
+    skip: false
     selectors:
       # Delivery and Installation
       - date_range:
@@ -145,7 +145,7 @@ stories:
         width: 1600
 
   - name: '2024-11-27'
-    skip: true
+    skip: false
     selectors:
       - date_range:
           start: '2024-11-27'

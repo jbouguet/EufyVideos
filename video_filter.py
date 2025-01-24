@@ -155,7 +155,10 @@ class VideoSelector:
                     "Invalid time_range format. Expected 'start' and 'end' keys."
                 )
 
-        devices = selector_dict.get("devices")
+        devices = None
+        if "devices" in selector_dict:
+            devices = selector_dict["devices"]
+        # devices = selector_dict.get("devices")
         if devices is None:
             devices = Config.get_all_devices()
         elif isinstance(devices, str):
@@ -167,11 +170,17 @@ class VideoSelector:
         if unknown_devices:
             raise ValueError(f"Unknown devices: {', '.join(unknown_devices)}")
 
-        filenames = selector_dict.get("filenames")
+        filenames = None
+        if "filenames" in selector_dict:
+            filenames = selector_dict["filenames"]
+        # filenames = selector_dict.get("filenames")
         if filenames and not isinstance(filenames, list):
             filenames = [filenames]
 
-        weekdays = selector_dict.get("weekdays")
+        weekdays = None
+        if "weekdays" in selector_dict:
+            weekdays = selector_dict["weekdays"]
+        # weekdays = selector_dict.get("weekdays")
         if weekdays and not isinstance(weekdays, list):
             weekdays = [weekdays]
 
@@ -310,19 +319,19 @@ class VideoFilter:
             # Make a deep copy for this selector's filtering
             temp_videos = copy.deepcopy(videos)
 
-            if selector.devices:
+            if selector.devices is not None:
                 temp_videos = VideoFilter.by_devices(temp_videos, selector.devices)
-            if selector.date_range:
+            if selector.date_range is not None:
                 temp_videos = VideoFilter.by_date(
                     temp_videos, selector.date_range.start, selector.date_range.end
                 )
-            if selector.time_range:
+            if selector.time_range is not None:
                 temp_videos = VideoFilter.by_time(
                     temp_videos, selector.time_range.start, selector.time_range.end
                 )
-            if selector.filenames:
+            if selector.filenames is not None:
                 temp_videos = VideoFilter.by_filenames(temp_videos, selector.filenames)
-            if selector.weekdays:
+            if selector.weekdays is not None:
                 temp_videos = VideoFilter.by_weekdays(temp_videos, selector.weekdays)
 
             output_videos.extend(temp_videos)
