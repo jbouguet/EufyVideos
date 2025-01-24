@@ -156,7 +156,12 @@ class AnalysisConfig:
 
     def to_file(self, config_file: str) -> None:
         with open(config_file, "w") as f:
-            yaml.dump(clean_none_values(asdict(self)), f, default_flow_style=False)
+            yaml.dump(
+                clean_none_values(asdict(self)),
+                f,
+                default_flow_style=False,
+                sort_keys=False,
+            )
 
 
 class VideoAnalyzer:

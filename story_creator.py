@@ -171,7 +171,12 @@ class Story:
             story_filename: Path where to save the configuration
         """
         with open(story_filename, "w") as f:
-            yaml.dump(clean_none_values(asdict(self)), f, default_flow_style=False)
+            yaml.dump(
+                clean_none_values(asdict(self)),
+                f,
+                default_flow_style=False,
+                sort_keys=False,
+            )
 
     @staticmethod
     def validate_story_dict(story_dict: Dict[str, Any]) -> None:

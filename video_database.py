@@ -34,6 +34,17 @@ from video_metadata import VideoMetadata
 logger = create_logger(__name__)
 
 
+def clean_none_values(d):
+    """Remove None values from dict and convert tuples to lists."""
+    if isinstance(d, dict):
+        return {k: clean_none_values(v) for k, v in d.items() if v is not None}
+    elif isinstance(d, list):
+        return [clean_none_values(item) for item in d]
+    elif isinstance(d, tuple):
+        return list(d)
+    return d
+
+
 @dataclass
 class VideoDatabase:
     """
@@ -156,7 +167,7 @@ class VideoDatabase:
             IOError: If there's an error writing to the file
         """
         with open(video_database_filename, "w") as f:
-            yaml.dump(asdict(self), f)
+            yaml.dump(clean_none_values(asdict(self)), f, default_flow_style=False)
 
     @classmethod
     def from_file(cls, video_database_filename: str) -> "VideoDatabase":
@@ -219,7 +230,12 @@ class VideoDatabaseList:
     def to_file(self, video_database_list_filename: str):
         """Save database list configuration to YAML file."""
         with open(video_database_list_filename, "w") as f:
-            yaml.dump(asdict(self), f)
+            yaml.dump(
+                clean_none_values(asdict(self)),
+                f,
+                default_flow_style=False,
+                sort_keys=False,
+            )
 
     @classmethod
     def from_file(cls, video_database_list_filename: str) -> "VideoDatabaseList":

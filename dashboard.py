@@ -204,12 +204,17 @@ if __name__ == "__main__":
     ]
     out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
 
-    video_database = VideoDatabaseList(
+    database_list = VideoDatabaseList(
         [
             VideoDatabase(video_directories=None, video_metadata_file=file)
             for file in metadata_files
         ]
-    ).load_videos()
+    )
+
+    database_list.to_file(os.path.join(out_dir, "video_database.yaml"))
+
+    # Load all of the videos
+    video_database = database_list.load_videos()
 
     min_date = video_database[0].date_str
     max_date = video_database[-1].date_str
