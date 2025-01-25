@@ -158,30 +158,26 @@ class VideoSelector:
         devices = None
         if "devices" in selector_dict:
             devices = selector_dict["devices"]
-        # devices = selector_dict.get("devices")
-        if devices is None:
-            devices = Config.get_all_devices()
-        elif isinstance(devices, str):
+        if devices and isinstance(devices, str):
             devices = [devices]
 
-        unknown_devices = [
-            device for device in devices if device not in Config.get_all_devices()
-        ]
-        if unknown_devices:
-            raise ValueError(f"Unknown devices: {', '.join(unknown_devices)}")
+        if devices is not None:
+            unknown_devices = [
+                device for device in devices if device not in Config.get_all_devices()
+            ]
+            if unknown_devices:
+                raise ValueError(f"Unknown devices: {', '.join(unknown_devices)}")
 
         filenames = None
         if "filenames" in selector_dict:
             filenames = selector_dict["filenames"]
-        # filenames = selector_dict.get("filenames")
-        if filenames and not isinstance(filenames, list):
+        if filenames and isinstance(filenames, str):
             filenames = [filenames]
 
         weekdays = None
         if "weekdays" in selector_dict:
             weekdays = selector_dict["weekdays"]
-        # weekdays = selector_dict.get("weekdays")
-        if weekdays and not isinstance(weekdays, list):
+        if weekdays and isinstance(weekdays, str):
             weekdays = [weekdays]
 
         return cls(
@@ -198,19 +194,19 @@ class VideoSelector:
         selectors = [selectors] if isinstance(selectors, VideoSelector) else selectors
         for i, selector in enumerate(selectors, 1):
             logger.info(f"  - Selector {i}:")
-            if selector.devices:
+            if selector.devices is not None:
                 logger.info(f"     Devices: {', '.join(selector.devices)}")
-            if selector.date_range:
+            if selector.date_range is not None:
                 logger.info(
                     f"     Date range: {selector.date_range.start} to {selector.date_range.end}"
                 )
-            if selector.time_range:
+            if selector.time_range is not None:
                 logger.info(
                     f"     Time range: {selector.time_range.start} to {selector.time_range.end}"
                 )
-            if selector.filenames:
+            if selector.filenames is not None:
                 logger.info(f"     Filenames: {', '.join(selector.filenames)}")
-            if selector.weekdays:
+            if selector.weekdays is not None:
                 logger.info(f"     Weekdays: {', '.join(selector.weekdays)}")
 
 

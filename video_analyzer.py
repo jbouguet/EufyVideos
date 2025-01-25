@@ -228,25 +228,26 @@ class VideoAnalyzer:
         total_duration_seconds: float = sum(
             video.duration.total_seconds() for video in self.videos_database
         )
-        average_fps = num_frames / total_duration_seconds
         total_size_mb: float = sum(video.file_size for video in self.videos_database)
-
+        average_fps = (
+            num_frames / total_duration_seconds if total_duration_seconds > 0 else 0
+        )
         tags_stats = self.tags_database.stats
         num_tagged_videos = tags_stats["num_tagged_videos"]
         num_tagged_frames = tags_stats["num_tagged_frames"]
         num_tags = tags_stats["num_tags"]
 
         logger.info(f"{colored("Database Statistics:","light_cyan")}")
-        logger.info(f"  - Number of videos        = {num_videos:,}")
-        logger.info(f"  - Number of frames        = {num_frames:,}")
-        logger.info(f"  - Size                    = {total_size_mb:,.3f} MB")
+        logger.info(f"  - {f'Number of videos':<23} = {num_videos:,}")
+        logger.info(f"  - {f'Number of frames':<23} = {num_frames:,}")
+        logger.info(f"  - {f'Size':<23} = {total_size_mb:,.3f} MB")
         logger.info(
-            f"  - Duration                = {total_duration_seconds / 60:,.3f} minutes"
+            f"  - {f'Duration':<23} = {total_duration_seconds / 60:,.3f} minutes"
         )
-        logger.info(f"  - Average FPS             = {average_fps:.3f}")
-        logger.info(f"  - Number of tagged videos = {num_tagged_videos:,}")
-        logger.info(f"  - Number of tagged frames = {num_tagged_frames:,}")
-        logger.info(f"  - Number of tags in total = {num_tags:,}")
+        logger.info(f"  - {f'Average FPS':<23} = {average_fps:.3f}")
+        logger.info(f"  - {f'Number of tagged videos':<23} = {num_tagged_videos:,}")
+        logger.info(f"  - {f'Number of tagged frames':<23} = {num_tagged_frames:,}")
+        logger.info(f"  - {f'Number of tags in total':<23} = {num_tags:,}")
 
     def _export_files(self) -> None:
         os.makedirs(self.config.output_directory, exist_ok=True)
