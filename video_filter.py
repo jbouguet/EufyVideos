@@ -19,7 +19,6 @@ Example Usage:
     # Export to metadata file
     VideoMetadata.export_videos_to_metadata_file(filtered_videos, 'metadata.csv')
 """
-import copy
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
@@ -218,9 +217,6 @@ class VideoFilter:
     through the by_selector method for complex filtering criteria.
 
     Example:
-        # Filter by single criterion
-        daytime_videos = VideoFilter.by_time(videos, '08:00:00', '17:00:00')
-
         # Filter by multiple criteria using selector
         selector = VideoSelector(
             devices=['Garage'],
@@ -228,58 +224,6 @@ class VideoFilter:
         )
         filtered_videos = VideoFilter.by_selectors(videos, [selector])
     """
-
-    @staticmethod
-    def by_devices(
-        videos: List[VideoMetadata], devices: List[str]
-    ) -> List[VideoMetadata]:
-        """Filter videos by device names."""
-        return VideoMetadata.clean_and_sort([v for v in videos if v.device in devices])
-
-    @staticmethod
-    def by_date(
-        videos: List[VideoMetadata], start_date: str, end_date: str
-    ) -> List[VideoMetadata]:
-        """Filter videos within a date range."""
-        start = datetime.strptime(start_date, "%Y-%m-%d").date()
-        end = datetime.strptime(end_date, "%Y-%m-%d").date()
-        return VideoMetadata.clean_and_sort(
-            [v for v in videos if start <= v.date <= end]
-        )
-
-    @staticmethod
-    def by_time(
-        videos: List[VideoMetadata], start_time: str, end_time: str
-    ) -> List[VideoMetadata]:
-        """Filter videos within a time range."""
-        start = datetime.strptime(start_time, "%H:%M:%S").time()
-        end = datetime.strptime(end_time, "%H:%M:%S").time()
-        return VideoMetadata.clean_and_sort(
-            [v for v in videos if VideoFilter.is_time_in_range(v.time(), start, end)]
-        )
-
-    @staticmethod
-    def by_filenames(
-        videos: List[VideoMetadata], filenames: List[str]
-    ) -> List[VideoMetadata]:
-        """Filter videos by specific filenames."""
-        return VideoMetadata.clean_and_sort(
-            [v for v in videos if v.filename in filenames]
-        )
-
-    @staticmethod
-    def by_weekdays(
-        videos: List[VideoMetadata], weekdays: List[str]
-    ) -> List[VideoMetadata]:
-        """Filter videos by weekdays."""
-        normalized_weekdays = [day.lower() for day in weekdays]
-        return VideoMetadata.clean_and_sort(
-            [
-                v
-                for v in videos
-                if v.datetime.strftime("%A").lower() in normalized_weekdays
-            ]
-        )
 
     @staticmethod
     def is_time_in_range(time, start, end) -> bool:
@@ -290,9 +234,61 @@ class VideoFilter:
             return start <= time or time <= end
 
     @staticmethod
+    def is_in_selector(
+        video: VideoMetadata,
+        selector: Optional[VideoSelector] = None,
+    ) -> bool:
+        """Returns True iff video satisfies all conditions listed in selector"""
+        if selector is None:
+            return True
+        if (selector.devices is not None) and (video.device not in selector.devices):
+            return False
+        if (selector.date_range is not None) and (
+            (
+                video.date
+                < datetime.strptime(selector.date_range.start, "%Y-%m-%d").date()
+            )
+            or (
+                video.date
+                > datetime.strptime(selector.date_range.end, "%Y-%m-%d").date()
+            )
+        ):
+            return False
+        if (selector.time_range is not None) and not VideoFilter.is_time_in_range(
+            video.time(),
+            datetime.strptime(selector.time_range.start, "%H:%M:%S").time(),
+            datetime.strptime(selector.time_range.end, "%H:%M:%S").time(),
+        ):
+            return False
+        if (selector.filenames is not None) and (
+            video.filename not in selector.filenames
+        ):
+            return False
+        if (selector.weekdays is not None) and (
+            video.datetime.strftime("%A").lower()
+            not in [day.lower() for day in selector.weekdays]
+        ):
+            return False
+        return True
+
+    @staticmethod
+    def is_in_selectors(
+        video: VideoMetadata,
+        selectors: Union[Optional[VideoSelector], List[VideoSelector]] = None,
+    ) -> bool:
+        """Returns False iff video does not satisfy any of the selectors"""
+        if selectors is None:
+            return True
+        selectors = [selectors] if isinstance(selectors, VideoSelector) else selectors
+        for selector in selectors:
+            if VideoFilter.is_in_selector(video, selector):
+                return True
+        return False
+
+    @staticmethod
     def by_selectors(
         videos: List[VideoMetadata],
-        selectors: Union[VideoSelector, List[VideoSelector]],
+        selectors: Union[Optional[VideoSelector], List[VideoSelector]] = None,
     ) -> List[VideoMetadata]:
         """
         Filter videos using multiple selectors.
@@ -306,30 +302,6 @@ class VideoFilter:
             selector2 = VideoSelector(devices=['Back Alleyway'], time_range=TimeRange('08:00:00', '17:00:00'))
             filtered_videos = VideoFilter.by_selectors(videos, [selector1, selector2])
         """
-        if not selectors:
-            return copy.deepcopy(videos)
-        selectors = [selectors] if isinstance(selectors, VideoSelector) else selectors
-
-        output_videos: List[VideoMetadata] = []
-        for selector in selectors:
-            # Make a deep copy for this selector's filtering
-            temp_videos = copy.deepcopy(videos)
-
-            if selector.devices is not None:
-                temp_videos = VideoFilter.by_devices(temp_videos, selector.devices)
-            if selector.date_range is not None:
-                temp_videos = VideoFilter.by_date(
-                    temp_videos, selector.date_range.start, selector.date_range.end
-                )
-            if selector.time_range is not None:
-                temp_videos = VideoFilter.by_time(
-                    temp_videos, selector.time_range.start, selector.time_range.end
-                )
-            if selector.filenames is not None:
-                temp_videos = VideoFilter.by_filenames(temp_videos, selector.filenames)
-            if selector.weekdays is not None:
-                temp_videos = VideoFilter.by_weekdays(temp_videos, selector.weekdays)
-
-            output_videos.extend(temp_videos)
-
-        return VideoMetadata.clean_and_sort(output_videos)
+        return VideoMetadata.clean_and_sort(
+            [v for v in videos if VideoFilter.is_in_selectors(v, selectors)]
+        )
