@@ -691,15 +691,23 @@ class InteractiveDashboard:
             )
 
             logger.info("----------------------------------------------------")
-            VideoSelector.log(selector)
-            logger.info(f"  - Time bin size: {60 / bins_per_hour} minutes")
-            logger.info(f"  - Metric: {metric_to_graph}")
-            logger.info(f"  - Number of videos: {self.num_videos:,}")
-            logger.info(f"  - Number of frames: {self.num_frames:,}")
+            selector_log_str: List[str] = selector.log_str()
+            if not selector_log_str:
+                logger.info("- Video Selector: No selection criteria")
+            else:
+                logger.info("- Video Selector:")
+                for s in selector_log_str:
+                    logger.info(f"     {s}")
+            logger.info("- Selected videos:")
+            logger.info(f"     Number of videos: {self.num_videos:,}")
+            logger.info(f"     Number of frames: {self.num_frames:,}")
             logger.info(
-                f"  - Duration: {self.total_duration_seconds / 60.0:,.3f} minutes"
+                f"     Duration: {self.total_duration_seconds / 60.0:,.3f} minutes"
             )
-            logger.info(f"  - Size: {self.total_size_mb:,.3f} MB")
+            logger.info(f"     Size: {self.total_size_mb:,.3f} MB")
+            logger.info("- Graphs:")
+            logger.info(f"     Metric: {metric_to_graph}")
+            logger.info(f"     Time bin: {60 / bins_per_hour} minutes")
 
             self.num_days = 0
             if self.num_videos > 0:

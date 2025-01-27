@@ -69,7 +69,7 @@ class TimeRange:
 @dataclass
 class VideoSelector:
     """
-    Defines criteria for filtering videos.
+    Defines criteria for filtering videos and implements the matching check.
 
     Combines multiple filtering criteria (devices, dates, times, filenames, weekdays)
     that are applied together (AND condition). When multiple VideoSelector
@@ -82,6 +82,9 @@ class VideoSelector:
             time_range=TimeRange(start='08:00:00', end='17:00:00'),
             weekdays=['monday', 'wednesday', 'friday']
         )
+        filtered_videos = VideoMetadata.clean_and_sort(
+            list(v for v in videos if selector.matches(v))
+            )
     """
 
     devices: Optional[List[str]] = None
@@ -90,7 +93,10 @@ class VideoSelector:
     filenames: Optional[List[str]] = None
     weekdays: Optional[List[str]] = None
 
-    # Cached values for optimization
+    # Placeholder for a new criteria for selection:
+    # new_criteria: Optional[T] = None
+
+    # Cached values for runtime optimization of the method matches
     _devices_set: Optional[set[str]] = None
     _start_date = None
     _end_date = None
@@ -98,6 +104,9 @@ class VideoSelector:
     _end_time = None
     _filenames_set: Optional[set[str]] = None
     _weekdays_set: Optional[set[str]] = None
+
+    #  Placeholder for cached values for a new criteria for selection:
+    # _new_criteria: Optional[T] = None
 
     def __post_init__(self):
         """Initialize cached values for faster lookups"""
@@ -124,6 +133,10 @@ class VideoSelector:
                 self.time_range.start, "%H:%M:%S"
             ).time()
             self._end_time = datetime.strptime(self.time_range.end, "%H:%M:%S").time()
+
+        # Placeholder for computations of cached values for a new criteria for selection:
+        # if self.new_criteria is not None:
+        #    self._new_criteria = ...
 
     def _validate_weekdays(self, weekdays):
         """Validate and normalize weekday inputs."""
@@ -214,13 +227,90 @@ class VideoSelector:
         if weekdays and isinstance(weekdays, str):
             weekdays = [weekdays]
 
+        # Placeholder for a new criteria for selection:
+        # new_criteria = None
+        # if "new_criteria" in selector_dict:
+        #     new_criteria_dict = selector_dict["new_criteria"]
+        #     new_criteria = F(new_criteria_dict)
+
         return cls(
             devices=devices,
             date_range=date_range,
             time_range=time_range,
             filenames=filenames,
             weekdays=weekdays,
+            # new_criteria=new_criteria,
         )
+
+    @staticmethod
+    def is_time_in_range(time, start, end) -> bool:
+        """Check if time falls within range, handling midnight crossing."""
+        if start <= end:
+            return start <= time <= end
+        else:  # Crosses midnight
+            return start <= time or time <= end
+
+    def matches(self, video: VideoMetadata) -> bool:
+        """
+        Returns True only if video satisfies all filtering conditions listed in selector.
+        """
+        # Check device (fastest operation - simple set lookup)
+        if self._devices_set is not None and video.device not in self._devices_set:
+            return False
+
+        # Check filename (fast set lookup)
+        if (
+            self._filenames_set is not None
+            and video.filename not in self._filenames_set
+        ):
+            return False
+
+        # Check weekday (fast set lookup)
+        if self._weekdays_set is not None:
+            weekday = video.datetime.strftime("%A").lower()
+            if weekday not in self._weekdays_set:
+                return False
+
+        # Check date range (more expensive - date comparison)
+        if self._start_date is not None and (
+            video.date < self._start_date or video.date > self._end_date
+        ):
+            return False
+
+        # Check time range (most expensive - time comparison with midnight handling)
+        if self._start_time is not None and not VideoSelector.is_time_in_range(
+            video.time(), self._start_time, self._end_time
+        ):
+            return False
+
+        # Placeholder for checking a new criteria for selection:
+        # if self.new_criteria is not None and (video does not pass self.new_criteria):
+        #     return False
+
+        return True
+
+    def log_str(self) -> List[str]:
+        output_str: List[str] = []
+        if self.devices is not None:
+            output_str.append(f"Devices: {', '.join(self.devices)}")
+        if self.date_range is not None:
+            output_str.append(
+                f"Date range: {self.date_range.start} to {self.date_range.end}"
+            )
+        if self.time_range is not None:
+            output_str.append(
+                f"Time range: {self.time_range.start} to {self.time_range.end}"
+            )
+        if self.filenames is not None:
+            output_str.append(f"Filenames: {', '.join(self.filenames)}")
+        if self.weekdays is not None:
+            output_str.append(f"Weekdays: {', '.join(self.weekdays)}")
+
+        # Placeholder for logging a new criteria for selection:
+        # if self.new_criteria is not None:
+        #     output_str.append(f"New_criteria: {self.new_criteria}")
+
+        return output_str
 
     @staticmethod
     def log(selectors: Union["VideoSelector", List["VideoSelector"]]) -> None:
@@ -231,30 +321,12 @@ class VideoSelector:
                 logger.info(f"  - Selector {i}:")
             else:
                 logger.info("  - Selector:")
-
-            if selector.devices is not None:
-                logger.info(f"     Devices: {', '.join(selector.devices)}")
-            if selector.date_range is not None:
-                logger.info(
-                    f"     Date range: {selector.date_range.start} to {selector.date_range.end}"
-                )
-            if selector.time_range is not None:
-                logger.info(
-                    f"     Time range: {selector.time_range.start} to {selector.time_range.end}"
-                )
-            if selector.filenames is not None:
-                logger.info(f"     Filenames: {', '.join(selector.filenames)}")
-            if selector.weekdays is not None:
-                logger.info(f"     Weekdays: {', '.join(selector.weekdays)}")
-
-            if (
-                selector.devices is None
-                and selector.date_range is None
-                and selector.time_range is None
-                and selector.filenames is None
-                and selector.weekdays is None
-            ):
+            selector_log_str = selector.log_str()
+            if not selector_log_str:
                 logger.info("     None")
+            else:
+                for s in selector_log_str:
+                    logger.info(f"     {s}")
 
 
 class VideoFilter:
@@ -265,75 +337,28 @@ class VideoFilter:
     through the by_selector method for complex filtering criteria.
 
     Example:
-        # Filter by multiple criteria using selector
-        selector = VideoSelector(
+        # Filter by multiple criteria in two separate selectors
+        selector1 = VideoSelector(
             devices=['Garage'],
             date_range=DateRange(start='2023-01-01', end='2023-12-31')
         )
-        filtered_videos = VideoFilter.by_selectors(videos, [selector])
+        selector2 = VideoSelector(
+            devices=['Front Yard'],
+            date_range=DateRange(start='2023-01-01', end='2023-12-31'),
+            time_range=TimeRange(start='08:00:00', end='17:00:00'),
+            weekdays=['monday', 'wednesday', 'friday']
+        )
+        # Filter the videos that match the criteria of either one of the two selectors:
+        filtered_videos = VideoFilter.by_selectors(videos, [selector1, selector2])
     """
 
     @staticmethod
-    def is_time_in_range(time, start, end) -> bool:
-        """Check if time falls within range, handling midnight crossing."""
-        if start <= end:
-            return start <= time <= end
-        else:  # Crosses midnight
-            return start <= time or time <= end
-
-    @staticmethod
-    def is_in_selector(
-        video: VideoMetadata,
-        selector: Optional[VideoSelector] = None,
-    ) -> bool:
-        """
-        Returns True only if video satisfies all filtering conditions listed in selector.
-        Returns True if selector is None.
-        """
-        if selector is None:
-            return True
-
-        # Check device (fastest operation - simple set lookup)
-        if (
-            selector._devices_set is not None
-            and video.device not in selector._devices_set
-        ):
-            return False
-
-        # Check filename (fast set lookup)
-        if (
-            selector._filenames_set is not None
-            and video.filename not in selector._filenames_set
-        ):
-            return False
-
-        # Check weekday (fast set lookup)
-        if selector._weekdays_set is not None:
-            weekday = video.datetime.strftime("%A").lower()
-            if weekday not in selector._weekdays_set:
-                return False
-
-        # Check date range (more expensive - date comparison)
-        if selector._start_date is not None and (
-            video.date < selector._start_date or video.date > selector._end_date
-        ):
-            return False
-
-        # Check time range (most expensive - time comparison with midnight handling)
-        if selector._start_time is not None and not VideoFilter.is_time_in_range(
-            video.time(), selector._start_time, selector._end_time
-        ):
-            return False
-
-        return True
-
-    @staticmethod
-    def is_in_selectors(
+    def matches_any_selectors(
         video: VideoMetadata,
         selectors: Union[Optional[VideoSelector], List[VideoSelector]] = None,
     ) -> bool:
         """
-        Returns True only if video satisfies the selection criteria of one of the selectors.
+        Returns True only if video satisfies the selection criteria of at least one of the selectors.
         Returns True if selector is None.
         """
         # Early exit for common cases
@@ -346,9 +371,7 @@ class VideoFilter:
             return True
 
         # Check each selector until a match is found
-        return any(
-            VideoFilter.is_in_selector(video, selector) for selector in selectors
-        )
+        return any(selector.matches(video) for selector in selectors)
 
     @staticmethod
     def by_selectors(
@@ -374,5 +397,7 @@ class VideoFilter:
             return VideoMetadata.clean_and_sort(videos)
 
         # Use generator expression for memory efficiency
-        filtered = (v for v in videos if VideoFilter.is_in_selectors(v, selectors))
+        filtered = (
+            v for v in videos if VideoFilter.matches_any_selectors(v, selectors)
+        )
         return VideoMetadata.clean_and_sort(list(filtered))
