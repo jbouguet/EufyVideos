@@ -82,7 +82,7 @@ stories:
         weekdays: ['monday', 'wednesday', 'friday', 'sunday']
 
   - name: 'Trash Pickups'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-07'
@@ -101,7 +101,7 @@ stories:
         devices: ['Garage']
 
   - name: 'HotTub Installation'
-    skip: false
+    skip: true
     selectors:
       # Delivery and Installation
       - date_range:
@@ -299,7 +299,7 @@ stories:
         width: 1600
 
   - name: 'test_selector'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-10'
@@ -319,7 +319,7 @@ stories:
     tag_video_generation: false
 
   - name: 'test_selector2'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-10'
@@ -392,7 +392,7 @@ stories:
           end: '2024-11-16'
 
   - name: 'New Patio Cover Installation - Gateway'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-10-09'
@@ -477,7 +477,7 @@ stories:
         enforce_16_9_aspect_ratio: true
 
   - name: 'New Patio Cover Installation'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-10-09'
@@ -645,7 +645,7 @@ stories:
           end: '2024-09-07'
 
   - name: 'Patio cover installation and removal'
-    skip: false
+    skip: true
     tag_processing: false
     tag_video_generation: false
     selectors:

@@ -641,45 +641,47 @@ class InteractiveDashboard:
             bins_per_hour,
             metric_to_graph,
         ):
-            # Ensure we have valid inputs
-            if not start_date or not end_date or start_time is None or end_time is None:
-                logger.debug("Missing required date/time inputs")
-                return (
-                    dash.no_update,
-                    dash.no_update,
-                    dash.no_update,
-                    dash.no_update,
-                    dash.no_update,
-                    dash.no_update,
-                    dash.no_update,
-                    dash.no_update,
+            start_date = self.min_date if start_date is None else start_date
+            end_date = self.max_date if end_date is None else end_date
+            date_range = (
+                None
+                if (start_date, end_date) == (self.min_date, self.max_date)
+                else DateRange(start=start_date, end=end_date)
+            )
+
+            start_time_str = (
+                "00:00:00" if start_time is None else self.slider_to_time(start_time)
+            )
+            end_time_str = (
+                "23:59:59" if end_time is None else self.slider_to_time(end_time)
+            )
+            time_range = (
+                None
+                if (start_time_str, end_time_str) == ("00:00:00", "23:59:59")
+                else TimeRange(start=start_time_str, end=end_time_str)
+            )
+            selected_devices = (
+                None
+                if (
+                    selected_devices is None
+                    or all(s in selected_devices for s in self.all_devices)
                 )
-
-            # Handle device selection
-            if selected_devices is None:
-                selected_devices = []
-
-            # Handle weekday selection
-            if weekdays is None:
-                weekdays = []
-
-            start_time_str = self.slider_to_time(start_time)
-            end_time_str = self.slider_to_time(end_time)
-
-            logger.debug("----------------------------------------------------")
-            logger.debug(f"Date range: {start_date} to {end_date}")
-            logger.debug(f"Devices: {selected_devices}")
-            logger.debug(f"Weekdays: {weekdays}")
-            logger.debug(f"Time range: {start_time_str} to {end_time_str}")
-            logger.debug(f"Time bin size: {60 / bins_per_hour} minutes")
-            logger.debug(f"Metric: {metric_to_graph}")
+                else selected_devices
+            )
+            weekdays = (
+                None
+                if (weekdays is None or all(s in weekdays for s in self.all_weekdays))
+                else weekdays
+            )
 
             selector = VideoSelector(
                 devices=selected_devices,
-                date_range=DateRange(start=start_date, end=end_date),
-                time_range=TimeRange(start=start_time_str, end=end_time_str),
+                date_range=date_range,
+                time_range=time_range,
                 weekdays=weekdays,
+                filenames=None,
             )
+
             filtered_videos = VideoFilter.by_selectors(self.videos, selector)
             self.num_videos = len(filtered_videos)
             self.num_frames = sum(video.frame_count for video in filtered_videos)
@@ -688,10 +690,16 @@ class InteractiveDashboard:
                 video.duration.total_seconds() for video in filtered_videos
             )
 
-            logger.debug(f"Number of videos: {self.num_videos:,}")
-            logger.debug(f"Number of frames: {self.num_frames:,}")
-            logger.debug(f"Duration: {self.total_duration_seconds / 60.0:,.3f} minutes")
-            logger.debug(f"Size: {self.total_size_mb:,.3f} MB")
+            logger.info("----------------------------------------------------")
+            VideoSelector.log(selector)
+            logger.info(f"  - Time bin size: {60 / bins_per_hour} minutes")
+            logger.info(f"  - Metric: {metric_to_graph}")
+            logger.info(f"  - Number of videos: {self.num_videos:,}")
+            logger.info(f"  - Number of frames: {self.num_frames:,}")
+            logger.info(
+                f"  - Duration: {self.total_duration_seconds / 60.0:,.3f} minutes"
+            )
+            logger.info(f"  - Size: {self.total_size_mb:,.3f} MB")
 
             self.num_days = 0
             if self.num_videos > 0:
@@ -887,7 +895,7 @@ if __name__ == "__main__":
     from logging_config import set_logger_level_and_format
     from video_database import VideoDatabase, VideoDatabaseList
 
-    set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
+    set_logger_level_and_format(logger, level=logging.INFO, extended_format=False)
 
     # Refer to the configuration file analysis_config.yaml for following directory and file settings.
     # Video database location:
