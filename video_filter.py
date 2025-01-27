@@ -239,7 +239,7 @@ class VideoSelector:
             time_range=time_range,
             filenames=filenames,
             weekdays=weekdays,
-            # new_criteria=new_criteria,
+            # new_criteria=new_criteria,  # Placeholder for a new criteria for selection:\
         )
 
     @staticmethod
