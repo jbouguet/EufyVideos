@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
+# import video_analyzer
 from config import Config
 from logging_config import create_logger
 from video_metadata import VideoMetadata
@@ -411,29 +412,38 @@ if __name__ == "__main__":
 
     from config import Config
     from logging_config import set_logger_level_and_format
-    from video_database import VideoDatabase, VideoDatabaseList
+    from video_analyzer import AnalysisConfig, VideoAnalyzer
 
-    set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
+    set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=False)
 
-    # Load video database
-    root_database = (
-        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"
+    # Load the config "analysis_config.yaml" containing up to date information about the database
+    analyzer = VideoAnalyzer(
+        AnalysisConfig.from_file(
+            os.path.join(os.path.dirname(__file__), "analysis_config.yaml")
+        )
     )
-    metadata_files = [
-        os.path.join(root_database, "videos_in_batches.csv"),
-        os.path.join(root_database, "videos_in_backup.csv"),
-        # Add more metadata files as needed
-    ]
-    out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
+    analyzer._load_all_databases()
+    analyzer._log_statistics()
 
-    database_list = VideoDatabaseList(
-        [
-            VideoDatabase(video_directories=None, video_metadata_file=file)
-            for file in metadata_files
-        ]
+    start_date = analyzer.videos_database[0].date_str
+    end_date = analyzer.videos_database[-1].date_str
+    start_time = "12:00:00"
+    end_time = "14:00:00"
+    devices = ["Backyard"]
+
+    selector = VideoSelector(
+        date_range=DateRange(start=start_date, end=end_date),
+        time_range=TimeRange(start=start_time, end=end_time),
+        devices=devices,
     )
 
-    database_list.to_file(os.path.join(out_dir, "video_database.yaml"))
+    VideoSelector.log(selector)
 
-    # Load all of the videos
-    video_database = database_list.load_videos()
+    # Filter the database
+    videos = VideoFilter.by_selectors(analyzer.videos_database, selector)
+
+    logger.debug(f"Number of selected videos: {len(videos)}")
+
+    VideoMetadata.export_videos_to_metadata_file(
+        videos, os.path.join(analyzer.config.output_directory, "filtered_videos.csv")
+    )
