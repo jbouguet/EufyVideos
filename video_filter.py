@@ -401,3 +401,39 @@ class VideoFilter:
             v for v in videos if VideoFilter.matches_any_selectors(v, selectors)
         )
         return VideoMetadata.clean_and_sort(list(filtered))
+
+
+if __name__ == "__main__":
+
+    # Testing code for the module.
+    import logging
+    import os
+
+    from config import Config
+    from logging_config import set_logger_level_and_format
+    from video_database import VideoDatabase, VideoDatabaseList
+
+    set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
+
+    # Load video database
+    root_database = (
+        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"
+    )
+    metadata_files = [
+        os.path.join(root_database, "videos_in_batches.csv"),
+        os.path.join(root_database, "videos_in_backup.csv"),
+        # Add more metadata files as needed
+    ]
+    out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
+
+    database_list = VideoDatabaseList(
+        [
+            VideoDatabase(video_directories=None, video_metadata_file=file)
+            for file in metadata_files
+        ]
+    )
+
+    database_list.to_file(os.path.join(out_dir, "video_database.yaml"))
+
+    # Load all of the videos
+    video_database = database_list.load_videos()
