@@ -16,7 +16,6 @@ torch
 torchvision
 torchaudio
 ultralytics
-tensorflow
 transformers
 einops
 timm

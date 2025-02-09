@@ -18,7 +18,7 @@ security cameras.
 
 ### 1. Install Python using Homebew
 
-1. Check if python is already insalled:
+1. Check if python is already installed:
    ```bash
    which -a python3
    ```
@@ -26,7 +26,10 @@ security cameras.
    ```bash
    brew install python
    ```
-3. If Homebrew needs to be installed, follow the instructions in https://brew.sh/.
+3. If Homebrew needs to be installed, follow the instructions in https://brew.sh/:
+   ```bash
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   ```
 4. Python should now be installed as /opt/homebrew/bin/python3
 
 ### 2. Install VS Code and Python Extensions
@@ -81,7 +84,7 @@ security cameras.
    ```
 2. Import general settings:
    ```bash
-   cp "VSCode/settings.json" "/User/{user_name}/Library/Application Support/Code/User/settings.json"
+   cp "VSCode/settings.json" "/Users/{user_name}/Library/Application Support/Code/User/settings.json"
    ```
 3. Restart VS Code to apply all settings.
 
