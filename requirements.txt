@@ -25,3 +25,4 @@ pipreqs
 pylint
 numpy
 python_dateutil
+termcolor

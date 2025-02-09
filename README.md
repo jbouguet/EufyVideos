@@ -94,10 +94,10 @@ security cameras.
    ```bash
    brew install --cask git-credential-manager
    ```
-1. Most simple git workflow:
+2. Most simple git workflow:
    ```bash
    git add .
    git commit -m "message"
    git push origin main
    ```
-2. [cheat-sheet](https://education.github.com/git-cheat-sheet-education.pdf) for the most commonly used git commands.
+3. [cheat-sheet](https://education.github.com/git-cheat-sheet-education.pdf) for the most commonly used git commands.
