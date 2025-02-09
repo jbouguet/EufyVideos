@@ -88,8 +88,12 @@ security cameras.
    ```
 3. Restart VS Code to apply all settings.
 
-### 6. Git workflow
+### 6. Setup the Git workflow
 
+1. Install and configure the git-credential-manager:
+   ```bash
+   brew install --cask git-credential-manager
+   ```
 1. Most simple git workflow:
    ```bash
    git add .
