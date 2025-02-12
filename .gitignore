@@ -1,21 +1,35 @@
-# Python virtual environment
+# Python virtual environments
 myenv/
 venv/
 env/
 .env/
+.venv/
+ENV/
 
 # Python cache files
 __pycache__/
 *.py[cod]
 *$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
 
 # VS Code settings
 .vscode/
+*.code-workspace
 
 # macOS system files
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
 
-# Additional folders
+# Additional project folders
 Co-DETR/
 
 # Large model files
@@ -28,3 +42,16 @@ yolo11s.pt
 yolov8m.pt
 yolov8n.pt
 yolov8s.pt
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Log files
+*.log
+logs/

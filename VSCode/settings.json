@@ -1,29 +1,106 @@
 {
-	"workbench.colorTheme": "Atom One Dark",
-	"editor.detectIndentation": false,
-	"ipynb.pasteImagesAsAttachments.enabled": false,
-	"scm.inputFontSize": 8,
-	"debug.console.fontSize": 8,
-	"markdown.preview.fontSize": 8,
-	"chat.editor.fontSize": 8,
-	"editor.minimap.enabled": false,
-	"terminal.integrated.fontSize": 11,
-	"editor.minimap.sectionHeaderFontSize": 8,
-	"editor.codeActionsOnSave": {},
-	"[python]": {
-		"editor.formatOnSave": true,
-    	"editor.defaultFormatter": "ms-python.black-formatter",
-		"editor.codeActionsOnSave": {
+    // Theme and visual settings
+    "workbench.colorTheme": "Atom One Dark",
+    "editor.detectIndentation": false,
+    "editor.minimap.enabled": false,
+    "editor.minimap.sectionHeaderFontSize": 8,
+    
+    // Font sizes
+    "terminal.integrated.fontSize": 11,
+    "scm.inputFontSize": 8,
+    "debug.console.fontSize": 8,
+    "markdown.preview.fontSize": 8,
+    "chat.editor.fontSize": 8,
+
+    // Python-specific settings
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.codeActionsOnSave": {
             "source.organizeImports": "explicit"
-        }
-	},
-	"jupyter.interactiveWindow.textEditor.executeSelection": true,
-	"python.analysis.autoFormatStrings": true,
-	"python.analysis.autoImportCompletions": true,
-	"continue.showInlineTip": false,
+        },
+        "editor.rulers": [88],  // Black's default line length
+        "editor.wordWrapColumn": 88,
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true
+    },
+
+    // General editor settings
     "editor.tabCompletion": "on",
+    "editor.bracketPairColorization.enabled": true,
+    "editor.guides.bracketPairs": true,
+    "editor.renderWhitespace": "trailing",
+    "editor.wordWrap": "off",
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    
+    // Python language settings
+    "python.analysis.autoFormatStrings": true,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "python.formatting.blackArgs": ["--line-length", "88"],
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    
+    // Jupyter settings
+    "jupyter.interactiveWindow.textEditor.executeSelection": true,
+    "ipynb.pasteImagesAsAttachments.enabled": false,
+    
+    // Git settings
     "git.autofetch": true,
+    "git.enableSmartCommit": true,
+    "git.confirmSync": false,
+    
+    // YAML settings
     "yaml.customTags": [
         "!join sequence"
-    ]
+    ],
+    
+    // Continue AI settings
+    "continue.showInlineTip": false,
+    
+    // File explorer settings
+    "explorer.confirmDelete": false,
+    "explorer.confirmDragAndDrop": false,
+    
+    // Search settings - aligned with .gitignore
+    "search.exclude": {
+        // Python environments
+        "**/myenv": true,
+        "**/venv": true,
+        "**/env": true,
+        "**/.env": true,
+        
+        // Python cache
+        "**/__pycache__": true,
+        "**/*.py[cod]": true,
+        "**/*$py.class": true,
+        
+        // VS Code
+        "**/.vscode": true,
+        
+        // System files
+        "**/.DS_Store": true,
+        
+        // Project specific
+        "**/Co-DETR": true,
+        
+        // Model files
+        "**/*.pt": true
+    },
+    
+    // File watcher exclusions (improves performance)
+    "files.watcherExclude": {
+        // Python environments
+        "**/myenv/**": true,
+        "**/venv/**": true,
+        "**/env/**": true,
+        "**/.env/**": true,
+        
+        // Python cache
+        "**/__pycache__/**": true,
+        
+        // Large model directories
+        "**/Co-DETR/**": true
+    }
 }
