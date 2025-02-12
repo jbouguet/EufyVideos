@@ -1,5 +1,5 @@
 # Core visualization and data processing
-plotly==5.18.0  # Strict requirement for visualization compatibility
+plotly==5.24.1  # Strict requirement for visualization compatibility
 pandas>=2.2.0,<3.0.0
 numpy>=1.24.0
 matplotlib>=3.7.0

@@ -9,12 +9,12 @@ security cameras.
 This project has strict version requirements due to visualization dependencies:
 
 - Python: >=3.12,<3.14
-- Plotly: ==5.18.0 (strict requirement)
+- Plotly: ==5.24.1 (strict requirement)
 - Pandas: >=2.2.0,<3.0.0
 
 ### Important Note on Plotly Version
 
-The visualization components are specifically designed for Plotly 5.18.0. Using Plotly 6.x or other versions may result in incorrect graph orientations and styling issues.
+The visualization components are specifically designed for Plotly 5.24.1. Using Plotly 6.x or other versions may result in incorrect graph orientations and styling issues.
 
 ## General Setup Instructions
 
@@ -155,12 +155,12 @@ The visualization components are specifically designed for Plotly 5.18.0. Using 
 1. Plotly 6.x Compatibility:
    - The visualization code is not compatible with Plotly 6.x
    - If you see horizontal instead of vertical bars, check your Plotly version
-   - Solution: `pip install plotly==5.18.0`
+   - Solution: `pip install plotly==5.24.1`
 
 2. Python Version:
    - Python 3.13+ may have type handling differences
    - Recommended: Use Python 3.12.x
-   
+
 3. Pandas Version:
    - Pandas 2.2.x or higher is required for proper datetime handling
    - Earlier versions may have date processing issues
