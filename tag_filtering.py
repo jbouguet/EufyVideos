@@ -83,11 +83,11 @@ if __name__ == "__main__":
     minimum_votes_track_merge: int = 10
 
     root_database: str = (
-        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"
+        "/Users/jbouguet/Documents/EufySecurityVideos/record/"
     )
     tags_directory: str = os.path.join(root_database, "tags_database")
     video_metadata_file: str = os.path.join(root_database, "videos_in_batches.csv")
-    out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
+    out_dir: str = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
 
     video_database = VideoDatabase(
         video_directories=None, video_metadata_file=video_metadata_file

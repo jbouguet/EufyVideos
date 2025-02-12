@@ -179,14 +179,14 @@ if __name__ == "__main__":
 
     # Load video database
     root_database = (
-        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"
+        "/Users/jbouguet/Documents/EufySecurityVideos/record/"
     )
     metadata_files = [
         os.path.join(root_database, "videos_in_batches.csv"),
         os.path.join(root_database, "videos_in_backup.csv"),
         # Add more metadata files as needed
     ]
-    out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
+    out_dir: str = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
 
     video_database = VideoDatabaseList(
         [

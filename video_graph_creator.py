@@ -6,9 +6,11 @@ VideoGraphCreator module for creating Plotly graphs from aggregated video metada
 This module interfaces with video_data_aggregator.py to create visualizations of video statistical data.
 """
 
+import warnings
 from typing import Dict, List
 
 import pandas as pd
+import plotly
 import plotly.graph_objects as go
 
 from config import Config
@@ -39,19 +41,54 @@ class VideoGraphCreator:
             title="Daily Video Count",
             config=config,
         )
+
+        Version Requirements:
+        - Python: >=3.12,<3.14
+        - Plotly: ==5.18.0
+        - Pandas: >=2.2.0,<3.0.0
+
+    See requirements.txt for complete dependency specifications.
     """
+
+    _version_checked = False
+
+    @classmethod
+    def _check_versions(cls):
+        """Check for compatible library versions"""
+        if cls._version_checked:
+            return
+
+        from version_config import verify_environment
+
+        incompatible = verify_environment(raise_on_error=False)
+
+        if incompatible:
+            versions_str = "\n".join(
+                f"  {pkg}: found {info['current']}, requires {info['required']}"
+                for pkg, info in incompatible.items()
+            )
+            warnings.warn(
+                f"Incompatible package versions detected:\n{versions_str}\n"
+                "Visual inconsistencies may occur. See requirements.txt for supported versions.",
+                RuntimeWarning,
+            )
+
+        cls._version_checked = True
 
     @staticmethod
     def create_figure(
         data: pd.DataFrame, title: str, config: Dict[str, bool | int] = None, **kwargs
     ) -> go.Figure:
-        """Creates a plotly figure with consistent styling using shared configuration"""
+        """
+        Creates a plotly figure with consistent styling using shared configuration.
+
+        Version Notes:
+            This method requires Plotly 5.18.0 for correct visualization. Using other
+            versions may result in incorrect graph orientation or styling.
+        """
+        VideoGraphCreator._check_versions()
         if config is None:
-            config = {
-                # "is_cumulative": False,
-                "is_hourly": False,
-                "bins_per_hour": 4,
-            }
+            config = {"is_hourly": False, "bins_per_hour": 4}
 
         def decimal_hour_to_time(decimal_hour):
             hours = int(decimal_hour)
@@ -102,6 +139,7 @@ class VideoGraphCreator:
                     y=data[device],
                     name=device,
                     marker_color=colors[device],
+                    # orientation='v',  # Explicitly set vertical orientation
                     text=data[device].apply(lambda x: f"{int(x)}"),
                     textposition="inside",
                     hovertemplate=hovertemplate,
@@ -279,15 +317,13 @@ if __name__ == "__main__":
     set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
 
     # Load video database
-    root_database = (
-        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"
-    )
+    root_database = "/Users/jbouguet/Documents/EufySecurityVideos/record/"
     metadata_files = [
         os.path.join(root_database, "videos_in_batches.csv"),
         os.path.join(root_database, "videos_in_backup.csv"),
         # Add more metadata files as needed
     ]
-    out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
+    out_dir: str = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
 
     video_database = VideoDatabaseList(
         [
@@ -327,11 +363,10 @@ if __name__ == "__main__":
     logger.debug(f"Number of videos: {len(videos)}")
 
     metric = "activity"
-    metrics = [metric]
 
     # Get aggregated data
     data_aggregator = VideoDataAggregator(
-        metrics=metrics, config={"bins_per_hour": bins_per_hour}
+        metrics=[metric], config={"bins_per_hour": bins_per_hour}
     )
 
     daily_data, hourly_data = data_aggregator.run(videos)

@@ -749,9 +749,9 @@ if __name__ == "__main__":
     from tag_visualizer import TagVisualizer, TagVisualizerConfig
 
     video_file: str = (
-        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/Batch022/T8600P102338033E_20240930085536.mp4"
+        "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch022/T8600P102338033E_20240930085536.mp4"
     )
-    out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
+    out_dir: str = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
     tag_video: str = os.path.join(
         out_dir, "T8600P102338033E_20240930085536_crops_tags.mp4"
     )

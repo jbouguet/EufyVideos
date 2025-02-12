@@ -908,10 +908,10 @@ if __name__ == "__main__":
     # Refer to the configuration file analysis_config.yaml for following directory and file settings.
     # Video database location:
     root_database = (
-        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"
+        "/Users/jbouguet/Documents/EufySecurityVideos/record/"
     )
     # Output directory to save Stories:
-    stories_output = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
+    stories_output = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
 
     metadata_files = [
         os.path.join(root_database, "videos_in_batches.csv"),

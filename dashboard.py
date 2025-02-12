@@ -187,22 +187,23 @@ if __name__ == "__main__":
     import os
 
     from config import Config
-    from logging_config import set_logger_level_and_format
+    from logging_config import set_logger_level_and_format, set_all_loggers_level_and_format
     from video_database import VideoDatabase, VideoDatabaseList
     from video_filter import DateRange, TimeRange, VideoFilter, VideoSelector
 
-    set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
+    set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=False)
+    set_all_loggers_level_and_format(level=logging.DEBUG, extended_format=False)
 
     # Load video database
     root_database = (
-        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"
+        "/Users/jbouguet/Documents/EufySecurityVideos/record/"
     )
     metadata_files = [
         os.path.join(root_database, "videos_in_batches.csv"),
         os.path.join(root_database, "videos_in_backup.csv"),
         # Add more metadata files as needed
     ]
-    out_dir: str = "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories"
+    out_dir: str = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
 
     database_list = VideoDatabaseList(
         [
@@ -219,12 +220,12 @@ if __name__ == "__main__":
     min_date = video_database[0].date_str
     max_date = video_database[-1].date_str
 
-    bins_per_hour = 12
+    bins_per_hour = 1
 
     start_date = min_date
     end_date = max_date
-    start_time = "13:30:00"
-    end_time = "14:00:00"
+    start_time = "00:00:00"
+    end_time = "23:59:59"
     devices = Config.get_all_devices()  # ["Backyard"]
 
     logger.debug(f"Date range: {start_date} to {end_date}")

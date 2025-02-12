@@ -495,10 +495,10 @@ if __name__ == "__main__":
     set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
 
     root_database: str = (
-        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/EufyVideos/record/"
+        "/Users/jbouguet/Documents/EufySecurityVideos/record/"
     )
     out_dir: str = (
-        "/Users/jeanyves.bouguet/Documents/EufySecurityVideos/stories/tag_processor_test"
+        "/Users/jbouguet/Documents/EufySecurityVideos/stories/tag_processor_test"
     )
     video_metadata_file: str = os.path.join(root_database, "videos_in_batches.csv")
     video_database = VideoDatabase(
