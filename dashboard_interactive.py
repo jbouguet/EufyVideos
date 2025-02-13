@@ -109,8 +109,6 @@ class InteractiveDashboard:
     def setup_layout(self):
         """Create the dashboard layout using shared configuration."""
         styles = DashboardConfig.get_dash_styles()
-
-        """Create the dashboard layout with all UI components."""
         main_controls = dbc.Card(
             dbc.CardBody(
                 [
@@ -899,6 +897,7 @@ class InteractiveDashboard:
 if __name__ == "__main__":
     import logging
     import os
+    import sys
 
     from logging_config import set_logger_level_and_format
     from video_database import VideoDatabase, VideoDatabaseList
@@ -907,9 +906,7 @@ if __name__ == "__main__":
 
     # Refer to the configuration file analysis_config.yaml for following directory and file settings.
     # Video database location:
-    root_database = (
-        "/Users/jbouguet/Documents/EufySecurityVideos/record/"
-    )
+    root_database = "/Users/jbouguet/Documents/EufySecurityVideos/record/"
     # Output directory to save Stories:
     stories_output = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
 
@@ -924,6 +921,10 @@ if __name__ == "__main__":
             for file in metadata_files
         ]
     ).load_videos()
+
+    if video_database is None:
+        logger.error("Failed to load video database")
+        sys.exit(1)
 
     # Create and run dashboard
     dashboard = InteractiveDashboard(video_database, stories_output)

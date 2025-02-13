@@ -7,10 +7,9 @@ This module interfaces with video_data_aggregator.py to create visualizations of
 """
 
 import warnings
-from typing import Dict, List
+from typing import Dict, List, Optional, cast
 
 import pandas as pd
-import plotly
 import plotly.graph_objects as go
 
 from config import Config
@@ -64,7 +63,7 @@ class VideoGraphCreator:
 
         if incompatible:
             versions_str = "\n".join(
-                f"  {pkg}: found {info['current']}, requires {info['required']}"
+                f"  {pkg}: found {cast(dict, info).get('current', 'unknown')}, requires {cast(dict, info).get('required', 'unknown')}"
                 for pkg, info in incompatible.items()
             )
             warnings.warn(
@@ -77,7 +76,10 @@ class VideoGraphCreator:
 
     @staticmethod
     def create_figure(
-        data: pd.DataFrame, title: str, config: Dict[str, bool | int] = None, **kwargs
+        data: pd.DataFrame,
+        title: str,
+        config: Optional[Dict[str, bool | int]] = None,
+        **kwargs,
     ) -> go.Figure:
         """
         Creates a plotly figure with consistent styling using shared configuration.
@@ -139,7 +141,6 @@ class VideoGraphCreator:
                     y=data[device],
                     name=device,
                     marker_color=colors[device],
-                    # orientation='v',  # Explicitly set vertical orientation
                     text=data[device].apply(lambda x: f"{int(x)}"),
                     textposition="inside",
                     hovertemplate=hovertemplate,
@@ -267,7 +268,7 @@ class VideoGraphCreator:
     def create_graphs(
         daily_data: Dict[str, pd.DataFrame],
         hourly_data: Dict[str, pd.DataFrame],
-        metrics: List[str] = None,
+        metrics: Optional[List[str]] = None,
         bins_per_hour: int = 4,
     ) -> List[go.Figure]:
         """Creates daily and hourly activity graphs from aggregated data."""
@@ -307,8 +308,8 @@ if __name__ == "__main__":
     # Testing code for the module.
     import logging
     import os
+    import sys
 
-    from config import Config
     from logging_config import set_logger_level_and_format
     from video_data_aggregator import VideoDataAggregator
     from video_database import VideoDatabase, VideoDatabaseList
@@ -331,6 +332,10 @@ if __name__ == "__main__":
             for file in metadata_files
         ]
     ).load_videos()
+
+    if video_database is None:
+        logger.error("Failed to load video database")
+        sys.exit(1)
 
     bins_per_hour = 1
 
@@ -358,7 +363,10 @@ if __name__ == "__main__":
         weekdays=weekdays,
     )
     # Filter the database
-    videos = VideoFilter.by_selectors(video_database, selector)
+    if video_database is None:
+        videos = []
+    else:
+        videos = VideoFilter.by_selectors(video_database, selector)
 
     logger.debug(f"Number of videos: {len(videos)}")
 

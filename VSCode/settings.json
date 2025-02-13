@@ -1,10 +1,11 @@
 {
     // Theme and visual settings
     "workbench.colorTheme": "Atom One Dark",
+    "workbench.sideBar.location": "right",
     "editor.detectIndentation": false,
     "editor.minimap.enabled": false,
     "editor.minimap.sectionHeaderFontSize": 8,
-    
+
     // Font sizes
     "terminal.integrated.fontSize": 11,
     "scm.inputFontSize": 8,
@@ -19,8 +20,8 @@
         "editor.codeActionsOnSave": {
             "source.organizeImports": "explicit"
         },
-        "editor.rulers": [88],  // Black's default line length
-        "editor.wordWrapColumn": 88,
+        "editor.rulers": [120],  // Black's default line length
+        "editor.wordWrapColumn": 120,
         "editor.tabSize": 4,
         "editor.insertSpaces": true
     },
@@ -33,36 +34,57 @@
     "editor.wordWrap": "off",
     "files.trimTrailingWhitespace": true,
     "files.insertFinalNewline": true,
-    
+
     // Python language settings
     "python.analysis.autoFormatStrings": true,
     "python.analysis.autoImportCompletions": true,
     "python.analysis.typeCheckingMode": "basic",
-    "python.formatting.blackArgs": ["--line-length", "88"],
-    "python.linting.enabled": true,
-    "python.linting.pylintEnabled": true,
-    
+
+    // Corrected Python linting settings
+    "pylint.enabled": true,
+    "pylint.args": [
+        "--max-line-length=120",
+        "--disable=C0111",
+        "--disable=C0103",
+        "--disable=C0301",
+        "--disable=C0303",
+        "--disable=C0412",
+        "--disable=C0415",
+        "--disable=W0621",
+        "--disable=W0612",
+        "--disable=W0511",
+        "--disable=W1203",
+        "--disable=W1514",
+        "--generated-members=numpy.*,torch.*,cv2.*",
+        "--good-names=i,j,k,ex,Run,_,x,y,z,df,ax",
+        "--extension-pkg-whitelist=numpy,cv2,torch",
+        "--ignore-patterns=test_.*?.py",
+        "--max-args=10",
+        "--max-attributes=10",
+        "--min-public-methods=0"
+    ],
+
     // Jupyter settings
     "jupyter.interactiveWindow.textEditor.executeSelection": true,
     "ipynb.pasteImagesAsAttachments.enabled": false,
-    
+
     // Git settings
     "git.autofetch": true,
     "git.enableSmartCommit": true,
     "git.confirmSync": false,
-    
+
     // YAML settings
     "yaml.customTags": [
         "!join sequence"
     ],
-    
+
     // Continue AI settings
     "continue.showInlineTip": false,
-    
+
     // File explorer settings
     "explorer.confirmDelete": false,
     "explorer.confirmDragAndDrop": false,
-    
+
     // Search settings - aligned with .gitignore
     "search.exclude": {
         // Python environments
@@ -70,25 +92,25 @@
         "**/venv": true,
         "**/env": true,
         "**/.env": true,
-        
+
         // Python cache
         "**/__pycache__": true,
         "**/*.py[cod]": true,
         "**/*$py.class": true,
-        
+
         // VS Code
         "**/.vscode": true,
-        
+
         // System files
         "**/.DS_Store": true,
-        
+
         // Project specific
         "**/Co-DETR": true,
-        
+
         // Model files
         "**/*.pt": true
     },
-    
+
     // File watcher exclusions (improves performance)
     "files.watcherExclude": {
         // Python environments
@@ -96,10 +118,10 @@
         "**/venv/**": true,
         "**/env/**": true,
         "**/.env/**": true,
-        
+
         // Python cache
         "**/__pycache__/**": true,
-        
+
         // Large model directories
         "**/Co-DETR/**": true
     }

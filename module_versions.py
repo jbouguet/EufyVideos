@@ -1,7 +1,8 @@
+import platform
 import sys
+
 import pandas as pd
 import plotly
-import platform
 
 print(f"Python version: {sys.version}")
 print(f"Pandas version: {pd.__version__}")

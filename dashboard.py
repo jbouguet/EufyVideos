@@ -18,16 +18,16 @@ Key interfaces with video_metadata.py:
 
 Example usage:
     from video_metadata import VideoMetadata
-    
+
     # Load videos using VideoMetadata's methods
     videos = VideoMetadata.load_videos_from_directories('/path/to/videos')
-    
+
     # Create dashboard and generate graphs
     dashboard = Dashboard()
     dashboard.create_graphs_file(videos, 'video_analytics.html')
 """
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -52,7 +52,11 @@ class Dashboard:
     4. Saves the results to an interactive HTML file
     """
 
-    def __init__(self, metrics: List[str] = None, config: Dict[str, bool | int] = None):
+    def __init__(
+        self,
+        metrics: Optional[List[str]] = None,
+        config: Optional[Dict[str, bool | int]] = None,
+    ):
         """Initialize dashboard optionally specifying metrics of interest"""
         if metrics is None:
             # By default, aggregate across all metrics
@@ -112,17 +116,17 @@ class Dashboard:
                     :root {{
                         --bs-font-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
                     }}
-                    
+
                     body {{
                         font-family: var(--bs-font-sans-serif);
                         margin: 0;
                         padding: 0;
                     }}
-                    
+
                     .dashboard-title {{ {title_style} }}
                     .container-fluid {{ {container_style} }}
                     .graph-container {{ {graph_style} }}
-                    
+
                     .plotly-graph-div {{
                         width: 100%;
                         height: {fig_height}px;
@@ -185,19 +189,17 @@ if __name__ == "__main__":
     # Testing code for the module.
     import logging
     import os
+    import sys
 
     from config import Config
-    from logging_config import set_logger_level_and_format, set_all_loggers_level_and_format
+    from logging_config import set_logger_level_and_format
     from video_database import VideoDatabase, VideoDatabaseList
     from video_filter import DateRange, TimeRange, VideoFilter, VideoSelector
 
     set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=False)
-    set_all_loggers_level_and_format(level=logging.DEBUG, extended_format=False)
 
     # Load video database
-    root_database = (
-        "/Users/jbouguet/Documents/EufySecurityVideos/record/"
-    )
+    root_database = "/Users/jbouguet/Documents/EufySecurityVideos/record/"
     metadata_files = [
         os.path.join(root_database, "videos_in_batches.csv"),
         os.path.join(root_database, "videos_in_backup.csv"),
@@ -216,6 +218,9 @@ if __name__ == "__main__":
 
     # Load all of the videos
     video_database = database_list.load_videos()
+    if video_database is None:
+        logger.error("Failed to load video database")
+        sys.exit(1)
 
     min_date = video_database[0].date_str
     max_date = video_database[-1].date_str
