@@ -897,7 +897,6 @@ class InteractiveDashboard:
 
 if __name__ == "__main__":
     import logging
-    import os
     import sys
 
     from logging_config import set_logger_level_and_format

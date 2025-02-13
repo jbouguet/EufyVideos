@@ -30,17 +30,18 @@ Example usage:
 """
 
 import sys
-from datetime import date, datetime
+from datetime import date
 from typing import Dict, List, Literal, Optional, Tuple, Union
 
 import pandas as pd
 from typing_extensions import TypeAlias
 
+from logging_config import create_logger
+from video_metadata import VideoMetadata
+
 MetricType: TypeAlias = Literal["activity", "duration", "filesize"]
 TimeKeyType: TypeAlias = Literal["date", "hour"]
 
-from logging_config import create_logger
-from video_metadata import VideoMetadata
 
 logger = create_logger(__name__)
 
