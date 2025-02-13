@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, NoReturn, Optional, Union
 
 import yaml
 from termcolor import colored
@@ -168,7 +169,7 @@ class VideoAnalyzer:
     def __init__(self, config: AnalysisConfig) -> None:
         self.config: AnalysisConfig = config
         self.videos_database: List[VideoMetadata] = []
-        self.tags_database: VideoTags = None
+        self.tags_database: Optional[VideoTags] = None
 
     @staticmethod
     def run(config_filename: str) -> None:
@@ -196,11 +197,16 @@ class VideoAnalyzer:
     @staticmethod
     def _load_videos_database(
         video_database_list: Union[VideoDatabase, VideoDatabaseList]
-    ) -> List[VideoMetadata]:
+    ) -> NoReturn | List[VideoMetadata]:
         corrupted_files: List[str] = []
         videos_database = video_database_list.load_videos(corrupted_files)
-        for file in corrupted_files:
-            logger.warning(f"    - {file}")
+        if videos_database is None:
+            logger.error("Failed to load video database")
+            sys.exit(1)
+        if corrupted_files:
+            logger.warning("Corrupted files found:")
+            for file in corrupted_files:
+                logger.warning(f"    - {file}")
         return videos_database
 
     @staticmethod
@@ -232,7 +238,11 @@ class VideoAnalyzer:
         average_fps = (
             num_frames / total_duration_seconds if total_duration_seconds > 0 else 0
         )
-        tags_stats = self.tags_database.stats
+        tags_stats = (
+            self.tags_database.stats
+            if self.tags_database
+            else {"num_tagged_videos": 0, "num_tagged_frames": 0, "num_tags": 0}
+        )
         num_tagged_videos = tags_stats["num_tagged_videos"]
         num_tagged_frames = tags_stats["num_tagged_frames"]
         num_tags = tags_stats["num_tags"]

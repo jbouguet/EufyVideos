@@ -19,20 +19,25 @@ Key interfaces with video_metadata.py:
 
 Example usage:
     from video_metadata import VideoMetadata
-    
+
     # Load videos using VideoMetadata's methods
     videos = VideoMetadata.load_videos_from_directories('/path/to/videos')
-    
+
     # Create dashboard and generate graphs
     data_aggregator = VideoDataAggregator()
     daily_data = self.data_aggregator.get_daily_aggregates(videos)
     hourly_data = self.data_aggregator.get_hourly_aggregates(videos)
 """
 
-from datetime import datetime
-from typing import Dict, List, Literal, Tuple
+import sys
+from datetime import date, datetime
+from typing import Dict, List, Literal, Optional, Tuple, Union
 
 import pandas as pd
+from typing_extensions import TypeAlias
+
+MetricType: TypeAlias = Literal["activity", "duration", "filesize"]
+TimeKeyType: TypeAlias = Literal["date", "hour"]
 
 from logging_config import create_logger
 from video_metadata import VideoMetadata
@@ -41,6 +46,7 @@ logger = create_logger(__name__)
 
 
 class VideoDataAggregator:
+    metrics: List[MetricType]
     """
     Handles data aggregation logic for video metadata.
 
@@ -67,14 +73,24 @@ class VideoDataAggregator:
             storage_by_15_minutes = hourly_data['filesize']   # MB per 15 minutes
     """
 
-    def __init__(self, metrics: List[str] = None, config: Dict[str, bool | int] = None):
+    def __init__(
+        self,
+        metrics: Optional[List[str]] = None,
+        config: Optional[Dict[str, Union[bool, int]]] = None,
+    ):
         """Initialize aggregarator optionally specifying metrics of interest"""
         if metrics is None:
             # By default, aggregate across all metrics
-            self.metrics = ["activity", "duration", "filesize"]
+            self.metrics: List[MetricType] = ["activity", "duration", "filesize"]
         else:
             # Only aggregate across a subset of specified metrics
-            self.metrics = metrics
+            # Validate metrics
+            valid_metrics = {"activity", "duration", "filesize"}
+            if not all(m in valid_metrics for m in metrics):
+                raise ValueError(f"Invalid metrics. Must be one of {valid_metrics}")
+            validated_metrics = [m for m in metrics if m in valid_metrics]
+            # Cast to MetricType since we've validated the values
+            self.metrics = [m for m in validated_metrics if m in ("activity", "duration", "filesize")]  # type: ignore
         # By default, set time interval to 15 minutes = 1 hour / 4 bin_per_hour
         if config is None:
             self.config = {"bins_per_hour": 4}
@@ -112,15 +128,15 @@ class VideoDataAggregator:
     @staticmethod
     def _aggregate_by_metric(
         videos: List[VideoMetadata],
-        time_key: Literal["date", "hour"],
-        metric: Literal["activity", "duration", "filesize"],
+        time_key: TimeKeyType,
+        metric: MetricType,
         bins_per_hour: int = 4,
     ) -> pd.DataFrame:
         """
         Generic aggregation function that processes VideoMetadata objects.
         """
 
-        def get_time_value(video: VideoMetadata) -> int | datetime | float:
+        def get_time_value(video: VideoMetadata) -> Union[date, float]:
             # Interface with VideoMetadata's date and time methods
             if time_key == "date":
                 return video.date
@@ -178,9 +194,7 @@ if __name__ == "__main__":
     set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
 
     # Load video database
-    root_database = (
-        "/Users/jbouguet/Documents/EufySecurityVideos/record/"
-    )
+    root_database = "/Users/jbouguet/Documents/EufySecurityVideos/record/"
     metadata_files = [
         os.path.join(root_database, "videos_in_batches.csv"),
         os.path.join(root_database, "videos_in_backup.csv"),
@@ -221,8 +235,11 @@ if __name__ == "__main__":
         weekdays=weekdays,
     )
     # Filter the database
-    videos = VideoFilter.by_selectors(video_database, selector)
+    if video_database is None:
+        logger.error("Failed to load video database")
+        sys.exit(1)
 
+    videos = VideoFilter.by_selectors(video_database, selector)
     logger.debug(f"Number of videos: {len(videos)}")
 
     metrics = ["activity"]

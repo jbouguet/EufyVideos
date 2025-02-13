@@ -24,7 +24,7 @@ Example Usage:
 2. Custom configuration:
     ```python
     from tag_visualizer import TagVisualizer, TagVisualizerConfig
-    
+
     config = TagVisualizerConfig(
         output_size={"width": 1920, "height": 1080}
     )
@@ -35,8 +35,9 @@ Example Usage:
 
 import contextlib
 import os
+import sys
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import cv2
 import numpy as np
@@ -47,10 +48,13 @@ from video_metadata import VideoMetadata
 
 logger = create_logger(__name__)
 
+ColorTuple = Tuple[int, int, int]
+
 
 @contextlib.contextmanager
 def suppress_stdout_stderr():
     """Context manager to suppress stdout and stderr."""
+    save_fds: List[int] = []
     try:
         null_fd = os.open(os.devnull, os.O_RDWR)
         save_fds = [os.dup(2), os.dup(1)]
@@ -65,9 +69,9 @@ def suppress_stdout_stderr():
             os.close(fd)
 
 
-def color_from_hash(number: int) -> tuple[int, int, int]:
+def color_from_hash(number: int) -> ColorTuple:
     # Predefined list of contrasting colors in BGR format
-    colors = [
+    colors: List[ColorTuple] = [
         (255, 0, 0),  # Blue
         (0, 255, 0),  # Green
         (0, 0, 255),  # Red
@@ -126,10 +130,18 @@ class TagVisualizerConfig:
         default_factory=lambda: {"width": 1600, "height": 900}
     )
     max_track_history: int = field(default=2000)
-    bbox_color: Tuple[int, int, int] = field(default=(0, 255, 0))  # Green in BGR
-    track_color: Tuple[int, int, int] = field(default=(230, 230, 230))  # Light gray
-    text_color: Tuple[int, int, int] = field(default=(0, 255, 0))  # Green
-    info_color: Tuple[int, int, int] = field(default=(255, 255, 255))  # White
+    bbox_color: ColorTuple = field(
+        default_factory=lambda: cast(ColorTuple, (0, 255, 0))
+    )  # Green in BGR
+    track_color: ColorTuple = field(
+        default_factory=lambda: cast(ColorTuple, (230, 230, 230))
+    )  # Light gray
+    text_color: ColorTuple = field(
+        default_factory=lambda: cast(ColorTuple, (0, 255, 0))
+    )  # Green
+    info_color: ColorTuple = field(
+        default_factory=lambda: cast(ColorTuple, (255, 255, 255))
+    )  # White
     font_scale: float = field(default=0.6)
     line_thickness: int = field(default=2)
     use_color_from_track_id: bool = field(default=True)
@@ -144,10 +156,18 @@ class TagVisualizerConfig:
         return cls(
             output_size=output_size,
             max_track_history=config_dict.get("max_track_history", 1000),
-            bbox_color=tuple(config_dict.get("bbox_color", (0, 255, 0))),
-            track_color=tuple(config_dict.get("track_color", (230, 230, 230))),
-            text_color=tuple(config_dict.get("text_color", (0, 255, 0))),
-            info_color=tuple(config_dict.get("info_color", (255, 255, 255))),
+            bbox_color=cast(
+                ColorTuple, tuple(config_dict.get("bbox_color", (0, 255, 0)))
+            ),
+            track_color=cast(
+                ColorTuple, tuple(config_dict.get("track_color", (230, 230, 230)))
+            ),
+            text_color=cast(
+                ColorTuple, tuple(config_dict.get("text_color", (0, 255, 0)))
+            ),
+            info_color=cast(
+                ColorTuple, tuple(config_dict.get("info_color", (255, 255, 255)))
+            ),
             font_scale=config_dict.get("font_scale", 0.6),
             line_thickness=config_dict.get("line_thickness", 2),
             use_color_from_track_id=config_dict.get("use_color_from_track_id", True),
@@ -206,7 +226,7 @@ class TagVisualizer:
     ) -> None:
         """Create the visualization video from tagged frames."""
         with suppress_stdout_stderr():
-            fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+            fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # type: ignore
             out = None
 
         for video in tqdm(
@@ -391,7 +411,7 @@ class TagVisualizer:
         frame: np.ndarray,
         label: str,
         bbox: Dict[str, int],
-        text_color: tuple[int, int, int] = None,
+        text_color: Optional[ColorTuple] = None,
     ) -> None:
         """Draw label text above bounding box."""
         if text_color is None:
@@ -417,7 +437,7 @@ class TagVisualizer:
             f"Number of tags: {num_tags}",
         ]
         positions = [(20, 80), (20, 120), (20, 160)]
-        colors = [(0, 0, 0), (255, 255, 255)]
+        colors: List[ColorTuple] = [(0, 0, 0), (255, 255, 255)]
         thicknesses = [6, 2]
 
         for text, pos in zip(header_text, positions):
@@ -449,14 +469,17 @@ if __name__ == "__main__":
     from video_database import VideoDatabase
     from video_filter import VideoFilter, VideoSelector
 
-    root_database: str = (
-        "/Users/jbouguet/Documents/EufySecurityVideos/record/"
-    )
+    root_database: str = "/Users/jbouguet/Documents/EufySecurityVideos/record/"
     out_dir: str = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
     video_metadata_file: str = os.path.join(root_database, "videos_in_batches.csv")
     video_database = VideoDatabase(
         video_directories=None, video_metadata_file=video_metadata_file
     ).load_videos()
+
+    if video_database is None:
+        logger.error("Failed to load video database")
+        sys.exit(1)
+
     videos = VideoFilter.by_selectors(
         video_database, VideoSelector(filenames=["T8600P102338033E_20240930085536.mp4"])
     )

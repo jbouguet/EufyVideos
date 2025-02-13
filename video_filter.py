@@ -5,22 +5,23 @@ This module provides filtering capabilities via VideoFilter and VideoSelector cl
 Example Usage:
     # Load videos from a directory
     videos = VideoMetadata.load_videos_from_directories('/path/to/videos')
-    
+
     # Create a selector for filtering
     selector = VideoSelector(
         devices=['Backyard'],
         date_range=DateRange(start='2023-01-01', end='2023-12-31'),
         time_range=TimeRange(start='08:00:00', end='17:00:00')
     )
-    
+
     # Filter videos
     filtered_videos = VideoFilter.by_selectors(videos, [selector])
-    
+
     # Export to metadata file
     VideoMetadata.export_videos_to_metadata_file(filtered_videos, 'metadata.csv')
 """
+import sys
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, Dict, List, Optional, Union
 
 # import video_analyzer
@@ -273,8 +274,10 @@ class VideoSelector:
                 return False
 
         # Check date range (more expensive - date comparison)
-        if self._start_date is not None and (
-            video.date < self._start_date or video.date > self._end_date
+        if (
+            self._start_date is not None
+            and self._end_date is not None
+            and (video.date < self._start_date or video.date > self._end_date)
         ):
             return False
 
@@ -424,6 +427,10 @@ if __name__ == "__main__":
     )
     analyzer._load_all_databases()
     analyzer._log_statistics()
+
+    if not analyzer.videos_database:
+        logger.error("No videos found in database")
+        sys.exit(1)
 
     start_date = analyzer.videos_database[0].date_str
     end_date = analyzer.videos_database[-1].date_str

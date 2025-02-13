@@ -12,6 +12,7 @@ This module extends dashboard.py by providing an interactive web interface for:
 The graphs update dynamically based on user selections.
 """
 
+import os
 from datetime import datetime
 from typing import List
 

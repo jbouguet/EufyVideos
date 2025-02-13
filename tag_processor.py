@@ -17,7 +17,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from math import ceil
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 from tqdm import tqdm
 
@@ -26,6 +26,8 @@ from object_detector_base import ObjectDetectorFactory
 from video_metadata import VideoMetadata
 
 logger = create_logger(__name__)
+
+TagDict = Dict[str, Dict[int, Dict[int, Dict[str, Any]]]]
 
 
 class Model(Enum):
@@ -102,9 +104,9 @@ class VideoTags:
     built-in deduplication support through hash-based uniqueness checking.
     """
 
-    timestamp: str = None
-    tag_processing_config: TaggerConfig = None
-    tags: Dict[str, Dict[int, Dict[int, Dict[str, Any]]]] = field(default_factory=list)
+    timestamp: Optional[str] = None
+    tag_processing_config: Optional[TaggerConfig] = None
+    tags: TagDict = field(default_factory=dict)
 
     @property
     def stats(self) -> Dict[str, int]:
@@ -130,8 +132,8 @@ class VideoTags:
     @classmethod
     def from_tags(
         cls,
-        tags: Dict[str, Dict[int, Dict[int, Dict[str, Any]]]],
-        tag_processing_config: TaggerConfig = None,
+        tags: TagDict,
+        tag_processing_config: Optional[TaggerConfig] = None,
     ) -> "VideoTags":
         """Create VideoTags instance from raw tag data."""
         return cls(
@@ -159,7 +161,7 @@ class VideoTags:
         """Load tags from file with lossless restoration."""
         timestamp = None
         tag_processing_config = None
-        tags = {}
+        tags: TagDict = {}
         if os.path.exists(tag_file):
             with open(tag_file, "r") as f:
                 tag_data = json.load(f)
@@ -241,37 +243,37 @@ class VideoTags:
     ) -> List[VideoMetadata]:
         """Export tags to VideoMetadata objects with addition."""
         if not self.timestamp or not self.tags:
-            return 0
-        videos = [videos] if isinstance(videos, VideoMetadata) else videos
-        for video in videos:
+            return [] if isinstance(videos, list) else [videos]
+        videos_list = [videos] if isinstance(videos, VideoMetadata) else videos
+        for video in videos_list:
             if video.filename in self.tags:
                 video.merge_new_tags(self.tags[video.filename])
-        return videos
+        return videos_list
 
     def to_videos_replace(
         self, videos: Union[VideoMetadata, List[VideoMetadata]]
     ) -> List[VideoMetadata]:
         """Export tags to VideoMetadata objects with full replacement."""
         if not self.timestamp or not self.tags:
-            return 0
-        videos = [videos] if isinstance(videos, VideoMetadata) else videos
-        for video in videos:
+            return [] if isinstance(videos, list) else [videos]
+        videos_list = [videos] if isinstance(videos, VideoMetadata) else videos
+        for video in videos_list:
             if video.filename in self.tags:
                 if hasattr(video, "tags") and video.tags:
                     video.tags.clear()
                 video.merge_new_tags(self.tags[video.filename])
-        return videos
+        return videos_list
 
     @classmethod
     def from_videos(
         cls,
         videos: Union[VideoMetadata, List[VideoMetadata]],
-        tag_processing_config: TaggerConfig = None,
+        tag_processing_config: Optional[TaggerConfig] = None,
     ) -> "VideoTags":
         """Create VideoTags instance from existing tags in VideoMetadata objects."""
-        videos = [videos] if isinstance(videos, VideoMetadata) else videos
-        tags = {}
-        for video in videos:
+        videos_list = [videos] if isinstance(videos, VideoMetadata) else videos
+        tags: TagDict = {}
+        for video in videos_list:
             if hasattr(video, "tags") and video.tags:
                 tags[video.filename] = {
                     int(frame): frame_tags
@@ -286,11 +288,11 @@ class VideoTags:
         videos: Union[VideoMetadata, List[VideoMetadata]],
     ) -> List[VideoMetadata]:
         """Clear all tags from VideoMetadata objects."""
-        videos = [videos] if isinstance(videos, VideoMetadata) else videos
-        for video in videos:
+        videos_list = [videos] if isinstance(videos, VideoMetadata) else videos
+        for video in videos_list:
             if hasattr(video, "tags") and video.tags:
                 video.tags.clear()
-        return videos
+        return videos_list
 
     @staticmethod
     def compute_tag_hash(filename: str, tag: Dict[str, Any]) -> int:
@@ -355,10 +357,14 @@ class VideoTags:
                     if "track_id" in tag:
                         track_lengths[int(tag["track_id"])] += 1
 
-        tags_new = defaultdict(lambda: defaultdict(dict))
+        tags_new: TagDict = {}
 
         for filename, file_tags in self.tags.items():
+            if filename not in tags_new:
+                tags_new[filename] = {}
             for frame_number, frame_tags in file_tags.items():
+                if frame_number not in tags_new[filename]:
+                    tags_new[filename][frame_number] = {}
                 # Group tags by value
                 value_groups = defaultdict(list)
                 for hash_key, tag in frame_tags.items():
@@ -393,7 +399,7 @@ class VideoTags:
 class TagProcessor:
     """Main interface for computing video tags using object detection models."""
 
-    def __init__(self, tag_processing_config: TaggerConfig = None):
+    def __init__(self, tag_processing_config: Optional[TaggerConfig] = None):
         """Initialize processor with configuration."""
         self.tag_processing_config = tag_processing_config or TaggerConfig()
         self.object_detector = ObjectDetectorFactory.create_detector(
@@ -403,18 +409,15 @@ class TagProcessor:
 
     def run(self, videos: Union[VideoMetadata, List[VideoMetadata]]) -> VideoTags:
         """Process videos to generate tags."""
-        videos = [videos] if isinstance(videos, VideoMetadata) else videos
+        videos_list = [videos] if isinstance(videos, VideoMetadata) else videos
         return VideoTags.from_tags(
-            tags=self._compute_video_tags(videos),
+            tags=self._compute_video_tags(videos_list),
             tag_processing_config=self.tag_processing_config,
         )
 
-    def _compute_video_tags(
-        self, videos: Union[VideoMetadata, List[VideoMetadata]]
-    ) -> Dict[str, Dict[int, Dict[int, Dict[str, Any]]]]:
+    def _compute_video_tags(self, videos: List[VideoMetadata]) -> TagDict:
         """Internal method to compute tags for all videos."""
-        videos = [videos] if isinstance(videos, VideoMetadata) else videos
-        tags = {}
+        tags: TagDict = {}
         unique_run_key = hash(datetime.now().isoformat())
         for video in tqdm(
             videos,
@@ -494,9 +497,7 @@ if __name__ == "__main__":
     # Set extended logging for this module only.
     set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
 
-    root_database: str = (
-        "/Users/jbouguet/Documents/EufySecurityVideos/record/"
-    )
+    root_database: str = "/Users/jbouguet/Documents/EufySecurityVideos/record/"
     out_dir: str = (
         "/Users/jbouguet/Documents/EufySecurityVideos/stories/tag_processor_test"
     )
@@ -504,6 +505,10 @@ if __name__ == "__main__":
     video_database = VideoDatabase(
         video_directories=None, video_metadata_file=video_metadata_file
     ).load_videos()
+
+    if video_database is None:
+        logger.error("Failed to load video database")
+        sys.exit(1)
 
     story_name: str = "T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809"
     filenames = [
@@ -513,6 +518,10 @@ if __name__ == "__main__":
     videos = VideoFilter.by_selectors(
         video_database, VideoSelector(filenames=filenames)
     )
+
+    if not videos:
+        logger.error("No videos found matching the specified filenames")
+        sys.exit(1)
 
     # Tracking configurations
     temporal_subsamplings: List[float] = [100, 50, 25, 15, 10, 5, 2, 1]

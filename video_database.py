@@ -8,23 +8,23 @@ offering flexibility in how video collections are managed and accessed.
 Example Usage:
     # Load videos from a directory
     videos = VideoMetadata.load_videos_from_directories('/path/to/videos')
-    
+
     # Create a selector for filtering
     selector = VideoSelector(
         devices=['Backyard'],
         date_range=DateRange(start='2023-01-01', end='2023-12-31'),
         time_range=TimeRange(start='08:00:00', end='17:00:00')
     )
-    
+
     # Filter videos
     filtered_videos = VideoFilter.by_selectors(videos, [selector])
-    
+
     # Export to metadata file
     VideoMetadata.export_videos_to_metadata_file(filtered_videos, 'metadata.csv')
 """
 import os
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Sequence, Union, cast
 
 import yaml
 
@@ -64,15 +64,15 @@ class VideoDatabase:
         videos = db.load_videos()
     """
 
-    video_directories: Union[Union[str, List[str]], None]
+    video_directories: Optional[Union[str, List[str]]]
     video_metadata_file: Optional[str]
     force_video_directories_scanning: bool = False
 
     @classmethod
-    def from_dict(
-        cls, video_database_dict: Dict[str, Any]
-    ) -> Union["VideoDatabase", None]:
+    def from_dict(cls, video_database_dict: Any) -> "VideoDatabase":
         """Create VideoDatabase from dictionary representation."""
+        if not isinstance(video_database_dict, dict):
+            raise ValueError("Input must be a dictionary")
         video_metadata_file = None
         video_directories = None
         if "video_metadata_file" in video_database_dict:
@@ -119,14 +119,14 @@ class VideoDatabase:
             self.video_metadata_file is not None
             and os.path.exists(self.video_metadata_file)
         )
-        valid_video_directories: bool = self.video_directories is not None
-        if valid_video_directories:
-            if isinstance(self.video_directories, str):
-                self.video_directories = [self.video_directories]
-            for dir in self.video_directories:
-                if not os.path.exists(dir):
-                    valid_video_directories = False
-                    continue
+        valid_video_directories: bool = False
+        if self.video_directories is not None:
+            directories = (
+                [self.video_directories]
+                if isinstance(self.video_directories, str)
+                else self.video_directories
+            )
+            valid_video_directories = all(os.path.exists(dir) for dir in directories)
 
         nothing_can_be_done: bool = (
             not valid_video_meta_file and not valid_video_directories
@@ -137,19 +137,26 @@ class VideoDatabase:
 
         if nothing_can_be_done:
             return None
-        elif scan_directories:
+
+        videos: List[VideoMetadata] = []
+        if scan_directories and self.video_directories is not None:
+            directories = (
+                [self.video_directories]
+                if isinstance(self.video_directories, str)
+                else self.video_directories
+            )
             videos = VideoMetadata.load_videos_from_directories(
-                self.video_directories, corrupted_files
+                directories, corrupted_files
             )
             logger.info(
-                f"{len(videos):,} videos loaded from {len(self.video_directories)} directories"
+                f"{len(videos):,} videos loaded from {len(directories)} directories"
             )
             if self.video_metadata_file is not None:
                 logger.info(f"Saving videos to {self.video_metadata_file}")
                 VideoMetadata.export_videos_to_metadata_file(
                     videos, self.video_metadata_file
                 )
-        else:
+        elif self.video_metadata_file is not None:
             videos = VideoMetadata.load_videos_from_metadata_files(
                 self.video_metadata_file, corrupted_files
             )
@@ -157,7 +164,7 @@ class VideoDatabase:
                 f"{len(videos):,} videos loaded from {self.video_metadata_file}"
             )
 
-        return VideoMetadata.clean_and_sort(videos)
+        return VideoMetadata.clean_and_sort(videos) if videos else None
 
     def to_file(self, video_database_filename: str) -> None:
         """
@@ -175,10 +182,14 @@ class VideoDatabase:
         Load database configuration from YAML file.
 
         Raises:
-            IOError:  If there's an error reading from the file
+            IOError: If there's an error reading from the file
+            ValueError: If the file contains invalid YAML or missing required fields
         """
         with open(video_database_filename, "r") as f:
-            return cls.from_dict(yaml.safe_load(f))
+            config = yaml.safe_load(f)
+            if not isinstance(config, dict):
+                raise ValueError(f"Invalid YAML format in {video_database_filename}")
+            return cls.from_dict(config)
 
 
 @dataclass
@@ -202,8 +213,13 @@ class VideoDatabaseList:
     video_database_list: List[VideoDatabase]
 
     @classmethod
-    def from_dict(cls, video_database_list_dict: Dict[str, Any]) -> "VideoDatabaseList":
+    def from_dict(cls, video_database_list_dict: Any) -> "VideoDatabaseList":
         """Create VideoDatabaseList from dictionary representation."""
+        if not isinstance(video_database_list_dict, (list, tuple)):
+            raise ValueError("Input must be a list or tuple")
+        video_database_list_dict = cast(
+            Sequence[Dict[str, Any]], video_database_list_dict
+        )
         video_database_list: List[VideoDatabase] = []
         for video_database_dict in video_database_list_dict:
             video_database_list.append(VideoDatabase.from_dict(video_database_dict))
@@ -218,14 +234,12 @@ class VideoDatabaseList:
         Returns:
             Combined list of videos from all databases, sorted by datetime
         """
-        videos_all = None
+        videos_all: List[VideoMetadata] = []
         for video_dir in self.video_database_list:
             videos = video_dir.load_videos(corrupted_files)
             if videos is not None:
-                if videos_all is None:
-                    videos_all = []
                 videos_all.extend(videos)
-        return VideoMetadata.clean_and_sort(videos_all)
+        return VideoMetadata.clean_and_sort(videos_all) if videos_all else None
 
     def to_file(self, video_database_list_filename: str):
         """Save database list configuration to YAML file."""
@@ -239,9 +253,20 @@ class VideoDatabaseList:
 
     @classmethod
     def from_file(cls, video_database_list_filename: str) -> "VideoDatabaseList":
-        """Load database list configuration from YAML file."""
+        """
+        Load database list configuration from YAML file.
+
+        Raises:
+            IOError: If there's an error reading from the file
+            ValueError: If the file contains invalid YAML or missing required fields
+        """
         with open(video_database_list_filename, "r") as f:
-            return cls.from_dict(yaml.safe_load(f))
+            config = yaml.safe_load(f)
+            if not isinstance(config, list):
+                raise ValueError(
+                    f"Invalid YAML format in {video_database_list_filename}"
+                )
+            return cls.from_dict(config)
 
 
 if __name__ == "__main__":
@@ -257,7 +282,7 @@ if __name__ == "__main__":
 
     def load_videos(
         data_dirs: List[str], video_file: str, force_directory_scanning: bool = False
-    ) -> List[VideoMetadata]:
+    ) -> Union[List[VideoMetadata], None]:
         print_dirs(data_dirs)
         corrupted_files: List[str] = []
         return VideoDatabase(
@@ -271,7 +296,7 @@ if __name__ == "__main__":
 
     def load_videos_batches_on_mac(
         video_files_dir: str, force_directory_scanning: bool = False
-    ) -> List[VideoMetadata]:
+    ) -> Union[List[VideoMetadata], None]:
         data_base_dir = os.path.expanduser(
             "~/Documents/EufySecurityVideos/EufyVideos/record"
         )
@@ -281,7 +306,7 @@ if __name__ == "__main__":
 
     def load_videos_backup_on_mac(
         video_files_dir: str, force_directory_scanning: bool = False
-    ) -> List[VideoMetadata]:
+    ) -> Union[List[VideoMetadata], None]:
         data_dirs = [
             os.path.expanduser(
                 "~/Documents/EufySecurityVideos/EufyVideos/record/backup"
@@ -292,7 +317,7 @@ if __name__ == "__main__":
 
     def load_all_videos_on_mac(
         video_files_dir: str, force_directory_scanning: bool = False
-    ) -> List[VideoMetadata]:
+    ) -> Union[List[VideoMetadata], None]:
         data_base_dir = os.path.expanduser(
             "~/Documents/EufySecurityVideos/EufyVideos/record"
         )
@@ -307,7 +332,7 @@ if __name__ == "__main__":
 
     def load_all_videos_seagate(
         video_files_dir: str, force_directory_scanning: bool = False
-    ) -> List[VideoMetadata]:
+    ) -> Union[List[VideoMetadata], None]:
         data_base_dir = os.path.join(
             "/Volumes", "Seagate Hub", "EufySecurityVideos", "EufyVideos", "record"
         )
@@ -320,7 +345,7 @@ if __name__ == "__main__":
 
     def load_all_videos_usb_key(
         video_files_dir: str, force_directory_scanning: bool = False
-    ) -> List[VideoMetadata]:
+    ) -> Union[List[VideoMetadata], None]:
         data_base_dir = os.path.join("/Volumes", "Eufy Videos", "record")
         data_dirs = get_batch_directories(data_base_dir)
         backup_dir = os.path.join(data_base_dir, "backup")
@@ -367,6 +392,13 @@ if __name__ == "__main__":
             video_files_dir, force_directory_scanning_on_mac
         )
         # Make sure that there is no overlap in videos between batches and backup
+        if videos_batches_on_mac is None:
+            logger.error("Failed to load videos from batches")
+            sys.exit(1)
+        if videos_backup_on_mac is None:
+            logger.error("Failed to load videos from backup")
+            sys.exit(1)
+
         videos_batches_and_backup_on_mac = VideoMetadata.repeats(
             videos_batches_on_mac, videos_backup_on_mac
         )
@@ -396,11 +428,15 @@ if __name__ == "__main__":
         )
 
     # PART 2: Check that the reference database is identical the ones on the usb_key and seagate
+    all_videos_mac = None
     if check_usb_key_database or check_seagate_database:
         logger.info("Loading reference video database on mac")
         all_videos_mac = load_all_videos_on_mac(
             video_files_dir, force_directory_scanning_on_mac
         )
+        if all_videos_mac is None:
+            logger.error("Failed to load reference video database")
+            sys.exit(1)
 
     # Compare mac and usb_key:
     if check_usb_key_database:
@@ -411,32 +447,35 @@ if __name__ == "__main__":
         if all_videos_usb_key is None or len(all_videos_usb_key) == 0:
             logger.info("No videos found on usb-key. The drive could be disconnected.")
         else:  # Compare mac and usb_key:
-            videos_missing_on_usb_key, videos_missing_on_mac_from_usb_key = (
-                VideoMetadata.differences(all_videos_mac, all_videos_usb_key)
-            )
-            videos_file_missing_on_usb_key = os.path.join(
-                out_dir, "videos_missing_on_usb_key.csv"
-            )
-            videos_file_missing_on_mac_from_usb_key = os.path.join(
-                out_dir, "videos_missing_on_mac_from_usb_key.csv"
-            )
+            if all_videos_mac is not None and all_videos_usb_key is not None:
+                videos_missing_on_usb_key, videos_missing_on_mac_from_usb_key = (
+                    VideoMetadata.differences(all_videos_mac, all_videos_usb_key)
+                )
 
-            VideoMetadata.export_videos_to_metadata_file(
-                videos_missing_on_usb_key, videos_file_missing_on_usb_key
-            )
-            VideoMetadata.export_videos_to_metadata_file(
-                videos_missing_on_mac_from_usb_key,
-                videos_file_missing_on_mac_from_usb_key,
-            )
+                if videos_missing_on_usb_key and videos_missing_on_mac_from_usb_key:
+                    videos_file_missing_on_usb_key = os.path.join(
+                        out_dir, "videos_missing_on_usb_key.csv"
+                    )
+                    videos_file_missing_on_mac_from_usb_key = os.path.join(
+                        out_dir, "videos_missing_on_mac_from_usb_key.csv"
+                    )
 
-            logger.info(
-                f"{len(videos_missing_on_usb_key)} videos on mac that are not on usb_key "
-                f"are saved in {videos_file_missing_on_usb_key}"
-            )
-            logger.info(
-                f"{len(videos_missing_on_mac_from_usb_key)} videos on usb_key that are not "
-                f"on mac are saved in {videos_file_missing_on_mac_from_usb_key}"
-            )
+                    VideoMetadata.export_videos_to_metadata_file(
+                        videos_missing_on_usb_key, videos_file_missing_on_usb_key
+                    )
+                    VideoMetadata.export_videos_to_metadata_file(
+                        videos_missing_on_mac_from_usb_key,
+                        videos_file_missing_on_mac_from_usb_key,
+                    )
+
+                    logger.info(
+                        f"{len(videos_missing_on_usb_key)} videos on mac that are not on usb_key "
+                        f"are saved in {videos_file_missing_on_usb_key}"
+                    )
+                    logger.info(
+                        f"{len(videos_missing_on_mac_from_usb_key)} videos on usb_key that are not "
+                        f"on mac are saved in {videos_file_missing_on_mac_from_usb_key}"
+                    )
 
     # Compare mac and seagate:
     if check_seagate_database:
@@ -447,31 +486,34 @@ if __name__ == "__main__":
         if all_videos_seagate is None or len(all_videos_seagate) == 0:
             logger.info("No videos found on seagate. The drive could be disconnected.")
         else:
-            videos_missing_on_seagate, videos_missing_on_mac_from_seagate = (
-                VideoMetadata.differences(all_videos_mac, all_videos_seagate)
-            )
-            videos_file_missing_on_seagate = os.path.join(
-                out_dir, "videos_missing_on_seagate.csv"
-            )
-            videos_file_missing_on_mac_from_seagate = os.path.join(
-                out_dir, "videos_missing_on_mac_from_seagate.csv"
-            )
+            if all_videos_mac is not None and all_videos_seagate is not None:
+                videos_missing_on_seagate, videos_missing_on_mac_from_seagate = (
+                    VideoMetadata.differences(all_videos_mac, all_videos_seagate)
+                )
 
-            VideoMetadata.export_videos_to_metadata_file(
-                videos_missing_on_seagate, videos_file_missing_on_seagate
-            )
-            VideoMetadata.export_videos_to_metadata_file(
-                videos_missing_on_mac_from_seagate,
-                videos_file_missing_on_mac_from_seagate,
-            )
+                if videos_missing_on_seagate and videos_missing_on_mac_from_seagate:
+                    videos_file_missing_on_seagate = os.path.join(
+                        out_dir, "videos_missing_on_seagate.csv"
+                    )
+                    videos_file_missing_on_mac_from_seagate = os.path.join(
+                        out_dir, "videos_missing_on_mac_from_seagate.csv"
+                    )
 
-            logger.info(
-                f"{len(videos_missing_on_seagate)} videos on mac that are not on seagate "
-                f"are saved in {videos_file_missing_on_seagate}"
-            )
-            logger.info(
-                f"{len(videos_missing_on_mac_from_seagate)} videos on seagate that are not "
-                f"on mac are saved in {videos_file_missing_on_mac_from_seagate}"
-            )
+                    VideoMetadata.export_videos_to_metadata_file(
+                        videos_missing_on_seagate, videos_file_missing_on_seagate
+                    )
+                    VideoMetadata.export_videos_to_metadata_file(
+                        videos_missing_on_mac_from_seagate,
+                        videos_file_missing_on_mac_from_seagate,
+                    )
+
+                    logger.info(
+                        f"{len(videos_missing_on_seagate)} videos on mac that are not on seagate "
+                        f"are saved in {videos_file_missing_on_seagate}"
+                    )
+                    logger.info(
+                        f"{len(videos_missing_on_mac_from_seagate)} videos on seagate that are not "
+                        f"on mac are saved in {videos_file_missing_on_mac_from_seagate}"
+                    )
 
     sys.exit()
