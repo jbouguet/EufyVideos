@@ -317,8 +317,10 @@ class VideoSelector:
         return output_str
 
     @staticmethod
-    def log(selectors: Union["VideoSelector", List["VideoSelector"]]) -> None:
+    def log(selectors: Union["VideoSelector", Optional[List["VideoSelector"]]]) -> None:
         """Log the criteria defined in one or more selectors."""
+        if selectors is None:
+            return
         selectors = [selectors] if isinstance(selectors, VideoSelector) else selectors
         for i, selector in enumerate(selectors, 1):
             if len(selectors) > 1:

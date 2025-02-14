@@ -32,7 +32,7 @@ from dataclasses import dataclass, field
 from datetime import date as date_type
 from datetime import datetime as datetime_type
 from datetime import time as time_type
-from datetime import timedelta
+from datetime import timedelta as timedelta_type
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import av
@@ -45,31 +45,19 @@ from tqdm import tqdm
 from config import Config
 from logging_config import create_logger
 
-# Re-export types with original names for type hints
-date = date_type
-datetime = datetime_type
-time = time_type
-
-
 logger = create_logger(__name__)
 
 
 class VideoMetadataError(Exception):
     """Base exception for video metadata operations."""
 
-    pass
-
 
 class VideoLoadError(VideoMetadataError):
     """Raised when a video file cannot be loaded."""
 
-    pass
-
 
 class MetadataFileError(VideoMetadataError):
     """Raised when there's an error with metadata file operations."""
-
-    pass
 
 
 @dataclass
@@ -99,13 +87,13 @@ class VideoMetadata:
     filename: str
     full_path: str
     device: str
-    datetime_obj: datetime
+    datetime_obj: datetime_type
     serial: str
     file_size: float
     width: int
     height: int
     frame_count: int
-    duration: timedelta
+    duration: timedelta_type
     fps: float
     video_codec: str
 
@@ -118,22 +106,22 @@ class VideoMetadata:
     tags: Dict[int, Dict[int, Dict[str, Any]]] = field(default_factory=dict)
 
     @property
-    def datetime(self) -> datetime:
+    def datetime(self) -> datetime_type:
         """Get the video's datetime object."""
         return self.datetime_obj
 
     @property
-    def date(self) -> date:
+    def date(self) -> date_type:
         """Get the video's date component."""
         return self.datetime_obj.date()
 
     @property
-    def time_obj(self) -> time:
+    def time_obj(self) -> time_type:
         """Get the video's time component."""
         return self.datetime_obj.time()
 
     @property
-    def time(self) -> time:
+    def time(self) -> time_type:
         """Get the video's time component (for backward compatibility)."""
         return self.datetime_obj.time()
 
@@ -191,22 +179,22 @@ class VideoMetadata:
         return num_tags_added
 
     @staticmethod
-    def _get_creation_time(file_path: str) -> datetime:
+    def _get_creation_time(file_path: str) -> datetime_type:
         """Extract creation time from file system metadata."""
         try:
             stat = os.stat(file_path)
             ctime = (
                 stat.st_birthtime if hasattr(stat, "st_birthtime") else stat.st_mtime
             )
-            return datetime.fromtimestamp(ctime)
+            return datetime_type.fromtimestamp(ctime)
         except OSError as e:
             logger.warning(f"Failed to get file creation time: {e}")
-            return datetime.strptime("19000101000000", "%Y%m%d%H%M%S")
+            return datetime_type.strptime("19000101000000", "%Y%m%d%H%M%S")
 
     @staticmethod
     def _get_video_metadata_time(
         container: av.container.Container,
-    ) -> Optional[datetime]:
+    ) -> Optional[datetime_type]:
         """Extract datetime from video container metadata."""
         try:
             if hasattr(container, "metadata") and "creation_time" in container.metadata:
@@ -245,12 +233,16 @@ class VideoMetadata:
 
             serial: str = serial_and_datetime[0] if num_parts >= 1 else ""
             device: str = Config.get_device_dict().get(serial, serial)
-            datetime_obj: datetime = datetime.strptime("19000101000000", "%Y%m%d%H%M%S")
+            datetime_obj: datetime_type = datetime_type.strptime(
+                "19000101000000", "%Y%m%d%H%M%S"
+            )
 
             if num_parts >= 2:
                 try:
                     datetime_part = serial_and_datetime[1]
-                    datetime_obj = datetime.strptime(datetime_part[:14], "%Y%m%d%H%M%S")
+                    datetime_obj = datetime_type.strptime(
+                        datetime_part[:14], "%Y%m%d%H%M%S"
+                    )
                     logger.debug(
                         f"Successfully parsed datetime from filename: {datetime_obj}"
                     )
@@ -294,7 +286,7 @@ class VideoMetadata:
                         width=stream.width,
                         height=stream.height,
                         frame_count=stream.frames,
-                        duration=timedelta(seconds=float(duration)),
+                        duration=timedelta_type(seconds=float(duration)),
                         fps=float(stream.average_rate or 0.0),
                         video_codec=codec_name,
                     )
@@ -417,10 +409,12 @@ class VideoMetadata:
                                     width=int(row["Width"]),
                                     height=int(row["Height"]),
                                     frame_count=int(row["Frame Count"]),
-                                    duration=timedelta(seconds=float(row["Duration"])),
+                                    duration=timedelta_type(
+                                        seconds=float(row["Duration"])
+                                    ),
                                     fps=float(row["FPS"]),
                                     device=row["Device"],
-                                    datetime_obj=datetime.strptime(
+                                    datetime_obj=datetime_type.strptime(
                                         row["Date Time"], "%Y-%m-%d %H:%M:%S"
                                     ),
                                     serial=row["Serial"],
