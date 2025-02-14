@@ -86,9 +86,30 @@ class Dashboard:
         # By default, set time interval to 15 minutes = 1 hour / 4 bin_per_hour
         bins_per_hour = self.config.get("bins_per_hour", 4)
 
-        return VideoGraphCreator.create_graphs(
-            daily_data, hourly_data, metrics=self.metrics, bins_per_hour=bins_per_hour
-        )
+        figs = []
+        for metric in self.metrics:
+            figs.append(
+                VideoGraphCreator.create_figure(
+                    daily_data[metric],
+                    title="Daily Video " + metric.capitalize(),
+                    config={"time_key": "date", "bins_per_hour": bins_per_hour},
+                )
+            )
+            figs.append(
+                VideoGraphCreator.create_figure(
+                    hourly_data[metric],
+                    title="Hourly Video " + metric.capitalize(),
+                    config={"time_key": "hour", "bins_per_hour": bins_per_hour},
+                )
+            )
+            figs.append(
+                VideoGraphCreator.create_figure(
+                    daily_data[metric].set_index("Date").cumsum().reset_index(),
+                    title="Cumulative Daily Video " + metric.capitalize(),
+                    config={"time_key": "date", "bins_per_hour": bins_per_hour},
+                )
+            )
+        return figs
 
     @staticmethod
     def save_graphs_to_html(figures: List[go.Figure], output_file: str):

@@ -7,7 +7,7 @@ This module interfaces with video_data_aggregator.py to create visualizations of
 """
 
 import warnings
-from typing import Dict, List, Optional, cast
+from typing import Dict, List, Optional, Union, cast
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -15,6 +15,7 @@ import plotly.graph_objects as go
 from config import Config
 from dashboard_config import DashboardConfig
 from logging_config import create_logger
+from video_data_aggregator import TimeKeyType
 
 logger = create_logger(__name__)
 
@@ -78,7 +79,7 @@ class VideoGraphCreator:
     def create_figure(
         data: pd.DataFrame,
         title: str,
-        config: Optional[Dict[str, bool | int]] = None,
+        config: Optional[Dict[str, Union[TimeKeyType, int]]] = None,
         **kwargs,
     ) -> go.Figure:
         """
@@ -90,7 +91,7 @@ class VideoGraphCreator:
         """
         VideoGraphCreator._check_versions()
         if config is None:
-            config = {"is_hourly": False, "bins_per_hour": 4}
+            config = {"time_key": "date", "bins_per_hour": 4}
 
         def decimal_hour_to_time(decimal_hour):
             hours = int(decimal_hour)
@@ -99,12 +100,12 @@ class VideoGraphCreator:
             return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
         fig = go.Figure()
-        x_column = "Hour" if config.get("is_hourly") else "Date"
+        x_column = "Hour" if config.get("time_key") == "hour" else "Date"
         devices = [dev for dev in Config.get_all_devices() if dev in data.columns]
         colors = DashboardConfig.get_device_colors()
 
         # For date-based charts, ensure all dates are present with zeros for missing dates
-        if not config.get("is_hourly"):
+        if config.get("time_key") == "date":
             # Convert Date column to datetime
             data[x_column] = pd.to_datetime(data[x_column])
 
@@ -122,7 +123,7 @@ class VideoGraphCreator:
 
         # Add device traces
         for device in devices:
-            if config.get("is_hourly"):
+            if config.get("time_key") == "hour":
                 hovertemplate = (
                     "<b>Time:</b> %{customdata}<br>"
                     + f"<b>{device}:</b> %{{y:.0f}}<extra></extra>"
@@ -153,16 +154,14 @@ class VideoGraphCreator:
         # Replace zeros with None to create discontinuities in the line
         total_with_gaps = total.replace(0, None)
 
-        if config.get("is_hourly"):
+        if config.get("time_key") == "hour":
             hovertemplate = (
-                "<b>Time:</b> %{customdata}<br>"
-                + "<b>Total:</b> %{y:.0f}<extra></extra>"
+                "<b>Time:</b> %{customdata}<br><b>Total:</b> %{y:.0f}<extra></extra>"
             )
             customdata = [decimal_hour_to_time(h) for h in data[x_column]]
         else:
             hovertemplate = (
-                f"<b>Date:</b> %{{x|%Y-%m-%d}}<br>"
-                + "<b>Total:</b> %{y:.0f}<extra></extra>"
+                "<b>Date:</b> %{x|%Y-%m-%d}<br><b>Total:</b> %{y:.0f}<extra></extra>"
             )
             customdata = None
 
@@ -196,13 +195,13 @@ class VideoGraphCreator:
         fig.update_xaxes(**fig_config["axes"]["grid"])
         fig.update_yaxes(**fig_config["axes"]["grid"], **fig_config["axes"]["yaxis"])
 
-        if config.get("is_hourly"):
+        if config.get("time_key") == "hour":
             # By default, set time interval to 15 minutes = 1 hour / 4 bin_per_hour
-            bins_per_hour = config.get("bins_per_hour", 4)
+            bins_per_hour = int(config.get("bins_per_hour", 4))
 
             # Get the actual range of hours from the data
-            min_hour = min(data[x_column])
-            max_hour = max(data[x_column])
+            min_hour = float(min(data[x_column]))
+            max_hour = float(max(data[x_column]))
 
             # Round down min_hour and up max_hour to the nearest bin
             min_hour_binned = int(min_hour * bins_per_hour) / bins_per_hour
@@ -210,13 +209,14 @@ class VideoGraphCreator:
 
             plot_range = [
                 min_hour_binned,
-                max_hour_binned + (1 / (bins_per_hour)),
+                max_hour_binned + (1.0 / bins_per_hour),
             ]
 
             # Create tick values based on actual data range
             total_bins = int((max_hour_binned - min_hour_binned) * bins_per_hour)
             tick_values = [
-                min_hour_binned + (i / bins_per_hour) for i in range(total_bins + 1)
+                min_hour_binned + (float(i) / bins_per_hour)
+                for i in range(total_bins + 1)
             ]
 
             logger.debug(f"min_hour = {min_hour}")
@@ -263,44 +263,6 @@ class VideoGraphCreator:
             )
 
         return fig
-
-    @staticmethod
-    def create_graphs(
-        daily_data: Dict[str, pd.DataFrame],
-        hourly_data: Dict[str, pd.DataFrame],
-        metrics: Optional[List[str]] = None,
-        bins_per_hour: int = 4,
-    ) -> List[go.Figure]:
-        """Creates daily and hourly activity graphs from aggregated data."""
-        if metrics is None:
-            # By default, display all metrics
-            metrics = ["activity", "duration", "filesize"]
-
-        figs = []
-
-        for metric in metrics:
-            figs.append(
-                VideoGraphCreator.create_figure(
-                    daily_data[metric],
-                    title="Daily Video " + metric.capitalize(),
-                )
-            )
-            figs.append(
-                VideoGraphCreator.create_figure(
-                    hourly_data[metric],
-                    title="Hourly Video " + metric.capitalize(),
-                    config={"is_hourly": True, "bins_per_hour": bins_per_hour},
-                )
-            )
-            figs.append(
-                VideoGraphCreator.create_figure(
-                    daily_data[metric].set_index("Date").cumsum().reset_index(),
-                    title="Cumulative Daily Video " + metric.capitalize(),
-                    # config={"is_cumulative": True},
-                )
-            )
-
-        return figs
 
 
 if __name__ == "__main__":

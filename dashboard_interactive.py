@@ -740,11 +740,30 @@ class InteractiveDashboard:
             daily_data, hourly_data = data_aggregator.run(filtered_videos)
 
             # Create figures
-            figs = VideoGraphCreator.create_graphs(
-                daily_data,
-                hourly_data,
-                metrics=[metric_to_graph],
-                bins_per_hour=bins_per_hour,
+            figs = []
+            figs.append(
+                VideoGraphCreator.create_figure(
+                    daily_data[metric_to_graph],
+                    title="Daily Video " + metric_to_graph.capitalize(),
+                    config={"time_key": "date", "bins_per_hour": bins_per_hour},
+                )
+            )
+            figs.append(
+                VideoGraphCreator.create_figure(
+                    hourly_data[metric_to_graph],
+                    title="Hourly Video " + metric_to_graph.capitalize(),
+                    config={"time_key": "hour", "bins_per_hour": bins_per_hour},
+                )
+            )
+            figs.append(
+                VideoGraphCreator.create_figure(
+                    daily_data[metric_to_graph]
+                    .set_index("Date")
+                    .cumsum()
+                    .reset_index(),
+                    title="Cumulative Daily Video " + metric_to_graph.capitalize(),
+                    config={"time_key": "date", "bins_per_hour": bins_per_hour},
+                )
             )
 
             return (
