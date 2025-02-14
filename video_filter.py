@@ -21,7 +21,7 @@ Example Usage:
 """
 import sys
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
 # import video_analyzer
@@ -283,7 +283,7 @@ class VideoSelector:
 
         # Check time range (most expensive - time comparison with midnight handling)
         if self._start_time is not None and not VideoSelector.is_time_in_range(
-            video.time(), self._start_time, self._end_time
+            video.time, self._start_time, self._end_time
         ):
             return False
 

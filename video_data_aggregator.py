@@ -142,16 +142,22 @@ class VideoDataAggregator:
             if time_key == "date":
                 return video.date
             else:
-                time = video.time()
+                video_time = video.time
                 # Convert to fractional hour based on bins_per_hour and set
                 # the value to mid point of the quantized time bin.
                 # First determine which bin the minutes fall into
                 minutes_per_bin = 60 / bins_per_hour
-                bin_index = (time.minute + (time.second / 60.0)) // minutes_per_bin
+                bin_index = (
+                    video_time.minute + (video_time.second / 60.0)
+                ) // minutes_per_bin
                 # Returns a decimal representation of the temporal quantized bin
                 # with the last offset 1 / (2 * bins_per_hour) setting the value
                 # to the mid point of the quantized bin.
-                return time.hour + bin_index / bins_per_hour + 1 / (2 * bins_per_hour)
+                return (
+                    video_time.hour
+                    + bin_index / bins_per_hour
+                    + 1 / (2 * bins_per_hour)
+                )
 
         def get_metric_value(video: VideoMetadata) -> float:
             # Interface with VideoMetadata's properties for different metrics

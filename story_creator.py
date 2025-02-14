@@ -3,8 +3,8 @@
 """
 Story Creator Module
 
-This module provides the Story class, which serves as a sophisticated container for managing 
-and processing video slices from a larger video database. It enables systematic selection, 
+This module provides the Story class, which serves as a sophisticated container for managing
+and processing video slices from a larger video database. It enables systematic selection,
 analysis, visualization, and processing of video segments based on various criteria.
 
 Key Features:
@@ -17,7 +17,7 @@ Key Features:
 Example Usage:
     # Create a story from a YAML configuration
     story = Story.from_file("story_config.yaml")
-    
+
     # Process the story with a video database
     story.process(videos_database, "output_directory")
 
@@ -297,16 +297,16 @@ class Story:
         VideoSelector.log(self.selectors)
         logger.info(f"{colored("Statistics:","light_cyan")}")
 
-        logger.info(f"  - {f'Number of videos':<23} = {num_videos:,}")
-        logger.info(f"  - {f'Number of frames':<23} = {num_frames:,}")
-        logger.info(f"  - {f'Size':<23} = {total_size_mb:,.3f} MB")
+        logger.info(f"  - {'Number of videos':<23} = {num_videos:,}")
+        logger.info(f"  - {'Number of frames':<23} = {num_frames:,}")
+        logger.info(f"  - {'Size':<23} = {total_size_mb:,.3f} MB")
         logger.info(
-            f"  - {f'Duration':<23} = {total_duration_seconds / 60:,.3f} minutes"
+            f"  - {'Duration':<23} = {total_duration_seconds / 60:,.3f} minutes"
         )
-        logger.info(f"  - {f'Average FPS':<23} = {average_fps:.3f}")
-        logger.info(f"  - {f'Number of tagged videos':<23} = {num_tagged_videos:,}")
-        logger.info(f"  - {f'Number of tagged frames':<23} = {num_tagged_frames:,}")
-        logger.info(f"  - {f'Number of tags in total':<23} = {num_tags:,}")
+        logger.info(f"  - {'Average FPS':<23} = {average_fps:.3f}")
+        logger.info(f"  - {'Number of tagged videos':<23} = {num_tagged_videos:,}")
+        logger.info(f"  - {'Number of tagged frames':<23} = {num_tagged_frames:,}")
+        logger.info(f"  - {'Number of tags in total':<23} = {num_tags:,}")
 
         return videos
 

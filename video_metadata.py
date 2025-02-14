@@ -9,17 +9,17 @@ core video metadata management through the VideoMetadata class
 Example Usage:
     # Load videos from a directory
     videos = VideoMetadata.load_videos_from_directories('/path/to/videos')
-    
+
     # Create a selector for filtering
     selector = VideoSelector(
         devices=['Backyard'],
         date_range=DateRange(start='2023-01-01', end='2023-12-31'),
         time_range=TimeRange(start='08:00:00', end='17:00:00')
     )
-    
+
     # Filter videos
     filtered_videos = VideoFilter.by_selectors(videos, [selector])
-    
+
     # Export to metadata file
     VideoMetadata.export_videos_to_metadata_file(filtered_videos, 'metadata.csv')
 """
@@ -29,16 +29,27 @@ import io
 import os
 import sys
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
+from datetime import date as date_type
+from datetime import datetime as datetime_type
+from datetime import time as time_type
+from datetime import timedelta
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import av
+import av.container
+import av.error
 import dateutil.parser
 from dateutil.tz import tzlocal, tzutc
 from tqdm import tqdm
 
 from config import Config
 from logging_config import create_logger
+
+# Re-export types with original names for type hints
+date = date_type
+datetime = datetime_type
+time = time_type
+
 
 logger = create_logger(__name__)
 
@@ -112,12 +123,18 @@ class VideoMetadata:
         return self.datetime_obj
 
     @property
-    def date(self):
+    def date(self) -> date:
         """Get the video's date component."""
         return self.datetime_obj.date()
 
-    def time(self):
+    @property
+    def time_obj(self) -> time:
         """Get the video's time component."""
+        return self.datetime_obj.time()
+
+    @property
+    def time(self) -> time:
+        """Get the video's time component (for backward compatibility)."""
         return self.datetime_obj.time()
 
     @property
@@ -145,7 +162,7 @@ class VideoMetadata:
         """Hash based on filename and datetime."""
         return hash((self.filename, self.datetime))
 
-    def __lt__(self, other: "VideoMetadata") -> bool:
+    def __lt__(self, other: Union["VideoMetadata", Any]) -> bool:
         """Compare videos for sorting based on datetime."""
         if not isinstance(other, VideoMetadata):
             return NotImplemented
@@ -226,9 +243,9 @@ class VideoMetadata:
             serial_and_datetime = filename.split("_")
             num_parts = len(serial_and_datetime)
 
-            serial = serial_and_datetime[0] if num_parts >= 1 else ""
-            device = Config.get_device_dict().get(serial, serial)
-            datetime_obj = None
+            serial: str = serial_and_datetime[0] if num_parts >= 1 else ""
+            device: str = Config.get_device_dict().get(serial, serial)
+            datetime_obj: datetime = datetime.strptime("19000101000000", "%Y%m%d%H%M%S")
 
             if num_parts >= 2:
                 try:
@@ -240,7 +257,8 @@ class VideoMetadata:
                 except (ValueError, TypeError) as e:
                     logger.debug(f"Failed to parse datetime from filename: {e}")
 
-            old_stderr = sys.stderr
+            old_stderr: Any
+            old_stderr = sys.stderr  # Initialize before use
             sys.stderr = io.StringIO()
 
             try:
@@ -277,11 +295,11 @@ class VideoMetadata:
                         height=stream.height,
                         frame_count=stream.frames,
                         duration=timedelta(seconds=float(duration)),
-                        fps=float(stream.average_rate),
+                        fps=float(stream.average_rate or 0.0),
                         video_codec=codec_name,
                     )
 
-            except av.AVError as e:
+            except av.error.FFmpegError as e:
                 raise VideoLoadError(f"LibAV error processing {file_path}: {str(e)}")
             except OSError as e:
                 raise VideoLoadError(f"OS error accessing {file_path}: {str(e)}")
@@ -296,7 +314,8 @@ class VideoMetadata:
     @staticmethod
     def clean_and_sort(videos: List["VideoMetadata"]) -> List["VideoMetadata"]:
         """Remove duplicates and sort videos by datetime."""
-        return sorted(set(videos))
+        unique_videos: Set["VideoMetadata"] = set(videos)
+        return sorted(unique_videos)
 
     @staticmethod
     def load_videos_from_directories(
@@ -513,8 +532,8 @@ class VideoMetadata:
         Returns:
             Tuple of (videos in list1 not in list2, videos in list2 not in list1)
         """
-        set1 = set(list1)
-        set2 = set(list2)
+        set1: Set["VideoMetadata"] = set(list1)
+        set2: Set["VideoMetadata"] = set(list2)
         return sorted(set1 - set2), sorted(set2 - set1)
 
     @staticmethod
@@ -522,5 +541,5 @@ class VideoMetadata:
         source: List["VideoMetadata"], other: List["VideoMetadata"]
     ) -> List["VideoMetadata"]:
         """Find videos from 'other' that already exist in 'source'."""
-        source_set = set(source)
+        source_set: Set["VideoMetadata"] = set(source)
         return sorted(video for video in other if video in source_set)

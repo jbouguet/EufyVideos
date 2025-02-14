@@ -248,16 +248,16 @@ class VideoAnalyzer:
         num_tags = tags_stats["num_tags"]
 
         logger.info(f"{colored("Database Statistics:","light_cyan")}")
-        logger.info(f"  - {f'Number of videos':<23} = {num_videos:,}")
-        logger.info(f"  - {f'Number of frames':<23} = {num_frames:,}")
-        logger.info(f"  - {f'Size':<23} = {total_size_mb:,.3f} MB")
+        logger.info(f"  - {'Number of videos':<23} = {num_videos:,}")
+        logger.info(f"  - {'Number of frames':<23} = {num_frames:,}")
+        logger.info(f"  - {'Size':<23} = {total_size_mb:,.3f} MB")
         logger.info(
-            f"  - {f'Duration':<23} = {total_duration_seconds / 60:,.3f} minutes"
+            f"  - {'Duration':<23} = {total_duration_seconds / 60:,.3f} minutes"
         )
-        logger.info(f"  - {f'Average FPS':<23} = {average_fps:.3f}")
-        logger.info(f"  - {f'Number of tagged videos':<23} = {num_tagged_videos:,}")
-        logger.info(f"  - {f'Number of tagged frames':<23} = {num_tagged_frames:,}")
-        logger.info(f"  - {f'Number of tags in total':<23} = {num_tags:,}")
+        logger.info(f"  - {'Average FPS':<23} = {average_fps:.3f}")
+        logger.info(f"  - {'Number of tagged videos':<23} = {num_tagged_videos:,}")
+        logger.info(f"  - {'Number of tagged frames':<23} = {num_tagged_frames:,}")
+        logger.info(f"  - {'Number of tags in total':<23} = {num_tags:,}")
 
     def _export_files(self) -> None:
         os.makedirs(self.config.output_directory, exist_ok=True)
