@@ -24,6 +24,7 @@ Example Usage:
     VideoMetadata.export_videos_to_metadata_file(filtered_videos, 'metadata.csv')
 """
 
+import contextlib
 import csv
 import io
 import os
@@ -48,16 +49,23 @@ from logging_config import create_logger
 logger = create_logger(__name__)
 
 
-class VideoMetadataError(Exception):
-    """Base exception for video metadata operations."""
+@contextlib.contextmanager
+def capture_stderr():
+    """Context manager to capture stderr output."""
+    stderr_capture = io.StringIO()
+    original_stderr = sys.stderr
+    sys.stderr = stderr_capture
+    try:
+        yield stderr_capture
+    finally:
+        sys.stderr = original_stderr
 
 
-class VideoLoadError(VideoMetadataError):
-    """Raised when a video file cannot be loaded."""
+class VideoError(Exception):
+    """Base exception for all video-related operations."""
 
-
-class MetadataFileError(VideoMetadataError):
-    """Raised when there's an error with metadata file operations."""
+    def __init__(self, message: str):
+        super().__init__(message)
 
 
 @dataclass
@@ -156,10 +164,12 @@ class VideoMetadata:
             return NotImplemented
         return self.datetime < other.datetime
 
-    # Merged an incoming set of new tags more_tags into the existing set self.tags.
-    # Any new tag with identical hash_key will be skipped, and frame numbers are kept sorted
-    # post merge operation.
     def merge_new_tags(self, more_tags: Dict[int, Dict[int, Dict[str, Any]]]) -> int:
+        """
+        Merge an incoming set of new tags into the existing set self.tags.
+        Any new tag with identical hash_key will be skipped, and frame numbers are kept sorted
+        post merge operation.
+        """
         num_tags_added = 0
         new_tags = {
             int(frame): {
@@ -224,7 +234,7 @@ class VideoMetadata:
             VideoMetadata instance or None if file cannot be processed
 
         Raises:
-            VideoLoadError: If there's an error processing the video file
+            VideoError: If there's an error processing the video file
         """
         try:
             filename = os.path.basename(file_path)
@@ -249,59 +259,56 @@ class VideoMetadata:
                 except (ValueError, TypeError) as e:
                     logger.debug(f"Failed to parse datetime from filename: {e}")
 
-            old_stderr: Any
-            old_stderr = sys.stderr  # Initialize before use
-            sys.stderr = io.StringIO()
+            result = None
+            with capture_stderr() as stderr_capture:
+                try:
+                    with av.open(file_path) as container:
+                        stream = container.streams.video[0]
+                        duration = (
+                            container.duration / 1000000 if container.duration else 0
+                        )
+                        codec_name = stream.codec_context.name
 
-            try:
-                with av.open(file_path) as container:
-                    stream = container.streams.video[0]
-                    duration = container.duration / 1000000 if container.duration else 0
-                    codec_name = stream.codec_context.name
+                        if datetime_obj is None:
+                            datetime_obj = cls._get_video_metadata_time(container)
+                            if datetime_obj:
+                                logger.debug(
+                                    f"Using datetime from video metadata: {datetime_obj}"
+                                )
 
-                    if datetime_obj is None:
-                        datetime_obj = cls._get_video_metadata_time(container)
-                        if datetime_obj:
-                            logger.debug(
-                                f"Using datetime from video metadata: {datetime_obj}"
-                            )
+                        if datetime_obj is None:
+                            datetime_obj = cls._get_creation_time(file_path)
+                            logger.debug(f"Using file creation time: {datetime_obj}")
 
-                    if datetime_obj is None:
-                        datetime_obj = cls._get_creation_time(file_path)
-                        logger.debug(f"Using file creation time: {datetime_obj}")
-
-                    error_output = sys.stderr.getvalue()
-                    if error_output:
-                        logger.warning(
-                            f"LibAV warnings/errors for file {file_path}:\n{error_output}"
+                        result = cls(
+                            filename=filename,
+                            full_path=file_path,
+                            device=device,
+                            datetime_obj=datetime_obj,
+                            serial=serial,
+                            file_size=os.path.getsize(file_path) / (1024 * 1024),
+                            width=stream.width,
+                            height=stream.height,
+                            frame_count=stream.frames,
+                            duration=timedelta_type(seconds=float(duration)),
+                            fps=float(stream.average_rate or 0.0),
+                            video_codec=codec_name,
                         )
 
-                    return cls(
-                        filename=filename,
-                        full_path=file_path,
-                        device=device,
-                        datetime_obj=datetime_obj,
-                        serial=serial,
-                        file_size=os.path.getsize(file_path) / (1024 * 1024),
-                        width=stream.width,
-                        height=stream.height,
-                        frame_count=stream.frames,
-                        duration=timedelta_type(seconds=float(duration)),
-                        fps=float(stream.average_rate or 0.0),
-                        video_codec=codec_name,
-                    )
+                except (av.error.FFmpegError, OSError, Exception) as e:
+                    raise VideoError(f"Error processing {file_path}") from e
 
-            except av.error.FFmpegError as e:
-                raise VideoLoadError(f"LibAV error processing {file_path}: {str(e)}")
-            except OSError as e:
-                raise VideoLoadError(f"OS error accessing {file_path}: {str(e)}")
-            except Exception as e:
-                raise VideoLoadError(
-                    f"Unexpected error processing {file_path}: {str(e)}"
+            # Check for any stderr output after restoring stderr
+            error_output = stderr_capture.getvalue()
+            if error_output:
+                logger.warning(
+                    f"LibAV warnings/errors for file {file_path}:\n{error_output}"
                 )
 
-        finally:
-            sys.stderr = old_stderr
+            return result
+
+        except Exception as e:
+            raise VideoError(f"Error processing {file_path}") from e
 
     @staticmethod
     def clean_and_sort(videos: List["VideoMetadata"]) -> List["VideoMetadata"]:
@@ -311,7 +318,7 @@ class VideoMetadata:
 
     @staticmethod
     def load_videos_from_directories(
-        directories: Union[str, List[str]], corrupted_files: List[str] = []
+        directories: Union[str, List[str]], corrupted_files: Optional[List[str]] = None
     ) -> List["VideoMetadata"]:
         """
         Load videos from one or more directories.
@@ -324,9 +331,11 @@ class VideoMetadata:
             List of VideoMetadata objects, sorted by datetime
 
         Raises:
-            VideoLoadError: If there's an error loading videos
+            VideoError: If there's an error loading videos
         """
         videos: List[VideoMetadata] = []
+        if corrupted_files is None:
+            corrupted_files = []
         if isinstance(directories, str):
             directories = [directories]
 
@@ -362,7 +371,7 @@ class VideoMetadata:
                         videos.append(video)
                     else:
                         corrupted_files.append(os.path.join(directory, file))
-                except VideoLoadError as e:
+                except VideoError as e:
                     logger.error(str(e))
                     corrupted_files.append(os.path.join(directory, file))
 
@@ -370,7 +379,8 @@ class VideoMetadata:
 
     @staticmethod
     def load_videos_from_metadata_files(
-        video_metadata_files: Union[str, List[str]], corrupted_files: List[str] = []
+        video_metadata_files: Union[str, List[str]],
+        corrupted_files: Optional[List[str]] = None,
     ) -> List["VideoMetadata"]:
         """
         Load videos from one or more metadata files.
@@ -383,9 +393,11 @@ class VideoMetadata:
             List of VideoMetadata objects, sorted by datetime
 
         Raises:
-            MetadataFileError: If there's an error reading metadata files
+            VideoError: If there's an error reading metadata files
         """
         videos: List[VideoMetadata] = []
+        if corrupted_files is None:
+            corrupted_files = []
         if isinstance(video_metadata_files, str):
             video_metadata_files = [video_metadata_files]
 
@@ -427,9 +439,9 @@ class VideoMetadata:
                             continue
 
             except (IOError, csv.Error) as e:
-                raise MetadataFileError(
-                    f"Error reading metadata file {video_metadata_file}: {str(e)}"
-                )
+                raise VideoError(
+                    f"Error reading metadata file {video_metadata_file}"
+                ) from e
 
         return VideoMetadata.clean_and_sort(videos)
 
@@ -445,7 +457,7 @@ class VideoMetadata:
             video_metadata_file: Path to the output CSV file
 
         Raises:
-            MetadataFileError: If there's an error writing to the file
+            VideoError: If there's an error writing to the file
         """
         try:
             with open(
@@ -486,9 +498,9 @@ class VideoMetadata:
                         ]
                     )
         except IOError as e:
-            raise MetadataFileError(
-                f"Error saving video metafile {video_metadata_file}: {str(e)}"
-            )
+            raise VideoError(
+                f"Error saving video metafile {video_metadata_file}"
+            ) from e
 
     @staticmethod
     def export_videos_to_playlist_file(
@@ -502,7 +514,7 @@ class VideoMetadata:
             playlist_filename: Path to the output M3U file
 
         Raises:
-            MetadataFileError: If there's an error writing to the file
+            VideoError: If there's an error writing to the file
         """
         try:
             with open(playlist_filename, "w", encoding="utf-8") as file:
@@ -512,9 +524,7 @@ class VideoMetadata:
                         f"#EXTINF:-1,{video.date_str} {video.time_str} {video.device} - {video.filename}\n{video.full_path}\n"
                     )
         except IOError as e:
-            raise MetadataFileError(
-                f"Error saving playlist file {playlist_filename}: {str(e)}"
-            )
+            raise VideoError(f"Error saving playlist file {playlist_filename}") from e
 
     @staticmethod
     def differences(

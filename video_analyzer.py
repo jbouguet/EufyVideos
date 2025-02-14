@@ -175,18 +175,18 @@ class VideoAnalyzer:
     def run(config_filename: str) -> None:
         config: AnalysisConfig = AnalysisConfig.from_file(config_filename)
         video_analyzer = VideoAnalyzer(config)
-        video_analyzer._load_all_databases()
-        video_analyzer._log_statistics()
-        video_analyzer._export_files()
-        video_analyzer._process_stories()
+        video_analyzer.load_all_databases()
+        video_analyzer.log_statistics()
+        video_analyzer.export_files()
+        video_analyzer.process_stories()
 
-    def _load_all_databases(self) -> None:
+    def load_all_databases(self) -> None:
         logger.info(f"{colored("Loading Databases", "light_yellow")}")
-        self.videos_database = VideoAnalyzer._load_videos_database(
+        self.videos_database = VideoAnalyzer.load_videos_database(
             self.config.video_database_list
         )
         self.tags_database = (
-            VideoAnalyzer._load_tags_database(self.config.tag_database_files)
+            VideoAnalyzer.load_tags_database(self.config.tag_database_files)
             if self.config.tag_database_files
             else None
         )
@@ -195,7 +195,7 @@ class VideoAnalyzer:
             logger.info(f"Tag Database: {self.tags_database.stats}")
 
     @staticmethod
-    def _load_videos_database(
+    def load_videos_database(
         video_database_list: Union[VideoDatabase, VideoDatabaseList]
     ) -> NoReturn | List[VideoMetadata]:
         corrupted_files: List[str] = []
@@ -210,7 +210,7 @@ class VideoAnalyzer:
         return videos_database
 
     @staticmethod
-    def _load_tags_database(tag_database_files: Union[str, List[str]]) -> VideoTags:
+    def load_tags_database(tag_database_files: Union[str, List[str]]) -> VideoTags:
         tags_database = VideoTags.from_tags(tags={})
         tag_database_files = (
             [tag_database_files]
@@ -228,7 +228,7 @@ class VideoAnalyzer:
 
         return tags_database
 
-    def _log_statistics(self) -> None:
+    def log_statistics(self) -> None:
         num_videos: int = len(self.videos_database)
         num_frames: int = sum(video.frame_count for video in self.videos_database)
         total_duration_seconds: float = sum(
@@ -259,7 +259,7 @@ class VideoAnalyzer:
         logger.info(f"  - {'Number of tagged frames':<23} = {num_tagged_frames:,}")
         logger.info(f"  - {'Number of tags in total':<23} = {num_tags:,}")
 
-    def _export_files(self) -> None:
+    def export_files(self) -> None:
         os.makedirs(self.config.output_directory, exist_ok=True)
 
         config_filename: str = os.path.join(
@@ -290,7 +290,7 @@ class VideoAnalyzer:
         logger.info(f"  - graphs file:   {graphs_filename}")
         Dashboard().create_graphs_file(self.videos_database, graphs_filename)
 
-    def _process_stories(self) -> None:
+    def process_stories(self) -> None:
         if self.config.process_stories and self.config.stories:
             for story in self.config.stories:
                 story.process(self.videos_database, self.config.output_directory)

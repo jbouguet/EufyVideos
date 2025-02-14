@@ -427,8 +427,8 @@ if __name__ == "__main__":
             os.path.join(os.path.dirname(__file__), "analysis_config.yaml")
         )
     )
-    analyzer._load_all_databases()
-    analyzer._log_statistics()
+    analyzer.load_all_databases()
+    analyzer.log_statistics()
 
     if not analyzer.videos_database:
         logger.error("No videos found in database")
