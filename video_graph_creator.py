@@ -7,7 +7,7 @@ This module interfaces with video_data_aggregator.py to create visualizations of
 """
 
 import warnings
-from typing import Dict, List, Optional, Union, cast
+from typing import Dict, Optional, Union, cast
 
 import pandas as pd
 import plotly.graph_objects as go

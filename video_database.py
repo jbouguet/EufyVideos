@@ -27,6 +27,7 @@ from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Optional, Sequence, Union, cast
 
 import yaml
+from click import Option
 
 from logging_config import create_logger
 from video_metadata import VideoMetadata
@@ -93,7 +94,7 @@ class VideoDatabase:
         )
 
     def load_videos(
-        self, corrupted_files: List[str] = []
+        self, corrupted_files: Optional[List[str]] = None
     ) -> Union[List[VideoMetadata], None]:
         """
         Load videos based on configuration.
@@ -115,6 +116,8 @@ class VideoDatabase:
             VideoLoadError: If there's an error loading videos
             MetadataFileError: If there's an error with metadata files
         """
+        if corrupted_files is None:
+            corrupted_files = []
         valid_video_meta_file: bool = (
             self.video_metadata_file is not None
             and os.path.exists(self.video_metadata_file)
@@ -226,7 +229,7 @@ class VideoDatabaseList:
         return cls(video_database_list=video_database_list)
 
     def load_videos(
-        self, corrupted_files: List[str] = []
+        self, corrupted_files: Optional[List[str]] = None
     ) -> Union[List[VideoMetadata], None]:
         """
         Load videos from all databases in the list.
@@ -234,6 +237,8 @@ class VideoDatabaseList:
         Returns:
             Combined list of videos from all databases, sorted by datetime
         """
+        if corrupted_files is None:
+            corrupted_files = []
         videos_all: List[VideoMetadata] = []
         for video_dir in self.video_database_list:
             videos = video_dir.load_videos(corrupted_files)

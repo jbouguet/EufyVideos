@@ -27,7 +27,7 @@ Example usage:
     dashboard.create_graphs_file(videos, 'video_analytics.html')
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, cast
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -237,14 +237,28 @@ if __name__ == "__main__":
 
     database_list.to_file(os.path.join(out_dir, "video_database.yaml"))
 
-    # Load all of the videos
-    video_database = database_list.load_videos()
-    if video_database is None:
-        logger.error("Failed to load video database")
-        sys.exit(1)
+    def validate_and_get_bounds(
+        videos: Optional[object],
+    ) -> tuple[List[VideoMetadata], VideoMetadata, VideoMetadata]:
+        """Get the first and last videos from a validated video list."""
+        if videos is None:
+            logger.error("Failed to load video database")
+            sys.exit(1)
+        if not isinstance(videos, list) or not videos:
+            logger.error("video_database is not a non-empty list")
+            sys.exit(1)
+        if not all(isinstance(v, VideoMetadata) for v in videos):
+            logger.error("Not all elements are VideoMetadata objects")
+            sys.exit(1)
 
-    min_date = video_database[0].date_str
-    max_date = video_database[-1].date_str
+        videos_typed = cast(List[VideoMetadata], videos)
+        return videos_typed, videos_typed[0], videos_typed[-1]
+
+    # Load and validate the videos
+    raw_videos = database_list.load_videos()
+    validated_videos, first_video, last_video = validate_and_get_bounds(raw_videos)
+    min_date = first_video.date_str
+    max_date = last_video.date_str
 
     bins_per_hour = 1
 
@@ -265,7 +279,7 @@ if __name__ == "__main__":
     )
 
     # Filter the database
-    videos = VideoFilter.by_selectors(video_database, selector)
+    videos = VideoFilter.by_selectors(validated_videos, selector)
 
     logger.debug(f"Number of videos: {len(videos)}")
 

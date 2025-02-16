@@ -85,7 +85,7 @@ class InputFragments:
         normalized_crop_roi = input_fragments_dict.get("normalized_crop_roi")
         if normalized_crop_roi is not None:
             try:
-                normalized_crop_roi = [float(x) for x in normalized_crop_roi]
+                normalized_crop_roi = tuple(float(x) for x in normalized_crop_roi)
                 if len(normalized_crop_roi) != 4:
                     raise ValueError(
                         f"normalized_crop_roi must have exactly 4 values, got {len(normalized_crop_roi)}"
@@ -176,7 +176,22 @@ class OutputVideo:
 
     width: Optional[int] = None
     date_time_label: DateTimeLabel = field(default_factory=DateTimeLabel)
-    output_video_codec: Optional[str] = "h264"
+    output_video_codec: str = field(default="h264")  # Default to h264, never None
+
+    def __post_init__(self):
+        """Ensure output_video_codec is a valid string."""
+        try:
+            if not isinstance(self.output_video_codec, str):
+                self.output_video_codec = str(self.output_video_codec)
+            self.output_video_codec = self.output_video_codec.strip().lower()
+            if self.output_video_codec not in ["h264", "h265"]:
+                logger.warning(
+                    f"Invalid codec: {self.output_video_codec}, defaulting to h264"
+                )
+                self.output_video_codec = "h264"
+        except (AttributeError, TypeError, ValueError) as e:
+            logger.warning(f"Error validating codec: {str(e)}, defaulting to h264")
+            self.output_video_codec = "h264"
 
     @classmethod
     def from_dict(cls, output_video_dict: Dict[str, Any]) -> "OutputVideo":
@@ -186,7 +201,7 @@ class OutputVideo:
             date_time_label=DateTimeLabel.from_dict(
                 date_time_label_dict=output_video_dict.get("date_time_label", {})
             ),
-            output_video_codec=output_video_dict.get("output_video_codec", "h264"),
+            output_video_codec=str(output_video_dict.get("output_video_codec", "h264")),
         )
 
 
@@ -248,9 +263,9 @@ class VideoGenerator:
         ```
     """
 
-    def __init__(self, config: VideoGenerationConfig = None) -> None:
+    def __init__(self, config: Optional[VideoGenerationConfig] = None) -> None:
         """Initialize generator with optional configuration."""
-        self.config = config or VideoGenerationConfig()
+        self.config = VideoGenerationConfig() if config is None else config
 
     def run(
         self, videos: Union[VideoMetadata, List[VideoMetadata]], output_file: str
@@ -296,11 +311,10 @@ class VideoGenerator:
         output_width = self.config.output_video.width or default_width
         output_width = output_width - (output_width % 2)  # Ensure even width
 
-        ffmpeg_vcodec = (
-            "libx265"
-            if self.config.output_video.output_video_codec.lower() == "h265"
-            else "libx264"
-        )
+        # Determine video codec (h264 is default)
+        output_codec = self.config.output_video.output_video_codec.lower()
+        ffmpeg_vcodec = "libx265" if output_codec == "h265" else "libx264"
+        logger.debug(f"Using video codec: {ffmpeg_vcodec}")
 
         try:
             fragment_files = self._process_video_fragments(
@@ -349,7 +363,12 @@ class VideoGenerator:
                     output_width=output_width,
                     ffmpeg_vcodec=ffmpeg_vcodec,
                 )
-                fragment_files.append(fragment_file)
+                if fragment_file is not None:
+                    fragment_files.append(fragment_file)
+                else:
+                    logger.warning(
+                        f"Failed to process video fragment for {video.filename}"
+                    )
             except ffmpeg.Error as e:
                 logger.error(f"FFmpeg error processing video {video.filename}:")
                 logger.error(e.stderr.decode())
@@ -363,7 +382,7 @@ class VideoGenerator:
         fragment_directory: str,
         output_width: int,
         ffmpeg_vcodec: str,
-    ) -> str:
+    ) -> Optional[str]:
         """Process a single video fragment with all transformations."""
 
         fragment_file = os.path.join(
@@ -403,44 +422,76 @@ class VideoGenerator:
 
     def _get_video_audio_streams(
         self, video: VideoMetadata, start_time: float, duration: float
-    ):
+    ) -> Optional[Tuple[Any, Optional[Any]]]:
         """Get video and audio streams from input file."""
         import ffmpeg
 
-        try:
-            probe = ffmpeg.probe(filename=video.full_path)
+        if not video or not video.full_path:
+            logger.error("Invalid video metadata")
+            return None
 
+        try:
+            # Probe video file
+            try:
+                probe = ffmpeg.probe(filename=video.full_path)
+            except ffmpeg.Error as e:
+                logger.error(f"Error probing video {video.filename}: {str(e)}")
+                return None
+
+            # Get streams from probe
+            streams = probe.get("streams")
+            if not streams:
+                logger.error("No streams found in probe data")
+                return None
+
+            # Find stream indices
             video_index = None
             audio_index = None
-            for i, stream in enumerate(iterable=probe["streams"]):
-                if stream["codec_type"] == "video":
+            for i, stream in enumerate(streams):
+                if not isinstance(stream, dict):
+                    continue
+                stream_type = stream.get("codec_type", "")
+                if stream_type == "video":
                     video_index = i
-                elif stream["codec_type"] == "audio":
+                elif stream_type == "audio":
                     audio_index = i
 
             if video_index is None:
-                logger.warning(msg=f"No video stream found in {video.full_path}.")
+                logger.warning(f"No video stream found in {video.full_path}")
                 return None
 
-            # Input with trimming
-            input_stream = ffmpeg.input(
-                filename=video.full_path, ss=start_time, t=duration
-            )
+            # Create input stream
+            try:
+                input_stream = ffmpeg.input(
+                    filename=video.full_path, ss=start_time, t=duration
+                )
+            except ffmpeg.Error as e:
+                logger.error(f"Error creating input stream: {str(e)}")
+                return None
 
-            video_stream = input_stream.video.filter("setpts", "PTS-STARTPTS")
+            # Process video stream
+            try:
+                video_stream = input_stream.video.filter("setpts", "PTS-STARTPTS")
+            except Exception as e:
+                logger.error(f"Error processing video stream: {str(e)}")
+                return None
 
+            # Process audio stream if available
             audio_stream = None
             if audio_index is not None:
-                audio_stream = (
-                    input_stream["a"]
-                    .filter("asetpts", "PTS-STARTPTS")
-                    .filter("aresample", 48000)
-                )
+                try:
+                    audio_stream = (
+                        input_stream["a"]
+                        .filter("asetpts", "PTS-STARTPTS")
+                        .filter("aresample", 48000)
+                    )
+                except Exception as e:
+                    logger.warning(f"Error processing audio stream: {str(e)}")
 
-            return video_stream, audio_stream
+            return (video_stream, audio_stream)
 
-        except ffmpeg.Error as e:
-            logger.error(f"Error probing video {video.filename}: {str(e)}")
+        except Exception as e:
+            logger.error(f"Unexpected error processing streams: {str(e)}")
             return None
 
     def _apply_video_transformations(
@@ -497,7 +548,10 @@ class VideoGenerator:
         return video_stream, width, height
 
     def _apply_roi_crop(
-        self, video_stream, video: VideoMetadata, normalized_crop_roi: tuple
+        self,
+        video_stream,
+        video: VideoMetadata,
+        normalized_crop_roi: Tuple[float, float, float, float],
     ):
         """Apply region of interest cropping."""
         left, top, right, bottom = normalized_crop_roi
@@ -602,16 +656,21 @@ class VideoGenerator:
         output_file: str,
         ffmpeg_vcodec: str,
         target_fps: int,
-    ):
+    ) -> None:
         """Concatenate processed fragments into final output video."""
         import ffmpeg
 
-        logger.debug("Concatenating video fragments")
+        if not fragment_files:
+            logger.error("No valid video fragments to concatenate")
+            raise ValueError("No valid video fragments to concatenate")
+
+        logger.debug(f"Concatenating {len(fragment_files)} video fragments")
         concat_file = os.path.join(fragment_directory, "concat_list.txt")
 
         with open(concat_file, "w") as f:
             for fragment in fragment_files:
-                f.write(f"file '{fragment}'\n")
+                if fragment is not None:
+                    f.write(f"file '{fragment}'\n")
 
         try:
             concat_output = ffmpeg.input(filename=concat_file, format="concat", safe=0)
@@ -653,7 +712,7 @@ def cleanup_fragment_directory(fragment_directory: str) -> None:
         )
 
 
-def fps_robust_average(videos: List[VideoMetadata]) -> None | float:
+def fps_robust_average(videos: List[VideoMetadata]) -> Optional[float]:
     """
     Calculate robust average FPS from video list using IQR method.
 
@@ -661,37 +720,64 @@ def fps_robust_average(videos: List[VideoMetadata]) -> None | float:
     """
     if not videos:
         return None
+
+    # Filter out invalid FPS values and handle empty list
     fps_values = [video.fps for video in videos if video.fps > 0]
     if not fps_values:
         return None
 
-    fps_values.sort()
+    # For small lists, return simple average
     n = len(fps_values)
-    q1 = fps_values[n // 4]
-    q3 = fps_values[(3 * n) // 4]
+    if n < 4:  # Need at least 4 values for quartile calculation
+        return sum(fps_values) / n
+
+    # Sort for quartile calculation
+    fps_values.sort()
+    q1_idx = n // 4
+    q3_idx = (3 * n) // 4
+
+    # Calculate quartiles and IQR
+    q1 = fps_values[q1_idx]
+    q3 = fps_values[q3_idx]
     iqr = q3 - q1
-    lower_bound = q1 - 1.5 * iqr
-    upper_bound = q3 + 1.5 * iqr
 
-    filtered_fps = [fps for fps in fps_values if lower_bound <= fps <= upper_bound]
-    return (
-        sum(filtered_fps) / len(filtered_fps) if filtered_fps else sum(fps_values) / n
-    )
+    # If all values are the same or very close
+    if iqr < 0.001:  # Use small epsilon for float comparison
+        return fps_values[0]
+
+    try:
+        # Calculate bounds and filter outliers
+        lower_bound = q1 - 1.5 * iqr
+        upper_bound = q3 + 1.5 * iqr
+        filtered_fps = [fps for fps in fps_values if lower_bound <= fps <= upper_bound]
+
+        if not filtered_fps:
+            # If all values were filtered out, return average of original values
+            return sum(fps_values) / n
+
+        return sum(filtered_fps) / len(filtered_fps)
+    except (TypeError, ZeroDivisionError) as e:
+        logger.error(f"Error calculating FPS average: {str(e)}")
+        return None
 
 
-def width_minimum(videos: List[VideoMetadata]) -> None | int:
+def width_minimum(videos: List[VideoMetadata]) -> Optional[int]:
     """Get minimum width from video list. Returns None if no valid widths found."""
     if not videos:
         return None
-    width_values = [video.width for video in videos]
+
+    # Filter out invalid width values and handle empty list
+    width_values = [video.width for video in videos if video.width > 0]
     if not width_values:
         return None
+
     return min(width_values)
 
 
 def compute_default_fps_and_width(
-    videos: List[VideoMetadata], normalized_crop_roi: tuple = None
-) -> Tuple[int]:
+    videos: List[VideoMetadata],
+    normalized_crop_roi: Optional[Tuple[float, float, float, float]] = None,
+) -> Tuple[int, int]:
     """
     Compute default FPS and width values based on input videos.
 
@@ -726,7 +812,7 @@ def compute_default_fps_and_width(
         default_width = width_min
 
     # Adjust width for ROI if specified
-    if normalized_crop_roi:
+    if normalized_crop_roi is not None:
         left, _, right, _ = normalized_crop_roi
         if not (0 <= left < right <= 1):
             raise ValueError(
@@ -768,7 +854,11 @@ if __name__ == "__main__":
     current_offset = 0.0
 
     logger.info(f"Cropping source video {video_file}")
-    video_in = [VideoMetadata.from_video_file(video_file)]
+    video_metadata = VideoMetadata.from_video_file(video_file)
+    if video_metadata is None:
+        logger.error(f"Failed to load video metadata from {video_file}")
+        sys.exit(1)
+    video_in = [video_metadata]
 
     # Generate crops
     for i, config in enumerate(crop_configs, 1):
@@ -785,7 +875,12 @@ if __name__ == "__main__":
         )
         logger.info(f"Creating cropped video {crop_output}")
         VideoGenerator(crop_config).run(video_in, crop_output)
-        videos.append(VideoMetadata.from_video_file(crop_output))
+
+        crop_metadata = VideoMetadata.from_video_file(crop_output)
+        if crop_metadata is None:
+            logger.error(f"Failed to load video metadata from {crop_output}")
+            sys.exit(1)
+        videos.append(crop_metadata)
 
         # Update offset for the next crop
         current_offset += config["duration"]
