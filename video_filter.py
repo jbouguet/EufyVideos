@@ -91,9 +91,9 @@ class VideoSelector:
     """
     Defines criteria for filtering videos and implements the matching check.
 
-    Combines multiple filtering criteria (devices, dates, times, filenames, weekdays)
-    that are applied together (AND condition). When multiple VideoSelector
-    objects are used, they act as OR conditions.
+    Combines multiple filtering criteria (devices, dates, times, duration, filenames, weekdays)
+    that are applied together (AND condition).
+    When multiple VideoSelector objects are used, they act as OR conditions.
 
     Example:
         selector = VideoSelector(
@@ -459,7 +459,6 @@ if __name__ == "__main__":
     import logging
     import os
 
-    from config import Config
     from logging_config import set_logger_level_and_format
     from video_analyzer import AnalysisConfig, VideoAnalyzer
 
