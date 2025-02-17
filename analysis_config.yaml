@@ -35,7 +35,7 @@ directories:
 
 # Video database configuration
 video_database_list:
-- force_video_directories_scanning: true
+- force_video_directories_scanning: false
   video_metadata_file: !join [*root_database, "/videos_in_batches.csv"]
   video_directories: *batch_dirs
 
@@ -66,15 +66,22 @@ process_stories: true
 
 stories:
 
-  - name: 'Busiest few minutes'
+  - name: 'Longest Videos'
     skip: false
+    selectors:
+      - duration_range:
+          min: 120
+          max: 10000000
+
+  - name: 'Busiest few minutes'
+    skip: true
     selectors:
       - time_range:
           start: '13:46:00'
           end: '13:47:59'
 
   - name: 'Every Other Day'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-01'
@@ -82,7 +89,7 @@ stories:
         weekdays: ['monday', 'wednesday', 'friday', 'sunday']
 
   - name: 'Trash Pickups'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-07'
@@ -101,7 +108,7 @@ stories:
         devices: ['Garage']
 
   - name: 'HotTub Installation'
-    skip: false
+    skip: true
     selectors:
       # Delivery and Installation
       - date_range:
@@ -145,7 +152,7 @@ stories:
         width: 1600
 
   - name: '2024-11-27'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-27'
@@ -153,7 +160,7 @@ stories:
         devices: ['Front Entrance']
 
   - name: '2024-11-20'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-20'
@@ -181,7 +188,7 @@ stories:
   # TAGS DATABASE - START
 
   - name: '2024-11-18 - Backyard Planning - 5 videos'
-    skip: false
+    skip: true
     selectors:
       - filenames: ['T8600P1024260D5E_20241118084615.mp4', 'T8600P1024260D5E_20241118084819.mp4', 'T8600P1024260D5E_20241118084902.mp4', 'T8600P1024260D5E_20241118085102.mp4', 'T8600P1024260D5E_20241118085306.mp4']
     tag_processing: false
@@ -205,7 +212,7 @@ stories:
         width: 800
 
   - name: '2024-11-18 - Backyard Planning'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-18'
@@ -227,7 +234,7 @@ stories:
         height: 900
 
   - name: 'T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809'
-    skip: false
+    skip: true
     selectors:
       - filenames: [ 'T8600P102338033E_20240930085536.mp4' , 'T8600P1024260D5E_20241119181809.mp4']
     tag_processing: false
@@ -244,7 +251,7 @@ stories:
   # TAGS DATABASE - END
 
   - name: '2024-11-18_to_2024-11-20 - Outdoor Shower'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-18'
@@ -275,7 +282,7 @@ stories:
         width: 600
 
   - name: 'Audio Failures'
-    skip: false
+    skip: true
     selectors:
       - filenames: ["T8160T1224250195_20241118111259.mp4", "T8600P1024260D5E_20241118112043.mp4", "T8160P1123332B02_20241118140843.mp4", "T8160P1123332B02_20241118145352.mp4", "T8160P1123332B02_20241118150336.mp4", "T8160T1224250195_20241118150422.mp4"]
     tag_processing: false
@@ -299,7 +306,7 @@ stories:
         width: 1600
 
   - name: 'test_selector'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-10'
@@ -319,7 +326,7 @@ stories:
     tag_video_generation: false
 
   - name: 'test_selector2'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-10'
@@ -333,7 +340,7 @@ stories:
     tag_video_generation: false
 
   - name: '2024-11-20 1pm-8am'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-20'
@@ -344,7 +351,7 @@ stories:
         devices: ['Backyard', 'Back Alleyway']
 
   - name: '2024-11-20 8am-1m'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-20'
@@ -355,7 +362,7 @@ stories:
         devices: ['Backyard', 'Back Alleyway']
 
   - name: 'Front Yard Cleaning - 2024-11-17'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-17'
@@ -366,7 +373,7 @@ stories:
         devices: ['Front Yard']
 
   - name: 'Backyard Cleaning - 2024-11-17'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-17'
@@ -377,7 +384,7 @@ stories:
         devices: ['Backyard']
 
   - name: 'Stolen Moped '
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-14'
@@ -385,14 +392,14 @@ stories:
         devices: ['Back Alleyway', 'Garage']
 
   - name: 'New Backyard Camera'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-11-16'
           end: '2024-11-16'
 
   - name: 'New Patio Cover Installation - Gateway'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-10-09'
@@ -431,7 +438,7 @@ stories:
         width: 800
 
   - name: 'Tracking Tests'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-10-09'
@@ -454,7 +461,7 @@ stories:
         enforce_16_9_aspect_ratio: true
 
   - name: 'New Patio Cover Installation - Small'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-10-11'
@@ -477,7 +484,7 @@ stories:
         enforce_16_9_aspect_ratio: true
 
   - name: 'New Patio Cover Installation'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-10-09'
@@ -509,7 +516,7 @@ stories:
       conf_threshold: 0.2
 
   - name: 'Stupid Mailman - 2024-10-07'
-    skip: false
+    skip: true
     selectors:
       - devices: ['Front Yard', 'Walkway', 'Front Door']
         date_range:
@@ -534,7 +541,7 @@ stories:
         width: 800
 
   - name: '2024-10-12 - Grandparents'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-10-12'
@@ -556,7 +563,7 @@ stories:
         enforce_16_9_aspect_ratio: true
 
   - name: 'corrupted_files'
-    skip: false
+    skip: true
     tag_processing: false
     tag_video_generation: false
     selectors:
@@ -570,7 +577,7 @@ stories:
                     ]
 
   - name: 'Raccoon'
-    skip: false
+    skip: true
     tag_processing: false
     tag_video_generation: false
     tag_processing_config:
@@ -595,7 +602,7 @@ stories:
         width: 800
 
   - name: 'Rat'
-    skip: false
+    skip: true
     tag_processing: false
     tag_video_generation: false
     selectors:
@@ -613,7 +620,7 @@ stories:
         normalized_crop_roi: [0.75, 0.4, 1, 0.75]
 
   - name: 'Suspicious Trash Guy - 2024-09-26'
-    skip: false
+    skip: true
     tag_processing: false
     tag_video_generation: false
     selectors:
@@ -632,7 +639,7 @@ stories:
         normalized_crop_roi: [0.0, 0.2, 0.9, 1.0]
 
   - name: 'Neighbor Umbrella'
-    skip: false
+    skip: true
     tag_processing: false
     tag_video_generation: false
     selectors:
@@ -645,7 +652,7 @@ stories:
           end: '2024-09-07'
 
   - name: 'Patio cover installation and removal'
-    skip: false
+    skip: true
     tag_processing: false
     tag_video_generation: false
     selectors:
@@ -674,7 +681,7 @@ stories:
         width: 1600
 
   - name: 'Plant Flowering Timelapse'
-    skip: false
+    skip: true
     tag_processing: false
     tag_video_generation: false
     selectors:
@@ -691,7 +698,7 @@ stories:
         normalized_crop_roi: [0.0458, 0.4856, 0.3841, 0.9764]
 
   - name: 'Plant Growth Timelapse'
-    skip: false
+    skip: true
     tag_processing: false
     tag_video_generation: false
     selectors:
@@ -710,7 +717,7 @@ stories:
         normalized_crop_roi: [0.23802, 0.3037, 0.8589, 1.0]
 
   - name: 'Suspicious Trash Dump From Neighbor on 2024-05-26'
-    skip: false
+    skip: true
     tag_processing: false
     tag_video_generation: false
     selectors:
@@ -728,7 +735,7 @@ stories:
         enforce_16_9_aspect_ratio: false
 
   - name: 'Test'
-    skip: false
+    skip: true
     tag_processing: false
     tag_video_generation: false
     selectors:

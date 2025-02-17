@@ -69,6 +69,24 @@ class TimeRange:
 
 
 @dataclass
+class DurationRange:
+    """
+    Represents a duration range for video filtering.
+
+    Used by VideoSelector to define duration-based filtering criteria.
+    Durations should be in seconds format.
+    """
+
+    min: float
+    max: float
+
+    @classmethod
+    def from_dict(cls, duration_range_dict: Dict[str, Any]) -> "DurationRange":
+        """Create DurationRange from dictionary representation."""
+        return cls(min=duration_range_dict["min"], max=duration_range_dict["max"])
+
+
+@dataclass
 class VideoSelector:
     """
     Defines criteria for filtering videos and implements the matching check.
@@ -94,6 +112,7 @@ class VideoSelector:
     time_range: Optional[TimeRange] = None
     filenames: Optional[List[str]] = None
     weekdays: Optional[List[str]] = None
+    duration_range: Optional[DurationRange] = None
 
     # Placeholder for a new criteria for selection:
     # new_criteria: Optional[T] = None
@@ -229,6 +248,19 @@ class VideoSelector:
         if weekdays and isinstance(weekdays, str):
             weekdays = [weekdays]
 
+        duration_range = None
+        if "duration_range" in selector_dict:
+            duration_range_dict = selector_dict["duration_range"]
+            if (
+                isinstance(duration_range_dict, dict)
+                and "min" in duration_range_dict
+                and "max" in duration_range_dict
+            ):
+                duration_range = DurationRange.from_dict(duration_range_dict)
+            else:
+                logger.warning(
+                    "Invalid duration_range format. Expected 'min' and 'max' keys."
+                )
         # Placeholder for a new criteria for selection:
         # new_criteria = None
         # if "new_criteria" in selector_dict:
@@ -241,6 +273,7 @@ class VideoSelector:
             time_range=time_range,
             filenames=filenames,
             weekdays=weekdays,
+            duration_range=duration_range,
             # new_criteria=new_criteria,  # Placeholder for a new criteria for selection:\
         )
 
@@ -281,6 +314,13 @@ class VideoSelector:
         ):
             return False
 
+        # Check duration range (more expensive)
+        if self.duration_range is not None and (
+            video.duration.total_seconds() < self.duration_range.min
+            or video.duration.total_seconds() > self.duration_range.max
+        ):
+            return False
+
         # Check time range (most expensive - time comparison with midnight handling)
         if self._start_time is not None and not VideoSelector.is_time_in_range(
             video.time, self._start_time, self._end_time
@@ -304,6 +344,10 @@ class VideoSelector:
         if self.time_range is not None:
             output_str.append(
                 f"Time range: {self.time_range.start} to {self.time_range.end}"
+            )
+        if self.duration_range is not None:
+            output_str.append(
+                f"Duration range: [{self.duration_range.min} - {self.duration_range.max}] seconds"
             )
         if self.filenames is not None:
             output_str.append(f"Filenames: {', '.join(self.filenames)}")
