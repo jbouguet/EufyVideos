@@ -35,12 +35,13 @@ class Model(Enum):
     Supported object detection models.
 
     Each model has different characteristics:
-    - TENSORFLOW: Google's TensorFlow-based EfficientDet model
     - FLORENCE2: Microsoft's Florence-2 vision model
     - YOLO11*: Various sizes of YOLO v11 models (N=Nano to X=Extra Large)
+    - TENSORFLOW: Google's TensorFlow-based EfficientDet model [no longer supported]
+
     """
 
-    TENSORFLOW = "TensorFlow"
+    # TENSORFLOW = "TensorFlow"
     FLORENCE2 = "Florence-2"
     YOLO11N = "Yolo11n"
     YOLO11S = "Yolo11s"

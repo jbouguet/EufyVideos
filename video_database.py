@@ -27,7 +27,6 @@ from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Optional, Sequence, Union, cast
 
 import yaml
-from click import Option
 
 from logging_config import create_logger
 from video_metadata import VideoMetadata

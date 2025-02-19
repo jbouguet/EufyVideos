@@ -8,6 +8,7 @@ security cameras.
 
 This project has strict version requirements due to visualization dependencies:
 
+- ffmpeg: Required for video processing
 - Python: >=3.12,<3.14
 - Plotly: ==5.24.1 (strict requirement)
 - Pandas: >=2.2.0,<3.0.0
@@ -18,11 +19,17 @@ The visualization components are specifically designed for Plotly 5.24.1. Using 
 
 ## General Setup Instructions
 
-1. Clone the repository
+1. Install ffmpeg (required for video processing):
+   ```bash
+   brew install ffmpeg
+   ```
+
+2. Clone the repository
    ```bash
    git clone https://github.com/jbouguet/EufyVideos.git
    ```
-2. Create virtual environment: `python -m venv myenv`
+
+3. Create virtual environment: `python -m venv myenv`
 3. Activate virtual environment: `source myenv/bin/activate`
 4. Install required libraries: `pip install -r requirements.txt`
 5. Verify installation:
@@ -39,9 +46,9 @@ The visualization components are specifically designed for Plotly 5.24.1. Using 
    ```bash
    which -a python3
    ```
-2. Install Python if not already installed using [Homebrew](https://mac.install.guide/python/brew) or other [options](https://mac.install.guide/python/install)
+2. Install Python and ffmpeg using [Homebrew](https://mac.install.guide/python/brew) or other [options](https://mac.install.guide/python/install)
    ```bash
-   brew install python
+   brew install python ffmpeg
    ```
 3. If Homebrew needs to be installed, follow the instructions in https://brew.sh/:
    ```bash
@@ -165,7 +172,12 @@ The visualization components are specifically designed for Plotly 5.24.1. Using 
    - Pandas 2.2.x or higher is required for proper datetime handling
    - Earlier versions may have date processing issues
 
-4. VS Code Extension Issues:
+4. ffmpeg Issues:
+   - If you encounter "No such file or directory: 'ffprobe'" error, ffmpeg is not installed
+   - Solution: Install ffmpeg using `brew install ffmpeg`
+   - For other video processing issues, ensure ffmpeg is properly installed by running `which ffmpeg` and `which ffprobe`
+
+5. VS Code Extension Issues:
    - If extensions fail to install, try installing them manually through VS Code's Extensions panel
    - For auto-formatting issues, ensure Black is installed in your Python environment: `pip install black`
    - Check that the Python extension can find your interpreter by running "Python: Select Interpreter" from the Command Palette

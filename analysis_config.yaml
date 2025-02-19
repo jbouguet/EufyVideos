@@ -66,11 +66,35 @@ process_stories: true
 
 stories:
 
-  - name: 'Longest Videos'
+  - name: '2T8600P1024260D5E_20241118084819'
     skip: false
     selectors:
+      - filenames: ['T8600P1024260D5E_20241118084819.mp4']
+    tag_processing: false
+    tag_processing_config:
+      model: "Yolo11x"
+      task: "Track"
+      num_frames_per_second: 15
+      conf_threshold: 0.2
+    tag_video_generation: false
+    tag_video_generation_config:
+      output_size:
+        width: 1600
+        height: 900
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 37
+        offset_in_seconds: 0
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 1600
+
+  - name: 'Longest Videos'
+    skip: true
+    selectors:
       - duration_range:
-          min: 120
+          min: 354
           max: 10000000
 
   - name: 'Busiest few minutes'

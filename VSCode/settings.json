@@ -1,7 +1,7 @@
 {
     // Theme and visual settings
     "workbench.colorTheme": "Atom One Dark",
-    "workbench.sideBar.location": "right",
+    "workbench.sideBar.location": "left",
     "editor.detectIndentation": false,
     "editor.minimap.enabled": false,
     "editor.minimap.sectionHeaderFontSize": 8,

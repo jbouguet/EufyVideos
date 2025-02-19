@@ -37,16 +37,17 @@ class ObjectDetectorFactory:
     @staticmethod
     def create_detector(model: str, conf_threshold: float = 0.2) -> ObjectDetector:
         from object_detector_florence2 import Florence2ObjectDetector
-        from object_detector_tensorflow import TensorFlowObjectDetector
+
+        # from object_detector_tensorflow import TensorFlowObjectDetector
         from object_detector_yolo import YoloObjectDetector
         from tag_processor import Model
 
         match model:
-            case Model.TENSORFLOW.value:
-                return TensorFlowObjectDetector(
-                    model_name="efficientdet_d0_coco17_tpu-32",
-                    conf_threshold=conf_threshold,
-                )
+            # case Model.TENSORFLOW.value:
+            #    return TensorFlowObjectDetector(
+            #        model_name="efficientdet_d0_coco17_tpu-32",
+            #        conf_threshold=conf_threshold,
+            #    )
             case Model.FLORENCE2.value:
                 return Florence2ObjectDetector(
                     model_name="microsoft/Florence-2-large",
