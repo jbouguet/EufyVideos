@@ -6,6 +6,6 @@
     ],
     "settings": {
         "typescript.tsserver.enableTracing": true,
-        "workbench.sideBar.location": "right"
+        "workbench.sideBar.location": "left"
     }
 }

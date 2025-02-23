@@ -19,9 +19,10 @@ Example Usage:
     # Export to metadata file
     VideoMetadata.export_videos_to_metadata_file(filtered_videos, 'metadata.csv')
 """
+import re  # Used for Pattern type and regex operations
 import sys
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, field  # field is used to configure dataclass fields
+from datetime import date, datetime, time
 from typing import Any, Dict, List, Optional, Union
 
 # import video_analyzer
@@ -39,15 +40,16 @@ class DateRange:
 
     Used by VideoSelector to define date-based filtering criteria.
     Dates should be in 'YYYY-MM-DD' format.
+    Either start or end can be None to specify only a lower or upper bound.
     """
 
-    start: str
-    end: str
+    start: Optional[str] = None
+    end: Optional[str] = None
 
     @classmethod
     def from_dict(cls, date_range_dict: Dict[str, Any]) -> "DateRange":
         """Create DateRange from dictionary representation."""
-        return cls(start=date_range_dict["start"], end=date_range_dict["end"])
+        return cls(start=date_range_dict.get("start"), end=date_range_dict.get("end"))
 
 
 @dataclass
@@ -57,15 +59,44 @@ class TimeRange:
 
     Used by VideoSelector to define time-based filtering criteria.
     Times should be in 'HH:MM:SS' format.
+    If start is larger than end, the time interval crosses midnight.
+    Either start or end can be None to specify only a lower or upper bound.
     """
 
-    start: str
-    end: str
+    start: Optional[str] = None  # Optional, in HH:MM:SS format
+    end: Optional[str] = None  # Optional, in HH:MM:SS format
 
     @classmethod
     def from_dict(cls, time_range_dict: Dict[str, Any]) -> "TimeRange":
-        """Create TimeRange from dictionary representation."""
-        return cls(start=time_range_dict["start"], end=time_range_dict["end"])
+        """
+        Create TimeRange from dictionary representation.
+
+        Args:
+            time_range_dict: Dictionary containing optional 'start' and 'end' time strings
+
+        Returns:
+            TimeRange instance
+
+        Raises:
+            ValueError: If time strings are not in HH:MM:SS format
+        """
+        start = time_range_dict.get("start")
+        end = time_range_dict.get("end")
+
+        # Validate time format if provided
+        if start is not None:
+            try:
+                datetime.strptime(start, "%H:%M:%S")
+            except ValueError as e:
+                raise ValueError(f"Invalid start time format. Expected HH:MM:SS: {e}")
+
+        if end is not None:
+            try:
+                datetime.strptime(end, "%H:%M:%S")
+            except ValueError as e:
+                raise ValueError(f"Invalid end time format. Expected HH:MM:SS: {e}")
+
+        return cls(start=start, end=end)
 
 
 @dataclass
@@ -75,18 +106,21 @@ class DurationRange:
 
     Used by VideoSelector to define duration-based filtering criteria.
     Durations should be in seconds format.
+    Either min or max can be None to specify only a lower or upper bound.
     """
 
-    min: float
-    max: float
+    min: Optional[float] = None
+    max: Optional[float] = None
 
     @classmethod
     def from_dict(cls, duration_range_dict: Dict[str, Any]) -> "DurationRange":
         """Create DurationRange from dictionary representation."""
-        return cls(min=duration_range_dict["min"], max=duration_range_dict["max"])
+        return cls(
+            min=duration_range_dict.get("min"), max=duration_range_dict.get("max")
+        )
 
 
-@dataclass
+@dataclass(repr=False)
 class VideoSelector:
     """
     Defines criteria for filtering videos and implements the matching check.
@@ -107,53 +141,116 @@ class VideoSelector:
             )
     """
 
-    devices: Optional[List[str]] = None
-    date_range: Optional[DateRange] = None
-    time_range: Optional[TimeRange] = None
-    filenames: Optional[List[str]] = None
-    weekdays: Optional[List[str]] = None
-    duration_range: Optional[DurationRange] = None
+    devices: Optional[List[str]] = field(default=None)
+    date_range: Optional[DateRange] = field(default=None)
+    time_range: Optional[TimeRange] = field(default=None)
+    filenames: Optional[List[str]] = field(default=None)
+    weekdays: Optional[List[str]] = field(default=None)
+    duration_range: Optional[DurationRange] = field(default=None)
+    date_regex: Optional[str] = field(default=None)
 
     # Placeholder for a new criteria for selection:
     # new_criteria: Optional[T] = None
 
-    # Cached values for runtime optimization of the method matches
-    _devices_set: Optional[set[str]] = None
-    _start_date = None
-    _end_date = None
-    _start_time = None
-    _end_time = None
-    _filenames_set: Optional[set[str]] = None
-    _weekdays_set: Optional[set[str]] = None
+    # Cached values for runtime optimization of the method matches (initialized in __post_init__)
+    _devices_set: Optional[set[str]] = field(default=None, init=False, repr=False)
+    _start_date: Optional[date] = field(default=None, init=False, repr=False)
+    _end_date: Optional[date] = field(default=None, init=False, repr=False)
+    _start_time: Optional[time] = field(default=None, init=False, repr=False)
+    _end_time: Optional[time] = field(default=None, init=False, repr=False)
+    _filenames_set: Optional[set[str]] = field(default=None, init=False, repr=False)
+    _weekdays_set: Optional[set[str]] = field(default=None, init=False, repr=False)
+    _date_pattern: Optional[re.Pattern] = field(default=None, init=False, repr=False)
+    _duration_range_min: Optional[float] = field(default=None, init=False, repr=False)
+    _duration_range_max: Optional[float] = field(default=None, init=False, repr=False)
 
     #  Placeholder for cached values for a new criteria for selection:
     # _new_criteria: Optional[T] = None
 
     def __post_init__(self):
-        """Initialize cached values for faster lookups"""
-        # Convert lists to sets for O(1) lookups
-        self._devices_set = set(self.devices) if self.devices is not None else None
+        """Initialize cached values for faster lookups and validate inputs"""
+        # Convert lists to sets for O(1) lookups, treating None as empty list
+        self._devices_set = (
+            set(self.devices or []) if self.devices is not None else None
+        )
         self._filenames_set = (
-            set(self.filenames) if self.filenames is not None else None
+            set(self.filenames or []) if self.filenames is not None else None
         )
         self._weekdays_set = (
-            set(day.lower() for day in self.weekdays)
+            set(day.lower() for day in (self.weekdays or []))
             if self.weekdays is not None
             else None
         )
 
-        # Pre-compute date and time objects
-        if self.date_range is not None:
-            self._start_date = datetime.strptime(
-                self.date_range.start, "%Y-%m-%d"
-            ).date()
-            self._end_date = datetime.strptime(self.date_range.end, "%Y-%m-%d").date()
+        # Validate and cache duration_range
+        if self.duration_range is not None:
+            if self.duration_range.min is None and self.duration_range.max is None:
+                raise ValueError(
+                    "At least one of min or max must be specified in duration_range"
+                )
+            self._duration_range_min = self.duration_range.min
+            self._duration_range_max = self.duration_range.max
 
+        # Initialize and validate date range
+        self._start_date = None
+        self._end_date = None
+        if self.date_range is not None:
+            if self.date_range.start is None and self.date_range.end is None:
+                raise ValueError(
+                    "At least one of start or end must be specified in date_range"
+                )
+            if self.date_range.start is not None:
+                self._start_date = datetime.strptime(
+                    self.date_range.start, "%Y-%m-%d"
+                ).date()
+            if self.date_range.end is not None:
+                self._end_date = datetime.strptime(
+                    self.date_range.end, "%Y-%m-%d"
+                ).date()
+
+        # Compile date regex pattern if provided
+        self._date_pattern = None
+        if self.date_regex is not None:
+            # Convert user-friendly pattern (with * wildcards) to proper regex
+            # Replace * with \d+ for matching one or more digits
+            # Escape - to match literal hyphens
+            try:
+                # Convert user-friendly pattern to proper regex:
+                # 1. Replace * with \d+ for matching digits
+                # 2. Escape - to match literal hyphens
+                # 3. Handle * at start of pattern (e.g. "*-07-15")
+                pattern = self.date_regex
+                if pattern.startswith("*"):
+                    pattern = r"\d+" + pattern[1:]  # Replace leading * with \d+
+                pattern = pattern.replace("*", r"\d+").replace("-", r"\-")
+                self._date_pattern = re.compile(f"^{pattern}$")
+            except re.error as e:
+                raise ValueError(
+                    f"Invalid date regex pattern '{self.date_regex}': {e}. "
+                    "Pattern should follow YYYY-MM-DD format with * for wildcards."
+                )
+
+        # Initialize and validate time range
+        self._start_time = None
+        self._end_time = None
         if self.time_range is not None:
-            self._start_time = datetime.strptime(
-                self.time_range.start, "%H:%M:%S"
-            ).time()
-            self._end_time = datetime.strptime(self.time_range.end, "%H:%M:%S").time()
+            if self.time_range.start is None and self.time_range.end is None:
+                raise ValueError(
+                    "At least one of start or end must be specified in time_range"
+                )
+            try:
+                if self.time_range.start is not None:
+                    self._start_time = datetime.strptime(
+                        self.time_range.start, "%H:%M:%S"
+                    ).time()
+                if self.time_range.end is not None:
+                    self._end_time = datetime.strptime(
+                        self.time_range.end, "%H:%M:%S"
+                    ).time()
+            except ValueError as e:
+                raise ValueError(
+                    f"Invalid time format in time_range. Expected HH:MM:SS format: {e}"
+                )
 
         # Placeholder for computations of cached values for a new criteria for selection:
         # if self.new_criteria is not None:
@@ -195,72 +292,54 @@ class VideoSelector:
         Raises:
             ValueError: If unknown devices are specified
         """
+        # Handle date range
         date_range = None
-        if "date_range" in selector_dict:
-            date_range_dict = selector_dict["date_range"]
-            if (
-                isinstance(date_range_dict, dict)
-                and "start" in date_range_dict
-                and "end" in date_range_dict
-            ):
-                date_range = DateRange.from_dict(date_range_dict)
-            else:
-                logger.warning(
-                    "Invalid date_range format. Expected 'start' and 'end' keys."
-                )
+        date_range_dict = selector_dict.get("date_range")
+        if isinstance(date_range_dict, dict):
+            # Create DateRange even if only one of start/end is specified
+            date_range = DateRange.from_dict(date_range_dict)
 
+        # Handle time range
         time_range = None
-        if "time_range" in selector_dict:
-            time_range_dict = selector_dict["time_range"]
-            if (
-                isinstance(time_range_dict, dict)
-                and "start" in time_range_dict
-                and "end" in time_range_dict
-            ):
-                time_range = TimeRange.from_dict(time_range_dict)
-            else:
-                logger.warning(
-                    "Invalid time_range format. Expected 'start' and 'end' keys."
-                )
+        time_range_dict = selector_dict.get("time_range")
+        if isinstance(time_range_dict, dict):
+            # Create TimeRange even if only one of start/end is specified
+            time_range = TimeRange.from_dict(time_range_dict)
 
-        devices = None
-        if "devices" in selector_dict:
-            devices = selector_dict["devices"]
-        if devices and isinstance(devices, str):
-            devices = [devices]
-
+        # Handle devices
+        devices = selector_dict.get("devices")
         if devices is not None:
-            unknown_devices = [
-                device for device in devices if device not in Config.get_all_devices()
-            ]
-            if unknown_devices:
-                raise ValueError(f"Unknown devices: {', '.join(unknown_devices)}")
+            if isinstance(devices, str):
+                devices = [devices]
+            if devices:  # Only validate non-empty list
+                unknown_devices = [
+                    device
+                    for device in devices
+                    if device not in Config.get_all_devices()
+                ]
+                if unknown_devices:
+                    raise ValueError(f"Unknown devices: {', '.join(unknown_devices)}")
 
-        filenames = None
-        if "filenames" in selector_dict:
-            filenames = selector_dict["filenames"]
-        if filenames and isinstance(filenames, str):
+        # Handle filenames
+        filenames = selector_dict.get("filenames")
+        if filenames is not None and isinstance(filenames, str):
             filenames = [filenames]
 
-        weekdays = None
-        if "weekdays" in selector_dict:
-            weekdays = selector_dict["weekdays"]
-        if weekdays and isinstance(weekdays, str):
+        # Handle weekdays
+        weekdays = selector_dict.get("weekdays")
+        if weekdays is not None and isinstance(weekdays, str):
             weekdays = [weekdays]
 
+        # Handle duration range
         duration_range = None
-        if "duration_range" in selector_dict:
-            duration_range_dict = selector_dict["duration_range"]
-            if (
-                isinstance(duration_range_dict, dict)
-                and "min" in duration_range_dict
-                and "max" in duration_range_dict
-            ):
-                duration_range = DurationRange.from_dict(duration_range_dict)
-            else:
-                logger.warning(
-                    "Invalid duration_range format. Expected 'min' and 'max' keys."
-                )
+        duration_range_dict = selector_dict.get("duration_range")
+        if isinstance(duration_range_dict, dict):
+            # Create DurationRange even if only one of min/max is specified
+            duration_range = DurationRange.from_dict(duration_range_dict)
+
+        # Handle date regex pattern
+        date_regex = selector_dict.get("date_regex")
+
         # Placeholder for a new criteria for selection:
         # new_criteria = None
         # if "new_criteria" in selector_dict:
@@ -274,6 +353,7 @@ class VideoSelector:
             filenames=filenames,
             weekdays=weekdays,
             duration_range=duration_range,
+            date_regex=date_regex,
             # new_criteria=new_criteria,  # Placeholder for a new criteria for selection:\
         )
 
@@ -290,10 +370,14 @@ class VideoSelector:
         Returns True only if video satisfies all filtering conditions listed in selector.
         """
         # Check device (fastest operation - simple set lookup)
+        if self.devices is not None and not self.devices:
+            return True  # Empty list matches everything
         if self._devices_set is not None and video.device not in self._devices_set:
             return False
 
         # Check filename (fast set lookup)
+        if self.filenames is not None and not self.filenames:
+            return True  # Empty list matches everything
         if (
             self._filenames_set is not None
             and video.filename not in self._filenames_set
@@ -301,31 +385,52 @@ class VideoSelector:
             return False
 
         # Check weekday (fast set lookup)
+        if self.weekdays is not None and not self.weekdays:
+            return True  # Empty list matches everything
         if self._weekdays_set is not None:
             weekday = video.datetime.strftime("%A").lower()
             if weekday not in self._weekdays_set:
                 return False
 
         # Check date range (more expensive - date comparison)
-        if (
-            self._start_date is not None
-            and self._end_date is not None
-            and (video.date < self._start_date or video.date > self._end_date)
-        ):
-            return False
+        if self.date_range is not None:
+            if self._start_date is not None and video.date < self._start_date:
+                return False
+            if self._end_date is not None and video.date > self._end_date:
+                return False
+
+        # Check date regex pattern
+        if self._date_pattern is not None:
+            if not self._date_pattern.match(video.date_str):
+                return False
 
         # Check duration range (more expensive)
-        if self.duration_range is not None and (
-            video.duration.total_seconds() < self.duration_range.min
-            or video.duration.total_seconds() > self.duration_range.max
+        duration_seconds = video.duration.total_seconds()
+        if (
+            self._duration_range_min is not None
+            and duration_seconds < self._duration_range_min
+        ):
+            return False
+        if (
+            self._duration_range_max is not None
+            and duration_seconds > self._duration_range_max
         ):
             return False
 
         # Check time range (most expensive - time comparison with midnight handling)
-        if self._start_time is not None and not VideoSelector.is_time_in_range(
-            video.time, self._start_time, self._end_time
-        ):
-            return False
+        if self.time_range is not None:
+            if self._start_time is not None and self._end_time is not None:
+                # Both bounds exist - use is_time_in_range to handle midnight crossing
+                if not VideoSelector.is_time_in_range(
+                    video.time, self._start_time, self._end_time
+                ):
+                    return False
+            else:
+                # Single bound - simple comparison
+                if self._start_time is not None and video.time < self._start_time:
+                    return False
+                if self._end_time is not None and video.time > self._end_time:
+                    return False
 
         # Placeholder for checking a new criteria for selection:
         # if self.new_criteria is not None and (video does not pass self.new_criteria):
@@ -336,23 +441,52 @@ class VideoSelector:
     def log_str(self) -> List[str]:
         output_str: List[str] = []
         if self.devices is not None:
-            output_str.append(f"Devices: {', '.join(self.devices)}")
+            if not self.devices:
+                output_str.append("Devices: []")
+            else:
+                output_str.append(f"Devices: {', '.join(self.devices)}")
+
         if self.date_range is not None:
-            output_str.append(
-                f"Date range: {self.date_range.start} to {self.date_range.end}"
+            start_str = (
+                self.date_range.start if self.date_range.start is not None else "-∞"
             )
+            end_str = self.date_range.end if self.date_range.end is not None else "∞"
+            output_str.append(f"Date range: {start_str} to {end_str}")
+
+        if self.date_regex is not None:
+            output_str.append(f"Date regex: {self.date_regex}")
+
         if self.time_range is not None:
-            output_str.append(
-                f"Time range: {self.time_range.start} to {self.time_range.end}"
+            start_str = (
+                self.time_range.start if self.time_range.start is not None else "-∞"
             )
+            end_str = self.time_range.end if self.time_range.end is not None else "∞"
+            output_str.append(f"Time range: {start_str} to {end_str}")
+
         if self.duration_range is not None:
-            output_str.append(
-                f"Duration range: [{self.duration_range.min} - {self.duration_range.max}] seconds"
+            min_str = (
+                str(self.duration_range.min)
+                if self.duration_range.min is not None
+                else "-∞"
             )
+            max_str = (
+                str(self.duration_range.max)
+                if self.duration_range.max is not None
+                else "∞"
+            )
+            output_str.append(f"Duration range: [{min_str} - {max_str}] seconds")
+
         if self.filenames is not None:
-            output_str.append(f"Filenames: {', '.join(self.filenames)}")
+            if not self.filenames:
+                output_str.append("Filenames: []")
+            else:
+                output_str.append(f"Filenames: {', '.join(self.filenames)}")
+
         if self.weekdays is not None:
-            output_str.append(f"Weekdays: {', '.join(self.weekdays)}")
+            if not self.weekdays:
+                output_str.append("Weekdays: []")
+            else:
+                output_str.append(f"Weekdays: {', '.join(self.weekdays)}")
 
         # Placeholder for logging a new criteria for selection:
         # if self.new_criteria is not None:

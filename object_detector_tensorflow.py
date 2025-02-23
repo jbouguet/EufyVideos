@@ -1,3 +1,6 @@
+# WARNING: As of 2/19/2025, the tensorflow library is not yet supported by Python 3.13.
+# This module should not be used until tensorflow adds support for Python 3.13.
+
 import glob
 import os
 from typing import Any, Dict, List

@@ -67,7 +67,7 @@ process_stories: true
 stories:
 
   - name: '2T8600P1024260D5E_20241118084819'
-    skip: false
+    skip: true
     selectors:
       - filenames: ['T8600P1024260D5E_20241118084819.mp4']
     tag_processing: false
@@ -90,12 +90,84 @@ stories:
       output_video:
         width: 1600
 
+  - name: 'Test Time Range 1'
+    skip: false
+    selectors:
+      - time_range:
+          start: '17:00:00'
+          end: '08:00:00'
+
+  - name: 'Test Time Range 2'
+    skip: false
+    selectors:
+      - time_range:
+          start: '17:00:00'
+
+  - name: 'Test Time Range 3'
+    skip: false
+    selectors:
+      - time_range:
+          end: '08:00:00'
+
+  - name: 'Test Regex 1'
+    skip: true
+    selectors:
+      - date_regex: "2024-0[3-4-5-6]-0[1-2-3-4-5-6-7-8-9]"  # March-June 2024, days 01 to 09
+
+  - name: 'Test Regex 2'
+    skip: true
+    selectors:
+      - date_regex: "****-**-1[5-7-9]" # All 15th, 17th and 19th days of any month/year
+
+
+  - name: 'Test Regex 3'
+    skip: true
+    selectors:
+      - date_regex: "*-0[6-7-8]-0[1-2-3-4-5]"  # 5 first days of June to August
+
+  - name: 'Test Regex 4'
+    skip: true
+    selectors:
+      - date_regex: "2024-07-04"  # Single day!
+
+
+
+  - name: 'Test Filter Videos'
+    skip: true
+    selectors:
+      - duration_range:
+          min: 100
+          max: 200
+        time_range:
+          start: '08:00:00'
+          end: '17:00:00'
+        date_range:
+          start: '2024-03-07'
+          end: '2025-01-09'
+
   - name: 'Longest Videos'
     skip: true
     selectors:
       - duration_range:
           min: 354
-          max: 10000000
+
+  - name: 'Shortest Videos'
+    skip: true
+    selectors:
+      - duration_range:
+          max: 4
+
+  - name: 'Videos Before A Date'
+    skip: true
+    selectors:
+      - date_range:
+          end: '2024-08-01'
+
+  - name: 'Videos After A Date'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-08-02'
 
   - name: 'Busiest few minutes'
     skip: true
