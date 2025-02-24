@@ -2,7 +2,7 @@
 
 import os
 import sys
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, NoReturn, Optional, Union
 
 import yaml
@@ -11,10 +11,11 @@ from termcolor import colored
 from config import Config
 from dashboard import Dashboard
 from logging_config import create_logger
-from story_creator import Story, clean_none_values
+from story_creator import Story
 from tag_processor import VideoTags
 from video_database import VideoDatabase, VideoDatabaseList
 from video_metadata import VideoMetadata
+from yaml_utils import save_to_yaml
 
 logger = create_logger(__name__)
 
@@ -156,13 +157,7 @@ class AnalysisConfig:
         return cls.from_dict(config_dict)
 
     def to_file(self, config_file: str) -> None:
-        with open(config_file, "w") as f:
-            yaml.dump(
-                clean_none_values(asdict(self)),
-                f,
-                default_flow_style=False,
-                sort_keys=False,
-            )
+        save_to_yaml(self, config_file)
 
 
 class VideoAnalyzer:

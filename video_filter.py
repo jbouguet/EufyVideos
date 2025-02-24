@@ -120,7 +120,7 @@ class DurationRange:
         )
 
 
-@dataclass(repr=False)
+@dataclass
 class VideoSelector:
     """
     Defines criteria for filtering videos and implements the matching check.
@@ -153,16 +153,36 @@ class VideoSelector:
     # new_criteria: Optional[T] = None
 
     # Cached values for runtime optimization of the method matches (initialized in __post_init__)
-    _devices_set: Optional[set[str]] = field(default=None, init=False, repr=False)
-    _start_date: Optional[date] = field(default=None, init=False, repr=False)
-    _end_date: Optional[date] = field(default=None, init=False, repr=False)
-    _start_time: Optional[time] = field(default=None, init=False, repr=False)
-    _end_time: Optional[time] = field(default=None, init=False, repr=False)
-    _filenames_set: Optional[set[str]] = field(default=None, init=False, repr=False)
-    _weekdays_set: Optional[set[str]] = field(default=None, init=False, repr=False)
-    _date_pattern: Optional[re.Pattern] = field(default=None, init=False, repr=False)
-    _duration_range_min: Optional[float] = field(default=None, init=False, repr=False)
-    _duration_range_max: Optional[float] = field(default=None, init=False, repr=False)
+    _devices_set: Optional[set[str]] = field(
+        default=None, metadata={"exclude_from_dict": True}
+    )
+    _start_date: Optional[date] = field(
+        default=None, metadata={"exclude_from_dict": True}
+    )
+    _end_date: Optional[date] = field(
+        default=None, metadata={"exclude_from_dict": True}
+    )
+    _start_time: Optional[time] = field(
+        default=None, metadata={"exclude_from_dict": True}
+    )
+    _end_time: Optional[time] = field(
+        default=None, metadata={"exclude_from_dict": True}
+    )
+    _filenames_set: Optional[set[str]] = field(
+        default=None, metadata={"exclude_from_dict": True}
+    )
+    _weekdays_set: Optional[set[str]] = field(
+        default=None, metadata={"exclude_from_dict": True}
+    )
+    _date_pattern: Optional[re.Pattern] = field(
+        default=None, metadata={"exclude_from_dict": True}
+    )
+    _duration_range_min: Optional[float] = field(
+        default=None, metadata={"exclude_from_dict": True}
+    )
+    _duration_range_max: Optional[float] = field(
+        default=None, metadata={"exclude_from_dict": True}
+    )
 
     #  Placeholder for cached values for a new criteria for selection:
     # _new_criteria: Optional[T] = None

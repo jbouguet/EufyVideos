@@ -34,7 +34,7 @@ Example Usage:
 """
 
 import os
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from math import ceil
 from typing import Any, Dict, List, Optional
 
@@ -49,19 +49,9 @@ from tag_visualizer import TagVisualizer, TagVisualizerConfig
 from video_filter import VideoFilter, VideoSelector
 from video_generator import VideoGenerationConfig, VideoGenerator
 from video_metadata import VideoMetadata
+from yaml_utils import save_to_yaml
 
 logger = create_logger(__name__)
-
-
-def clean_none_values(d):
-    """Remove None values from dict and convert tuples to lists."""
-    if isinstance(d, dict):
-        return {k: clean_none_values(v) for k, v in d.items() if v is not None}
-    elif isinstance(d, list):
-        return [clean_none_values(item) for item in d]
-    elif isinstance(d, tuple):
-        return list(d)
-    return d
 
 
 @dataclass
@@ -170,13 +160,14 @@ class Story:
         Args:
             story_filename: Path where to save the configuration
         """
-        with open(story_filename, "w") as f:
-            yaml.dump(
-                clean_none_values(asdict(self)),
-                f,
-                default_flow_style=False,
-                sort_keys=False,
-            )
+        save_to_yaml(self, story_filename)
+        # with open(story_filename, "w") as f:
+        #     yaml.dump(
+        #         clean_none_values(custom_asdict(self)),
+        #         f,
+        #         default_flow_style=False,
+        #         sort_keys=False,
+        #     )
 
     @staticmethod
     def validate_story_dict(story_dict: Dict[str, Any]) -> None:
