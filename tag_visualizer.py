@@ -130,21 +130,28 @@ class TagVisualizerConfig:
         default_factory=lambda: {"width": 1600, "height": 900}
     )
     max_track_history: int = field(default=2000)
+
     bbox_color: ColorTuple = field(
-        default_factory=lambda: cast(ColorTuple, (0, 255, 0))
+        default_factory=lambda: cast(ColorTuple, (0, 255, 0)),
+        metadata={"exclude_from_dict": True},
     )  # Green in BGR
     track_color: ColorTuple = field(
-        default_factory=lambda: cast(ColorTuple, (230, 230, 230))
+        default_factory=lambda: cast(ColorTuple, (230, 230, 230)),
+        metadata={"exclude_from_dict": True},
     )  # Light gray
     text_color: ColorTuple = field(
-        default_factory=lambda: cast(ColorTuple, (0, 255, 0))
+        default_factory=lambda: cast(ColorTuple, (0, 255, 0)),
+        metadata={"exclude_from_dict": True},
     )  # Green
     info_color: ColorTuple = field(
-        default_factory=lambda: cast(ColorTuple, (255, 255, 255))
+        default_factory=lambda: cast(ColorTuple, (255, 255, 255)),
+        metadata={"exclude_from_dict": True},
     )  # White
-    font_scale: float = field(default=0.6)
-    line_thickness: int = field(default=2)
-    use_color_from_track_id: bool = field(default=True)
+    font_scale: float = field(default=0.6, metadata={"exclude_from_dict": True})
+    line_thickness: int = field(default=2, metadata={"exclude_from_dict": True})
+    use_color_from_track_id: bool = field(
+        default=True, metadata={"exclude_from_dict": True}
+    )
 
     @classmethod
     def from_dict(cls, config_dict: Optional[Dict[str, Any]]) -> "TagVisualizerConfig":

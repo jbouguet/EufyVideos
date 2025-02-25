@@ -49,7 +49,7 @@ from tag_visualizer import TagVisualizer, TagVisualizerConfig
 from video_filter import VideoFilter, VideoSelector
 from video_generator import VideoGenerationConfig, VideoGenerator
 from video_metadata import VideoMetadata
-from yaml_utils import save_to_yaml
+from yaml_utils import save_to_yaml, set_exclude_from_dict
 
 logger = create_logger(__name__)
 
@@ -160,14 +160,14 @@ class Story:
         Args:
             story_filename: Path where to save the configuration
         """
+        set_exclude_from_dict(
+            self, "video_generation_config", not self.video_generation
+        )
+        set_exclude_from_dict(self, "tag_processing_config", not self.tag_processing)
+        set_exclude_from_dict(
+            self, "tag_video_generation_config", not self.tag_video_generation
+        )
         save_to_yaml(self, story_filename)
-        # with open(story_filename, "w") as f:
-        #     yaml.dump(
-        #         clean_none_values(custom_asdict(self)),
-        #         f,
-        #         default_flow_style=False,
-        #         sort_keys=False,
-        #     )
 
     @staticmethod
     def validate_story_dict(story_dict: Dict[str, Any]) -> None:

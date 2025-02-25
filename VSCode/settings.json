@@ -1,6 +1,6 @@
 {
     // Theme and visual settings
-    "workbench.colorTheme": "Atom One Dark",
+    "workbench.colorTheme": "Dark High Contrast",
     "workbench.sideBar.location": "left",
     "editor.detectIndentation": false,
     "editor.minimap.enabled": false,

@@ -175,7 +175,9 @@ class OutputVideo:
     """
 
     width: Optional[int] = None
-    date_time_label: DateTimeLabel = field(default_factory=DateTimeLabel)
+    date_time_label: DateTimeLabel = field(
+        default_factory=DateTimeLabel, metadata={"exclude_from_dict": True}
+    )
     output_video_codec: str = field(default="h264")  # Default to h264, never None
 
     def __post_init__(self):

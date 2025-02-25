@@ -107,7 +107,6 @@ stories:
       output_video:
         width: 1600
 
-
   - name: 'Test Time Range 1'
     skip: true
     selectors:
@@ -147,7 +146,6 @@ stories:
     skip: true
     selectors:
       - date_regex: "2024-07-04"  # Single day!
-
 
 
   - name: 'Test Filter Videos'

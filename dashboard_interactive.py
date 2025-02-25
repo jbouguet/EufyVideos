@@ -267,6 +267,31 @@ class InteractiveDashboard:
                                 [
                                     html.Div(
                                         [
+                                            html.Label(
+                                                "Date Regex: ",
+                                                **styles["controls_labels"],
+                                            ),
+                                            dbc.Input(
+                                                id="date-regex-input",
+                                                type="text",
+                                                placeholder="Date Regex",
+                                                style=styles["controls_items"]["style"],
+                                            ),
+                                        ],
+                                        **styles["div_groups"],
+                                    ),
+                                ],
+                                width=1,
+                            ),
+                        ],
+                    ),
+                    # Thrid row with start time.
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                [
+                                    html.Div(
+                                        [
                                             html.Span(
                                                 "Start Time: ",
                                                 **styles["controls_labels"],
@@ -306,7 +331,7 @@ class InteractiveDashboard:
                             ),
                         ],
                     ),
-                    # Third row with end time.
+                    # Fourth row with end time.
                     dbc.Row(
                         [
                             dbc.Col(
@@ -564,6 +589,7 @@ class InteractiveDashboard:
             [
                 Output("date-range", "start_date"),
                 Output("date-range", "end_date"),
+                Output("date-regex-input", "value"),
                 Output("start-time", "value"),
                 Output("end-time", "value"),
                 Output("device-selector", "value"),
@@ -597,10 +623,13 @@ class InteractiveDashboard:
                 start="00:00:00", end="23:59:59"
             )
             weekdays = selector.weekdays or self.all_weekdays
+            date_regex = selector.date_regex
+            date_regex = "" if date_regex is None else date_regex
 
             return (
                 date_range.start,
                 date_range.end,
+                date_regex,
                 self.time_to_slider(time_range.start),
                 self.time_to_slider(time_range.end),
                 devices,
@@ -622,6 +651,7 @@ class InteractiveDashboard:
             [
                 Input("date-range", "start_date"),
                 Input("date-range", "end_date"),
+                Input("date-regex-input", "value"),
                 Input("start-time", "value"),
                 Input("end-time", "value"),
                 Input("device-selector", "value"),
@@ -633,6 +663,7 @@ class InteractiveDashboard:
         def update_graphs(
             start_date,
             end_date,
+            date_regex,
             start_time,
             end_time,
             selected_devices,
@@ -647,6 +678,7 @@ class InteractiveDashboard:
                 if (start_date, end_date) == (self.min_date, self.max_date)
                 else DateRange(start=start_date, end=end_date)
             )
+            date_regex = None if not date_regex else date_regex
 
             start_time_str = (
                 "00:00:00" if start_time is None else self.slider_to_time(start_time)
@@ -676,6 +708,7 @@ class InteractiveDashboard:
             selector = VideoSelector(
                 devices=selected_devices,
                 date_range=date_range,
+                date_regex=date_regex,
                 time_range=time_range,
                 weekdays=weekdays,
                 filenames=None,
@@ -839,6 +872,7 @@ class InteractiveDashboard:
             State("story-dir-input", "value"),
             State("date-range", "start_date"),
             State("date-range", "end_date"),
+            State("date-regex-input", "value"),
             State("start-time", "value"),
             State("end-time", "value"),
             State("device-selector", "value"),
@@ -851,6 +885,7 @@ class InteractiveDashboard:
             story_dir,
             start_date,
             end_date,
+            date_regex,
             start_time,
             end_time,
             selected_devices,
@@ -861,12 +896,14 @@ class InteractiveDashboard:
 
             os.makedirs(story_dir, exist_ok=True)
 
+            date_regex = None if not date_regex else date_regex
             Story(
                 name=story_name,
                 selectors=[
                     VideoSelector(
                         devices=selected_devices,
                         date_range=DateRange(start=start_date, end=end_date),
+                        date_regex=date_regex,
                         time_range=TimeRange(
                             start=self.slider_to_time(start_time),
                             end=self.slider_to_time(end_time),

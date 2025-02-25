@@ -5,6 +5,7 @@ This module provides utilities for serializing Python objects (particularly data
 to YAML format, with special handling for None values, collections, and exclusion flags.
 """
 
+import types
 from dataclasses import fields, is_dataclass
 from typing import Any, Dict, List, Union
 
@@ -24,6 +25,31 @@ def clean_none_values(obj: Any) -> Any:
     elif isinstance(obj, (list, tuple)):
         return [clean_none_values(item) for item in obj]
     return obj
+
+
+def set_exclude_from_dict(obj_class, field_name, exclude=True) -> bool:
+    """
+    Set the exclude_from_dict metadata for a field in a dataclass.
+
+    Args:
+        obj_class: The dataclass class (not instance)
+        field_name: Name of the field to modify
+        exclude: Whether to exclude the field (default: True)
+
+    Returns:
+        True if successful, False if the field wasn't found
+    """
+    for f in fields(obj_class):
+        if f.name == field_name:
+            # Create a new dictionary with the existing metadata and our addition
+            new_metadata = dict(f.metadata)
+            new_metadata["exclude_from_dict"] = exclude
+
+            # Replace the metadata with our new version
+            # We need to use object.__setattr__ to bypass immutability
+            object.__setattr__(f, "metadata", types.MappingProxyType(new_metadata))
+            return True
+    return False
 
 
 def exclude_from_dict(obj: Any) -> bool:
