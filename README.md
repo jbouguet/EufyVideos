@@ -157,6 +157,8 @@ The visualization components are specifically designed for Plotly 5.24.1. Using 
    ```
 3. [cheat-sheet](https://education.github.com/git-cheat-sheet-education.pdf) for the most commonly used git commands.
 
+4. Within VCode, you can use the Source Control panel (Ctrl+Shift+G or click the branching icon in the Activity Bar). Complete documentation available [here](https://code.visualstudio.com/docs/sourcecontrol/overview)
+
 ## Version Compatibility and Common Issues
 
 1. Plotly 6.x Compatibility:
