@@ -129,23 +129,33 @@ stories:
   - name: 'Test Regex 1'
     skip: true
     selectors:
-      - date_regex: "2024-0[3-4-5-6]-0[1-2-3-4-5-6-7-8-9]"  # March-June 2024, days 01 to 09
+      - date_regex: "2024-(0[3-6])-(0[1-9])"  # March-June 2024, days 01 to 09
 
   - name: 'Test Regex 2'
     skip: true
     selectors:
-      - date_regex: "****-**-1[5-7-9]" # All 15th, 17th and 19th days of any month/year
+      - date_regex: "\d{4}-\d{2}-(1[579])" # All 15th, 17th and 19th days of any month/year
 
 
   - name: 'Test Regex 3'
     skip: true
     selectors:
-      - date_regex: "*-0[6-7-8]-0[1-2-3-4-5]"  # 5 first days of June to August
+      - date_regex: "\d{4}-(0[6-8])-(0[1-5])"  # 5 first days of June to August
 
   - name: 'Test Regex 4'
     skip: true
     selectors:
       - date_regex: "2024-07-04"  # Single day!
+
+  - name: 'Test Regex 5'
+    skip: true
+    selectors:
+      - date_regex: "\d{4}-(0[7-9]|1[01])-(0[89]|1[0-2])"  # Days 8 to 12 between July and November
+
+  - name: 'Test Regex 6'
+    skip: true
+    selectors:
+      - date_regex: "\d{4}-(01|03|10)-(05|07|13|22)"
 
 
   - name: 'Test Filter Videos'

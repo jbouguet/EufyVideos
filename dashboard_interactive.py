@@ -50,27 +50,6 @@ class InteractiveDashboard:
         self.videos = videos
         self.stories_output = stories_output
 
-        # Add predefined directory options
-        self.directory_options = [
-            {"label": self.stories_output, "value": self.stories_output},
-            {
-                "label": os.path.join(self.stories_output, "dashboards"),
-                "value": os.path.join(self.stories_output, "dashboards"),
-            },
-            {
-                "label": os.path.join(self.stories_output, "daily"),
-                "value": os.path.join(self.stories_output, "daily"),
-            },
-            {
-                "label": os.path.join(self.stories_output, "weekly"),
-                "value": os.path.join(self.stories_output, "weekly"),
-            },
-            {
-                "label": os.path.join(self.stories_output, "monthly"),
-                "value": os.path.join(self.stories_output, "monthly"),
-            },
-        ]
-
         # Get date range from videos
         dates = [v.date for v in videos]
         self.min_date = min(dates).strftime("%Y-%m-%d")
@@ -134,6 +113,26 @@ class InteractiveDashboard:
                                                 day_size=30,
                                                 calendar_orientation="vertical",
                                                 show_outside_days=True,  # Show days from adjacent months
+                                            ),
+                                        ],
+                                        **styles["div_groups"],
+                                    ),
+                                ],
+                                width=1,
+                            ),
+                            dbc.Col(
+                                [
+                                    html.Div(
+                                        [
+                                            html.Label(
+                                                "Date Regex: ",
+                                                **styles["controls_labels"],
+                                            ),
+                                            dbc.Input(
+                                                id="date-regex-input",
+                                                type="text",
+                                                placeholder="Date Regex",
+                                                style=styles["controls_items"]["style"],
                                             ),
                                         ],
                                         **styles["div_groups"],
@@ -256,36 +255,11 @@ class InteractiveDashboard:
                                         **styles["div_groups"],
                                     ),
                                 ],
-                                width=2,
-                            ),
-                        ],
-                    ),
-                    # Second row with start time.
-                    dbc.Row(
-                        [
-                            dbc.Col(
-                                [
-                                    html.Div(
-                                        [
-                                            html.Label(
-                                                "Date Regex: ",
-                                                **styles["controls_labels"],
-                                            ),
-                                            dbc.Input(
-                                                id="date-regex-input",
-                                                type="text",
-                                                placeholder="Date Regex",
-                                                style=styles["controls_items"]["style"],
-                                            ),
-                                        ],
-                                        **styles["div_groups"],
-                                    ),
-                                ],
                                 width=1,
                             ),
                         ],
                     ),
-                    # Thrid row with start time.
+                    # Second row with start time.
                     dbc.Row(
                         [
                             dbc.Col(
@@ -331,7 +305,7 @@ class InteractiveDashboard:
                             ),
                         ],
                     ),
-                    # Fourth row with end time.
+                    # Third row with end time.
                     dbc.Row(
                         [
                             dbc.Col(
@@ -458,13 +432,11 @@ class InteractiveDashboard:
                                                 "Output Directory:",
                                                 **styles["controls_labels"],
                                             ),
-                                            dcc.Dropdown(
+                                            dbc.Input(
                                                 id="story-dir-input",
-                                                options=self.directory_options,
                                                 value=self.stories_output,
-                                                clearable=False,
-                                                optionHeight=16,
-                                                **styles["controls_items"],
+                                                type="text",
+                                                style=styles["controls_items"]["style"],
                                             ),
                                         ],
                                         **styles["div_groups"],

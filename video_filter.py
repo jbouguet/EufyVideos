@@ -231,23 +231,11 @@ class VideoSelector:
         # Compile date regex pattern if provided
         self._date_pattern = None
         if self.date_regex is not None:
-            # Convert user-friendly pattern (with * wildcards) to proper regex
-            # Replace * with \d+ for matching one or more digits
-            # Escape - to match literal hyphens
             try:
-                # Convert user-friendly pattern to proper regex:
-                # 1. Replace * with \d+ for matching digits
-                # 2. Escape - to match literal hyphens
-                # 3. Handle * at start of pattern (e.g. "*-07-15")
-                pattern = self.date_regex
-                if pattern.startswith("*"):
-                    pattern = r"\d+" + pattern[1:]  # Replace leading * with \d+
-                pattern = pattern.replace("*", r"\d+").replace("-", r"\-")
-                self._date_pattern = re.compile(f"^{pattern}$")
+                self._date_pattern = re.compile(f"^{self.date_regex}$")
             except re.error as e:
                 raise ValueError(
                     f"Invalid date regex pattern '{self.date_regex}': {e}. "
-                    "Pattern should follow YYYY-MM-DD format with * for wildcards."
                 )
 
         # Initialize and validate time range
