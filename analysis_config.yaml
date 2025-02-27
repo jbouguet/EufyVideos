@@ -136,7 +136,6 @@ stories:
     selectors:
       - date_regex: "\d{4}-\d{2}-(1[579])" # All 15th, 17th and 19th days of any month/year
 
-
   - name: 'Test Regex 3'
     skip: true
     selectors:
@@ -156,7 +155,6 @@ stories:
     skip: true
     selectors:
       - date_regex: "\d{4}-(01|03|10)-(05|07|13|22)"
-
 
   - name: 'Test Filter Videos'
     skip: true
