@@ -236,7 +236,7 @@ class VideoSelector:
             except re.error as e:
                 raise ValueError(
                     f"Invalid date regex pattern '{self.date_regex}': {e}. "
-                )
+                ) from e
 
         # Initialize and validate time range
         self._start_time = None
@@ -258,7 +258,7 @@ class VideoSelector:
             except ValueError as e:
                 raise ValueError(
                     f"Invalid time format in time_range. Expected HH:MM:SS format: {e}"
-                )
+                ) from e
 
         # Placeholder for computations of cached values for a new criteria for selection:
         # if self.new_criteria is not None:

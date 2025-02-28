@@ -14,7 +14,7 @@ The graphs update dynamically based on user selections.
 
 import os
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 import dash
 import dash_bootstrap_components as dbc
@@ -25,7 +25,7 @@ from dashboard_config import DashboardConfig
 from logging_config import create_logger
 from story_creator import Story
 from video_data_aggregator import VideoDataAggregator
-from video_filter import DateRange, TimeRange, VideoFilter, VideoSelector
+from video_filter import DateRange, DurationRange, TimeRange, VideoFilter, VideoSelector
 from video_graph_creator import VideoGraphCreator
 from video_metadata import VideoMetadata
 
@@ -145,6 +145,46 @@ class InteractiveDashboard:
                                     html.Div(
                                         [
                                             html.Label(
+                                                "Duration Min (s):",
+                                                **styles["controls_labels"],
+                                            ),
+                                            dbc.Input(
+                                                id="duration-range-min-input",
+                                                type="text",
+                                                placeholder="Min duration",
+                                                style=styles["controls_items"]["style"],
+                                            ),
+                                        ],
+                                        **styles["div_groups"],
+                                    ),
+                                ],
+                                width=1,
+                            ),
+                            dbc.Col(
+                                [
+                                    html.Div(
+                                        [
+                                            html.Label(
+                                                "Duration Max (s):",
+                                                **styles["controls_labels"],
+                                            ),
+                                            dbc.Input(
+                                                id="duration-range-max-input",
+                                                type="text",
+                                                placeholder="Max duration",
+                                                style=styles["controls_items"]["style"],
+                                            ),
+                                        ],
+                                        **styles["div_groups"],
+                                    ),
+                                ],
+                                width=1,
+                            ),
+                            dbc.Col(
+                                [
+                                    html.Div(
+                                        [
+                                            html.Label(
                                                 "Devices:",
                                                 **styles["controls_labels"],
                                             ),
@@ -163,7 +203,7 @@ class InteractiveDashboard:
                                         **styles["div_groups"],
                                     ),
                                 ],
-                                width=4,
+                                width=3,
                             ),
                             dbc.Col(
                                 [
@@ -191,7 +231,7 @@ class InteractiveDashboard:
                                         **styles["div_groups"],
                                     ),
                                 ],
-                                width=4,
+                                width=3,
                             ),
                             dbc.Col(
                                 [
@@ -562,6 +602,8 @@ class InteractiveDashboard:
                 Output("date-range", "start_date"),
                 Output("date-range", "end_date"),
                 Output("date-regex-input", "value"),
+                Output("duration-range-min-input", "value"),
+                Output("duration-range-max-input", "value"),
                 Output("start-time", "value"),
                 Output("end-time", "value"),
                 Output("device-selector", "value"),
@@ -598,10 +640,21 @@ class InteractiveDashboard:
             date_regex = selector.date_regex
             date_regex = "" if date_regex is None else date_regex
 
+            # Handle duration range
+            duration_min = ""
+            duration_max = ""
+            if selector.duration_range is not None:
+                if selector.duration_range.min is not None:
+                    duration_min = str(selector.duration_range.min)
+                if selector.duration_range.max is not None:
+                    duration_max = str(selector.duration_range.max)
+
             return (
                 date_range.start,
                 date_range.end,
                 date_regex,
+                duration_min,
+                duration_max,
                 self.time_to_slider(time_range.start),
                 self.time_to_slider(time_range.end),
                 devices,
@@ -624,6 +677,8 @@ class InteractiveDashboard:
                 Input("date-range", "start_date"),
                 Input("date-range", "end_date"),
                 Input("date-regex-input", "value"),
+                Input("duration-range-min-input", "value"),
+                Input("duration-range-max-input", "value"),
                 Input("start-time", "value"),
                 Input("end-time", "value"),
                 Input("device-selector", "value"),
@@ -636,6 +691,8 @@ class InteractiveDashboard:
             start_date,
             end_date,
             date_regex,
+            duration_min,
+            duration_max,
             start_time,
             end_time,
             selected_devices,
@@ -651,6 +708,30 @@ class InteractiveDashboard:
                 else DateRange(start=start_date, end=end_date)
             )
             date_regex = None if not date_regex else date_regex
+
+            # Process duration range inputs
+            duration_range: Optional[DurationRange] = None
+            duration_min_float = None
+            duration_max_float = None
+
+            if duration_min and duration_min.strip():
+                try:
+                    duration_min_float = float(duration_min)
+                except ValueError:
+                    # If not a valid float, treat as None
+                    pass
+
+            if duration_max and duration_max.strip():
+                try:
+                    duration_max_float = float(duration_max)
+                except ValueError:
+                    # If not a valid float, treat as None
+                    pass
+
+            if duration_min_float is not None or duration_max_float is not None:
+                duration_range = DurationRange(
+                    min=duration_min_float, max=duration_max_float
+                )
 
             start_time_str = (
                 "00:00:00" if start_time is None else self.slider_to_time(start_time)
@@ -683,6 +764,7 @@ class InteractiveDashboard:
                 date_regex=date_regex,
                 time_range=time_range,
                 weekdays=weekdays,
+                duration_range=duration_range,
                 filenames=None,
             )
 
@@ -845,6 +927,8 @@ class InteractiveDashboard:
             State("date-range", "start_date"),
             State("date-range", "end_date"),
             State("date-regex-input", "value"),
+            State("duration-range-min-input", "value"),
+            State("duration-range-max-input", "value"),
             State("start-time", "value"),
             State("end-time", "value"),
             State("device-selector", "value"),
@@ -858,6 +942,8 @@ class InteractiveDashboard:
             start_date,
             end_date,
             date_regex,
+            duration_min,
+            duration_max,
             start_time,
             end_time,
             selected_devices,
@@ -869,6 +955,31 @@ class InteractiveDashboard:
             os.makedirs(story_dir, exist_ok=True)
 
             date_regex = None if not date_regex else date_regex
+
+            # Process duration range inputs
+            duration_range: Optional[DurationRange] = None
+            duration_min_float = None
+            duration_max_float = None
+
+            if duration_min and duration_min.strip():
+                try:
+                    duration_min_float = float(duration_min)
+                except ValueError:
+                    # If not a valid float, treat as None
+                    pass
+
+            if duration_max and duration_max.strip():
+                try:
+                    duration_max_float = float(duration_max)
+                except ValueError:
+                    # If not a valid float, treat as None
+                    pass
+
+            if duration_min_float is not None or duration_max_float is not None:
+                duration_range = DurationRange(
+                    min=duration_min_float, max=duration_max_float
+                )
+
             Story(
                 name=story_name,
                 selectors=[
@@ -881,6 +992,7 @@ class InteractiveDashboard:
                             end=self.slider_to_time(end_time),
                         ),
                         weekdays=weekdays,
+                        duration_range=duration_range,
                     )
                 ],
             ).process(videos_database=self.videos, output_directory=story_dir)
@@ -888,12 +1000,13 @@ class InteractiveDashboard:
             # Clear the input after save
             return ""
 
-    def slider_to_time(self, t):
+    def slider_to_time(self, t: float) -> str:
         """Format time value from slider, rounding to nearest minute and turning 24:00:00 to 23:59:59"""
         if t == 24:
             return "23:59:59"
 
         hours = int(t)
+        # hours = int(t) + (t % 1)
         # Round to nearest integer minute
         minutes = round((t - hours) * 60)  # int((t % 1) * 60)
         if minutes == 60:
@@ -901,7 +1014,12 @@ class InteractiveDashboard:
             minutes = 0
         return f"{hours:02d}:{minutes:02d}:00"
 
-    def time_to_slider(self, time_str: str):
+    def time_to_slider(self, time_str: Optional[str] = None) -> Optional[float]:
+        """Format time value from slider, rounding to nearest minute and turning 23:59:59 to 24:00:00"""
+        if time_str is None:
+            return None
+        if time_str == "23:59:59":
+            return 24
         _time = datetime.strptime(time_str, "%H:%M:%S").time()
         hour = _time.hour
         minute = _time.minute
