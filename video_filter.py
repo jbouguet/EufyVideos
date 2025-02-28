@@ -88,13 +88,17 @@ class TimeRange:
             try:
                 datetime.strptime(start, "%H:%M:%S")
             except ValueError as e:
-                raise ValueError(f"Invalid start time format. Expected HH:MM:SS: {e}")
+                raise ValueError(
+                    f"Invalid start time format. Expected HH:MM:SS: {e}"
+                ) from e
 
         if end is not None:
             try:
                 datetime.strptime(end, "%H:%M:%S")
             except ValueError as e:
-                raise ValueError(f"Invalid end time format. Expected HH:MM:SS: {e}")
+                raise ValueError(
+                    f"Invalid end time format. Expected HH:MM:SS: {e}"
+                ) from e
 
         return cls(start=start, end=end)
 
