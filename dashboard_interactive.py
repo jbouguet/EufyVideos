@@ -100,15 +100,38 @@ class InteractiveDashboard:
                                     html.Div(
                                         [
                                             html.Label(
-                                                "Date Range: ",
+                                                "Start Date: ",
                                                 **styles["controls_labels"],
                                             ),
-                                            dcc.DatePickerRange(
-                                                id="date-range",
+                                            dcc.DatePickerSingle(
+                                                id="start-date",
                                                 min_date_allowed=self.min_date,
                                                 max_date_allowed=self.max_date,
-                                                start_date=self.min_date,
-                                                end_date=self.max_date,
+                                                date=self.min_date,
+                                                display_format="YYYY-MM-DD",
+                                                day_size=30,
+                                                calendar_orientation="vertical",
+                                                show_outside_days=True,  # Show days from adjacent months
+                                            ),
+                                        ],
+                                        **styles["div_groups"],
+                                    ),
+                                ],
+                                width=1,
+                            ),
+                            dbc.Col(
+                                [
+                                    html.Div(
+                                        [
+                                            html.Label(
+                                                "End Date: ",
+                                                **styles["controls_labels"],
+                                            ),
+                                            dcc.DatePickerSingle(
+                                                id="end-date",
+                                                min_date_allowed=self.min_date,
+                                                max_date_allowed=self.max_date,
+                                                date=self.max_date,
                                                 display_format="YYYY-MM-DD",
                                                 day_size=30,
                                                 calendar_orientation="vertical",
@@ -231,7 +254,7 @@ class InteractiveDashboard:
                                         **styles["div_groups"],
                                     ),
                                 ],
-                                width=3,
+                                width=2,
                             ),
                             dbc.Col(
                                 [
@@ -599,8 +622,8 @@ class InteractiveDashboard:
         # First callback updates the store when load button is clicked
         @self.app.callback(
             [
-                Output("date-range", "start_date"),
-                Output("date-range", "end_date"),
+                Output("start-date", "date"),
+                Output("end-date", "date"),
                 Output("date-regex-input", "value"),
                 Output("duration-range-min-input", "value"),
                 Output("duration-range-max-input", "value"),
@@ -674,8 +697,8 @@ class InteractiveDashboard:
                 Output("total-size-store", "data"),
             ],
             [
-                Input("date-range", "start_date"),
-                Input("date-range", "end_date"),
+                Input("start-date", "date"),
+                Input("end-date", "date"),
                 Input("date-regex-input", "value"),
                 Input("duration-range-min-input", "value"),
                 Input("duration-range-max-input", "value"),
@@ -924,8 +947,8 @@ class InteractiveDashboard:
             Input("save-button", "n_clicks"),
             State("story-name-input", "value"),
             State("story-dir-input", "value"),
-            State("date-range", "start_date"),
-            State("date-range", "end_date"),
+            State("start-date", "date"),
+            State("end-date", "date"),
             State("date-regex-input", "value"),
             State("duration-range-min-input", "value"),
             State("duration-range-max-input", "value"),
@@ -1042,11 +1065,20 @@ class InteractiveDashboard:
 
 
 if __name__ == "__main__":
+    import argparse
     import logging
     import sys
 
     from logging_config import set_logger_level_and_format
     from video_database import VideoDatabase, VideoDatabaseList
+
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Run the interactive dashboard")
+    parser.add_argument(
+        "--port", type=int, default=8050, help="Port to run the dashboard on"
+    )
+    parser.add_argument("--debug", action="store_true", help="Run in debug mode")
+    args = parser.parse_args()
 
     set_logger_level_and_format(logger, level=logging.INFO, extended_format=False)
 
@@ -1074,4 +1106,4 @@ if __name__ == "__main__":
 
     # Create and run dashboard
     dashboard = InteractiveDashboard(video_database, stories_output)
-    dashboard.run(debug=True)
+    dashboard.run(debug=args.debug, port=args.port)
