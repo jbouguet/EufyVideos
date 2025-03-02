@@ -70,7 +70,7 @@ class InteractiveDashboard:
         ]
 
         self.num_videos = len(self.videos)
-        self.num_days = (self.videos[-1].date - self.videos[0].date).days + 1
+        self.num_days = len(set(video.date for video in self.videos))
         self.num_frames = sum(video.frame_count for video in self.videos)
         self.total_size_mb = sum(video.file_size for video in self.videos)
         self.total_duration_seconds = sum(
@@ -820,9 +820,7 @@ class InteractiveDashboard:
 
             self.num_days = 0
             if self.num_videos > 0:
-                self.num_days = (
-                    filtered_videos[-1].date - filtered_videos[0].date
-                ).days + 1
+                self.num_days = len(set(video.date for video in filtered_videos))
             logger.debug(f"Number of days: {self.num_days :,}")
             if self.num_days > 0:
                 logger.debug(
