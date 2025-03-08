@@ -2,6 +2,8 @@
 directories:
   root_database: &root_database "/Users/jbouguet/Documents/EufySecurityVideos/record"
   stories_output: &stories_output "/Users/jbouguet/Documents/EufySecurityVideos/stories"
+  #root_database: &root_database "/Volumes/Eufy Videos/record"
+  #stories_output: &stories_output "/Volumes/Eufy Videos/stories"
   tags_database: &tags_dir !join [*root_database, "/tags_database"]
   batch_dirs: &batch_dirs
     - !join [*root_database, "/Batch001"]
@@ -32,6 +34,7 @@ directories:
     - !join [*root_database, "/Batch026"]
     - !join [*root_database, "/Batch027"]
     - !join [*root_database, "/Batch028"]
+    - !join [*root_database, "/Batch029"]
 
 # Video database configuration
 video_database_list:
@@ -66,8 +69,30 @@ process_stories: true
 
 stories:
 
+  - name: '2025-01-09 -> 2025-03-06 - Backyard'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2025-01-09'
+          end: '2025-03-06'
+        devices: ['Backyard']
+
+  - name: '2025-01-09 -> 2025-03-06'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2025-01-09'
+          end: '2025-03-06'
+
+  - name: '2025-03-06'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2025-03-06'
+          end: '2025-03-06'
+
   - name: 'Mega Filter Test'
-    skip: false
+    skip: true
     selectors:
       - duration_range:
           min: 10
@@ -127,32 +152,32 @@ stories:
           end: '08:00:00'
 
   - name: 'Test Regex 1'
-    skip: false
+    skip: true
     selectors:
       - date_regex: "2024-(0[3-6])-(0[1-9])"  # March-June 2024, days 01 to 09
 
   - name: 'Test Regex 2'
-    skip: false
+    skip: true
     selectors:
       - date_regex: '[0-9]{4}-[0-9]{2}-(1[579])' # All 15th, 17th and 19th days of any month/year
 
   - name: 'Test Regex 3'
-    skip: false
+    skip: true
     selectors:
       - date_regex: '[0-9]{4}-(0[6-8])-(0[1-5])'  # 5 first days of June to August
 
   - name: 'Test Regex 4'
-    skip: false
+    skip: true
     selectors:
       - date_regex: "2024-07-04|2024-05-17"  # Two specific days!
 
   - name: 'Test Regex 5'
-    skip: false
+    skip: true
     selectors:
       - date_regex: '[0-9]{4}-(0[7-9]|1[01])-(0[89]|1[0-2])'  # Days 8 to 12 between July and November
 
   - name: 'Test Regex 6'
-    skip: false
+    skip: true
     selectors:
       - date_regex: '[0-9]{4}-(01|03|10)-(05|07|13|22)'
 
