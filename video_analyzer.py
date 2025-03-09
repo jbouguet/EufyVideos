@@ -132,10 +132,10 @@ class AnalysisConfig:
                 if "video_directories" in db:
                     if isinstance(db["video_directories"], list):
                         logger.debug("  directories:")
-                        for dir in db["video_directories"]:
-                            logger.debug(f"    - {dir}")
+                        for directory in db["video_directories"]:
+                            logger.debug(f"    - {directory}")
                             logger.debug(
-                                f"    - directory exists: {os.path.exists(dir)}"
+                                f"    - directory exists: {os.path.exists(directory)}"
                             )
                     else:
                         logger.debug(f"  directory: {db['video_directories']}")
