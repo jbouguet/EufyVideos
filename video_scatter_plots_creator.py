@@ -79,24 +79,22 @@ class VideoScatterPlotsCreator:
             videos: List of VideoMetadata objects
 
         Returns:
-            DataFrame with columns for time, date, hour, device, duration, and filesize
+            DataFrame with columns for device, duration, filesize, pixel count, datetime, and day of week
         """
         data = []
 
         for video in videos:
-            # Extract time components
-            time_obj = video.time_obj
-            hour_float = time_obj.hour + time_obj.minute / 60 + time_obj.second / 3600
+            # Calculate total pixel count (width * height * frame_count)
+            pixel_count = video.width * video.height * video.frame_count
 
-            # Create a row for each video
+            # Create a row for each video with only the necessary fields
             data.append(
                 {
-                    "Date": video.date,
-                    "Time": time_obj,
-                    "Hour": hour_float,
                     "Device": video.device,
                     "Duration": video.duration.total_seconds(),
                     "Filesize": video.file_size,  # In MB
+                    "PixelCount": pixel_count,
+                    "Resolution": f"{video.width}x{video.height}",
                     "DateTime": video.datetime_obj,
                     "DayOfWeek": video.datetime_obj.strftime("%A"),
                 }
@@ -105,22 +103,30 @@ class VideoScatterPlotsCreator:
         return pd.DataFrame(data)
 
     @classmethod
-    def create_duration_datetime_scatter(
+    def create_metric_vs_datetime_fig(
         cls,
         videos: List[VideoMetadata],
+        metric: str = "duration",
+        use_log_scale: bool = False,
         **kwargs,
     ) -> go.Figure:
         """
-        Create a scatter plot of video durations vs. continuous datetime.
+        Create a scatter plot of video metrics vs. continuous datetime.
 
         Args:
             videos: List of VideoMetadata objects
+            metric: The metric to plot on the y-axis, either "duration" or "filesize"
+            use_log_scale: If True, use logarithmic scale for the y-axis
             **kwargs: Additional keyword arguments to pass to the figure layout
 
         Returns:
             Plotly figure object
         """
         cls._check_versions()
+
+        # Validate metric parameter
+        if metric not in ["duration", "filesize"]:
+            raise ValueError('Metric must be either "duration" or "filesize"')
 
         # Prepare data
         df = cls._prepare_data(videos)
@@ -131,6 +137,15 @@ class VideoScatterPlotsCreator:
         # Create a figure from scratch with device coloring
         fig = go.Figure()
 
+        # Set up metric-specific configurations
+        metric_column = "Duration" if metric == "duration" else "Filesize"
+        metric_title = (
+            "Duration (seconds)" if metric == "duration" else "File Size (MB)"
+        )
+        metric_hover_label = "Duration" if metric == "duration" else "Filesize"
+        metric_units = "seconds" if metric == "duration" else "MB"
+        plot_title = f"Video {metric.capitalize()} by Date & Time"
+
         # Add a trace for each device
         for device in df["Device"].unique():
             device_df = df[df["Device"] == device]
@@ -138,11 +153,11 @@ class VideoScatterPlotsCreator:
             fig.add_trace(
                 go.Scatter(
                     x=device_df["DateTime"],
-                    y=device_df["Duration"],
+                    y=device_df[metric_column],
                     mode="markers",
                     marker={
                         "color": colors[device],
-                        "size": 4,
+                        "size": 3,
                         "opacity": 1.0,
                         "symbol": "square",
                     },
@@ -160,7 +175,7 @@ class VideoScatterPlotsCreator:
                         "<b>%{customdata[1]}</b><br>"
                         "<b>Time:</b> %{customdata[0]}<br>"
                         f"<b>{device}</b><br>"
-                        "<b>Duration:</b> %{y:.2f} seconds<extra></extra>"
+                        f"<b>{metric_hover_label}:</b> %{{y:.2f}} {metric_units}<extra></extra>"
                     ),
                 )
             )
@@ -171,7 +186,7 @@ class VideoScatterPlotsCreator:
         # Update layout with defaults plus any custom settings
         fig_height = DashboardConfig.get_figure_height()
         layout_config = {
-            "title": "Video Duration by Date & Time",
+            "title": plot_title,
             "height": fig_height,
             **fig_config["layout"],
             **kwargs,
@@ -184,25 +199,37 @@ class VideoScatterPlotsCreator:
             **fig_config["axes"]["grid"],
             type="date",
         )
-        fig.update_yaxes(
-            title="Duration (seconds)",
+
+        # Set y-axis with optional log scale
+        y_axis_config = {
+            "title": metric_title,
             **fig_config["axes"]["grid"],
             **fig_config["axes"]["yaxis"],
-        )
+        }
+
+        if use_log_scale:
+            y_axis_config["type"] = "log"
+
+        fig.update_yaxes(**y_axis_config)
 
         return fig
 
     @classmethod
-    def create_filesize_datetime_scatter(
+    def create_filesize_vs_pixel_fig(
         cls,
         videos: List[VideoMetadata],
+        use_log_scale: bool = True,
         **kwargs,
     ) -> go.Figure:
         """
-        Create a scatter plot of video filesizes vs. continuous datetime.
+        Create a scatter plot of video filesize vs. total pixel count.
+
+        This plot shows the relationship between total pixel count (width * height * frame_count)
+        and filesize for each device, which can help identify compression efficiency differences.
 
         Args:
             videos: List of VideoMetadata objects
+            use_log_scale: If True, use logarithmic scale for both axes (recommended for large numbers)
             **kwargs: Additional keyword arguments to pass to the figure layout
 
         Returns:
@@ -225,29 +252,32 @@ class VideoScatterPlotsCreator:
 
             fig.add_trace(
                 go.Scatter(
-                    x=device_df["DateTime"],
+                    x=device_df["PixelCount"],
                     y=device_df["Filesize"],
                     mode="markers",
                     marker={
                         "color": colors[device],
-                        "size": 4,
+                        "size": 3,
                         "opacity": 1.0,
                         "symbol": "square",
                     },
                     name=device,
                     customdata=np.stack(
                         (
+                            device_df["Resolution"].values,
+                            device_df["Duration"].values,
                             device_df["DateTime"]
                             .dt.strftime("%Y-%m-%d %H:%M:%S")
                             .values,
-                            device_df["DayOfWeek"].values,
                         ),
                         axis=-1,
                     ),
                     hovertemplate=(
-                        "<b>%{customdata[1]}</b><br>"
-                        "<b>Time:</b> %{customdata[0]}<br>"
+                        "<b>%{customdata[2]}</b><br>"
                         f"<b>{device}</b><br>"
+                        "<b>Resolution:</b> %{customdata[0]}<br>"
+                        "<b>Duration:</b> %{customdata[1]:.2f} seconds<br>"
+                        "<b>Pixel Count:</b> %{x:,.0f} pixels<br>"
                         "<b>Filesize:</b> %{y:.2f} MB<extra></extra>"
                     ),
                 )
@@ -259,21 +289,125 @@ class VideoScatterPlotsCreator:
         # Update layout with defaults plus any custom settings
         fig_height = DashboardConfig.get_figure_height()
         layout_config = {
-            "title": "Video File Size by Date & Time",
+            "title": "Video File Size vs. Total Pixel Count",
             "height": fig_height,
             **fig_config["layout"],
             **kwargs,
         }
         fig.update_layout(**layout_config)
 
+        # Set axis types (log or linear)
+        axis_type = "log" if use_log_scale else "linear"
+
         # Update axes
         fig.update_xaxes(
-            title="Date & Time",
+            title="Total Pixel Count (width × height × frames)",
+            type=axis_type,
             **fig_config["axes"]["grid"],
-            type="date",
         )
+
         fig.update_yaxes(
             title="File Size (MB)",
+            type=axis_type,
+            **fig_config["axes"]["grid"],
+            **fig_config["axes"]["yaxis"],
+        )
+
+        return fig
+
+    @classmethod
+    def create_filesize_vs_duration_fig(
+        cls,
+        videos: List[VideoMetadata],
+        use_log_scale: bool = True,
+        **kwargs,
+    ) -> go.Figure:
+        """
+        Create a scatter plot of video filesize vs. duration.
+
+        This plot shows the relationship between video duration and filesize
+        for each device, collapsing the datetime dimension.
+
+        Args:
+            videos: List of VideoMetadata objects
+            use_log_scale: If True, use logarithmic scale for both axes
+            **kwargs: Additional keyword arguments to pass to the figure layout
+
+        Returns:
+            Plotly figure object
+        """
+        cls._check_versions()
+
+        # Prepare data
+        df = cls._prepare_data(videos)
+
+        # Get device colors - use the exact same color scheme as video_graph_creator.py
+        colors = DashboardConfig.get_device_colors()
+
+        # Create a figure from scratch with device coloring
+        fig = go.Figure()
+
+        # Add a trace for each device
+        for device in df["Device"].unique():
+            device_df = df[df["Device"] == device]
+
+            fig.add_trace(
+                go.Scatter(
+                    x=device_df["Duration"],
+                    y=device_df["Filesize"],
+                    mode="markers",
+                    marker={
+                        "color": colors[device],
+                        "size": 3,
+                        "opacity": 1.0,
+                        "symbol": "square",
+                    },
+                    name=device,
+                    customdata=np.stack(
+                        (
+                            device_df["DateTime"]
+                            .dt.strftime("%Y-%m-%d %H:%M:%S")
+                            .values,
+                            device_df["DayOfWeek"].values,
+                        ),
+                        axis=-1,
+                    ),
+                    hovertemplate=(
+                        "<b>%{customdata[1]}</b><br>"
+                        "<b>Time:</b> %{customdata[0]}<br>"
+                        f"<b>{device}</b><br>"
+                        "<b>Duration:</b> %{x:.2f} seconds<br>"
+                        "<b>Filesize:</b> %{y:.2f} MB<extra></extra>"
+                    ),
+                )
+            )
+
+        # Get default figure config
+        fig_config = DashboardConfig.get_figure_config()
+
+        # Update layout with defaults plus any custom settings
+        fig_height = DashboardConfig.get_figure_height()
+        layout_config = {
+            "title": "Video File Size vs. Duration",
+            "height": fig_height,
+            **fig_config["layout"],
+            **kwargs,
+        }
+        fig.update_layout(**layout_config)
+
+        # Set axis types (log or linear)
+        axis_type = "log" if use_log_scale else "linear"
+
+        # Update axes
+        fig.update_xaxes(
+            title="Duration (seconds)",
+            type=axis_type,
+            **fig_config["axes"]["grid"],
+        )
+
+        fig.update_yaxes(
+            title="File Size (MB)",
+            type=axis_type,
             **fig_config["axes"]["grid"],
             **fig_config["axes"]["yaxis"],
         )
@@ -345,17 +479,31 @@ if __name__ == "__main__":
     logger.debug(f"Number of videos: {len(videos)}")
 
     # Create datetime scatter plots
-    duration_datetime_fig = VideoScatterPlotsCreator.create_duration_datetime_scatter(
-        videos
+    duration_vs_datetime_fig = VideoScatterPlotsCreator.create_metric_vs_datetime_fig(
+        videos, metric="duration", use_log_scale=True
     )
-    filesize_datetime_fig = VideoScatterPlotsCreator.create_filesize_datetime_scatter(
-        videos
+    filesize_vs_datetime_fig = VideoScatterPlotsCreator.create_metric_vs_datetime_fig(
+        videos, metric="filesize", use_log_scale=True
+    )
+
+    # Create duration vs. filesize scatter plot (with log-log scale)
+    filesize_vs_duration_fig = VideoScatterPlotsCreator.create_filesize_vs_duration_fig(
+        videos, use_log_scale=True
+    )
+
+    # Create filesize vs. pixel count scatter plot (with log-log scale)
+    filesize_vs_pixel_fig = VideoScatterPlotsCreator.create_filesize_vs_pixel_fig(
+        videos, use_log_scale=True
     )
 
     # Save figures to HTML
-    duration_datetime_fig.write_html(
-        os.path.join(out_dir, "duration_datetime_scatter.html")
+    duration_vs_datetime_fig.write_html(
+        os.path.join(out_dir, "duration_vs_datetime.html")
     )
-    filesize_datetime_fig.write_html(
-        os.path.join(out_dir, "filesize_datetime_scatter.html")
+    filesize_vs_datetime_fig.write_html(
+        os.path.join(out_dir, "filesize_vs_datetime.html")
     )
+    filesize_vs_duration_fig.write_html(
+        os.path.join(out_dir, "filesize_vs_duration.html")
+    )
+    filesize_vs_pixel_fig.write_html(os.path.join(out_dir, "filesize_vs_pixel.html"))

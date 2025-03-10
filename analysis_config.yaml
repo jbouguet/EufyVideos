@@ -35,6 +35,7 @@ directories:
     - !join [*root_database, "/Batch027"]
     - !join [*root_database, "/Batch028"]
     - !join [*root_database, "/Batch029"]
+    - !join [*root_database, "/Batch030"]
 
 # Video database configuration
 video_database_list:
