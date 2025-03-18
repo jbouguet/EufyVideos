@@ -48,7 +48,7 @@ class DashboardConfig:
     SELECTED_PALETTE = "light24"
 
     # Figure height for plots
-    FIGURE_HEIGHT = 600
+    FIGURE_HEIGHT = 800
 
     @classmethod
     def get_device_colors(cls) -> Dict[str, str]:

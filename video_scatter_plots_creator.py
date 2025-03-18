@@ -1,22 +1,27 @@
 #!/usr/bin/env python3
 
 """
-VideoScatterPlotsCreator module for creating scatter plots from individual video metadata.
+PlotCreator module for creating scatter plots from individual video metadata.
 
-This module creates scatter plots showing the distribution of video durations and filesizes
-as a function of day and time, color-coded by device type. Unlike the aggregated plots in
-video_graph_creator.py, these plots show individual data points for each video.
+This module creates scatter plots showing the distribution of video metrics such as duration
+and filesize as a function of day and time, color-coded by device type. Unlike the aggregated
+plots in video_graph_creator.py, these plots show individual data points for each video.
 
 Example usage:
     from video_metadata import VideoMetadata
-    from video_scatter_plots_creator import VideoScatterPlotsCreator
+    from video_scatter_plots_creator import PlotCreator
 
     # Load videos
     videos = VideoMetadata.load_videos_from_directories('/path/to/videos')
 
     # Create scatter plots
-    duration_fig = VideoScatterPlotsCreator.create_duration_scatter(videos)
-    filesize_fig = VideoScatterPlotsCreator.create_filesize_scatter(videos)
+    duration_vs_datetime_fig = PlotCreator.metric_vs_datetime(videos, metric="duration")
+    filesize_vs_datetime_fig = PlotCreator.metric_vs_datetime(videos, metric="filesize")
+    filesize_vs_duration_fig = PlotCreator.filesize_vs_duration(videos)
+    filesize_vs_pixel_fig = PlotCreator.filesize_vs_pixel(videos)
+
+    # Save all graphs to a single HTML file
+    PlotCreator.create_graphs_file(videos, 'output_graphs.html')
 """
 
 import warnings
@@ -33,13 +38,14 @@ from video_metadata import VideoMetadata
 logger = create_logger(__name__)
 
 
-class VideoScatterPlotsCreator:
+class PlotCreator:
     """
     Creates scatter plots showing individual video metadata points.
 
     This class generates scatter plots that visualize:
-    1. Video duration vs. time of day, color-coded by device
-    2. Video filesize vs. time of day, color-coded by device
+    1. Video metrics (duration/filesize) vs. datetime, color-coded by device
+    2. Video filesize vs. duration, color-coded by device
+    3. Video filesize vs. total pixel count, color-coded by device
 
     Unlike the aggregated plots in VideoGraphCreator, these plots show individual
     data points for each video, providing a more detailed view of the distribution.
@@ -103,11 +109,11 @@ class VideoScatterPlotsCreator:
         return pd.DataFrame(data)
 
     @classmethod
-    def create_metric_vs_datetime_fig(
+    def metric_vs_datetime(
         cls,
         videos: List[VideoMetadata],
         metric: str = "duration",
-        use_log_scale: bool = False,
+        use_log_scale: bool = True,
         **kwargs,
     ) -> go.Figure:
         """
@@ -215,7 +221,7 @@ class VideoScatterPlotsCreator:
         return fig
 
     @classmethod
-    def create_filesize_vs_pixel_fig(
+    def filesize_vs_pixel(
         cls,
         videos: List[VideoMetadata],
         use_log_scale: bool = True,
@@ -316,7 +322,7 @@ class VideoScatterPlotsCreator:
         return fig
 
     @classmethod
-    def create_filesize_vs_duration_fig(
+    def filesize_vs_duration(
         cls,
         videos: List[VideoMetadata],
         use_log_scale: bool = True,
@@ -414,6 +420,122 @@ class VideoScatterPlotsCreator:
 
         return fig
 
+    @staticmethod
+    def save_graphs_to_html(figures: List[go.Figure], output_file: str):
+        """Saves all graphs to a single HTML file using shared configuration."""
+        fig_height = DashboardConfig.get_figure_height()
+        styles = DashboardConfig.get_html_styles()
+
+        # Convert style dictionaries to CSS strings
+        title_style = "; ".join(f"{k}: {v}" for k, v in styles["title"].items())
+        container_style = "; ".join(f"{k}: {v}" for k, v in styles["container"].items())
+        graph_style = "; ".join(
+            f"{k}: {v}" for k, v in styles["graph_container"].items()
+        )
+
+        html_template = f"""
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Video Statistics</title>
+                <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+                <script src='https://cdn.plot.ly/plotly-2.20.0.min.js'></script>
+                <style>
+                    :root {{
+                        --bs-font-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                    }}
+
+                    body {{
+                        font-family: var(--bs-font-sans-serif);
+                        margin: 0;
+                        padding: 0;
+                    }}
+
+                    .dashboard-title {{ {title_style} }}
+                    .container-fluid {{ {container_style} }}
+                    .graph-container {{ {graph_style} }}
+
+                    .plotly-graph-div {{
+                        width: 100%;
+                        height: {fig_height}px;
+                    }}
+                </style>
+            </head>
+            <body>
+                <div class="container-fluid">
+                    <h2 class="dashboard-title">Video Statistics Dashboard</h2>
+                    <div class="row">
+                        <div class="col-12">
+        """
+
+        with open(output_file, "w") as file:
+            file.write(html_template)
+
+            for fig in figures:
+                file.write('<div class="graph-container">')
+                file.write(fig.to_html(full_html=False, include_plotlyjs=False))
+                file.write("</div>")
+
+            file.write(
+                """
+                        </div>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            )
+
+    @staticmethod
+    def create_graphs_file(
+        videos: List[VideoMetadata],
+        output_file: str,
+    ):
+        """
+        Create a comprehensive HTML dashboard with multiple scatter plots and save to a file.
+
+        This method generates four different scatter plots:
+        1. Video duration vs. datetime
+        2. Video filesize vs. datetime
+        3. Video filesize vs. duration
+        4. Video filesize vs. total pixel count
+
+        All plots are combined into a single HTML file with consistent styling and layout.
+
+        Args:
+            videos: List of VideoMetadata objects to visualize
+            output_file: Path where the HTML file will be saved
+
+        Returns:
+            None
+        """
+        # Create datetime scatter plots
+        duration_vs_datetime_fig = PlotCreator.metric_vs_datetime(
+            videos, metric="duration"
+        )
+        filesize_vs_datetime_fig = PlotCreator.metric_vs_datetime(
+            videos, metric="filesize"
+        )
+
+        # Create duration vs. filesize scatter plot
+        filesize_vs_duration_fig = PlotCreator.filesize_vs_duration(videos)
+
+        # Create filesize vs. pixel count scatter plot
+        filesize_vs_pixel_fig = PlotCreator.filesize_vs_pixel(videos)
+
+        # Save figures to HTML
+        PlotCreator.save_graphs_to_html(
+            [
+                duration_vs_datetime_fig,
+                filesize_vs_datetime_fig,
+                filesize_vs_duration_fig,
+                filesize_vs_pixel_fig,
+            ],
+            output_file,
+        )
+
 
 if __name__ == "__main__":
     # Testing code for the module
@@ -478,32 +600,4 @@ if __name__ == "__main__":
     videos = VideoFilter.by_selectors(video_database, selector)
     logger.debug(f"Number of videos: {len(videos)}")
 
-    # Create datetime scatter plots
-    duration_vs_datetime_fig = VideoScatterPlotsCreator.create_metric_vs_datetime_fig(
-        videos, metric="duration", use_log_scale=True
-    )
-    filesize_vs_datetime_fig = VideoScatterPlotsCreator.create_metric_vs_datetime_fig(
-        videos, metric="filesize", use_log_scale=True
-    )
-
-    # Create duration vs. filesize scatter plot (with log-log scale)
-    filesize_vs_duration_fig = VideoScatterPlotsCreator.create_filesize_vs_duration_fig(
-        videos, use_log_scale=True
-    )
-
-    # Create filesize vs. pixel count scatter plot (with log-log scale)
-    filesize_vs_pixel_fig = VideoScatterPlotsCreator.create_filesize_vs_pixel_fig(
-        videos, use_log_scale=True
-    )
-
-    # Save figures to HTML
-    duration_vs_datetime_fig.write_html(
-        os.path.join(out_dir, "duration_vs_datetime.html")
-    )
-    filesize_vs_datetime_fig.write_html(
-        os.path.join(out_dir, "filesize_vs_datetime.html")
-    )
-    filesize_vs_duration_fig.write_html(
-        os.path.join(out_dir, "filesize_vs_duration.html")
-    )
-    filesize_vs_pixel_fig.write_html(os.path.join(out_dir, "filesize_vs_pixel.html"))
+    PlotCreator.create_graphs_file(videos, os.path.join(out_dir, "stats_graphs.html"))

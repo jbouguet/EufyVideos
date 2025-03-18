@@ -64,6 +64,7 @@ class Config:
     FRAGMENTS = "_video_fragments"
     TAGS = "_tags.json"
     MOVIE_TAGS = "_tags.mp4"
+    SCATTER_PLOTS = "_scatter_plots.html"
 
     # Label parameters for video timestamps
     DATE_TIME_LABEL_BORDER_WIDTH = 1
