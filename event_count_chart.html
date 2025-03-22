@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Event Visualization with Extrapolation</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .text-right {
+      text-align: right;
+    }
+    h2 {
+      text-align: center;
+    }
+    ul {
+      margin-left: 20px;
+    }
+    .chart-container {
+      position: relative;
+      height: 400px;
+      width: 100%;
+    }
+    .details {
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Event Count Visualization with Extrapolation</h2>
+    <div class="chart-container">
+      <canvas id="eventChart"></canvas>
+    </div>
+    <div class="details">
+      <h3>Extrapolation Details:</h3>
+      <ul id="details-list"></ul>
+    </div>
+    <div>
+      <table id="data-table">
+        <thead>
+          <tr>
+            <th colspan="3">Actual Data</th>
+            <th colspan="3">Projected Data</th>
+          </tr>
+          <tr>
+            <th>Date</th>
+            <th>Daily</th>
+            <th>Cumulative</th>
+            <th>Date</th>
+            <th>Daily</th>
+            <th>Cumulative</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <!-- Data will be inserted here by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // ---- CONFIGURATION - EDIT THESE VALUES ----
+
+    // Input your raw daily counts here (just the counts, dates will be generated)
+    const rawDailyCounts = [372, 119, 103, 191, 58, 54, 81, 84, 60, 98, 83];
+
+    // Specify the start date of your data
+    const startDate = { day: 10, month: 3, year: 2025, dayOfWeek: 'Mon' };
+
+    // Number of days to extrapolate
+    const daysToExtrapolate = 9;
+
+    // Projected daily count (default uses average of last 7 days, but you can override)
+    // Set to null to auto-calculate, or provide a fixed number
+    const manualProjectedDailyCount = null; // Set to null to auto-calculate
+
+    // ---- END CONFIGURATION ----
+
+    // Generate dates for the actual data
+    const generateDates = (startDate, numDays) => {
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const result = [];
+
+      let currentDate = new Date(startDate.year, startDate.month - 1, startDate.day);
+      let currentDayIndex = days.indexOf(startDate.dayOfWeek);
+
+      for (let i = 0; i < numDays; i++) {
+        const day = currentDate.getDate();
+        const month = currentDate.getMonth() + 1;
+        const dayOfWeek = days[currentDayIndex];
+
+        result.push(`${dayOfWeek} ${month}/${day}`);
+
+        // Move to next day
+        currentDate.setDate(currentDate.getDate() + 1);
+        currentDayIndex = (currentDayIndex + 1) % 7;
+      }
+
+      return result;
+    };
+
+    // Calculate average for projection
+    const calculateProjectedAverage = () => {
+      if (manualProjectedDailyCount !== null) {
+        return manualProjectedDailyCount;
+      }
+
+      const daysToAverage = Math.min(7, rawDailyCounts.length);
+      const recentCounts = rawDailyCounts.slice(-daysToAverage);
+      return recentCounts.reduce((sum, count) => sum + count, 0) / daysToAverage;
+    };
+
+    // Generate the dates for actual data
+    const dates = generateDates(startDate, rawDailyCounts.length);
+
+    // Calculate cumulative sums for actual data
+    let cumulativeSum = 0;
+    const actualData = dates.map((date, index) => {
+      cumulativeSum += rawDailyCounts[index];
+      return {
+        date,
+        count: rawDailyCounts[index],
+        cumulativeSum
+      };
+    });
+
+    // Calculate the projected average
+    const avgDailyCount = calculateProjectedAverage();
+
+    // Generate projected data starting from the last actual data point
+    const lastActualData = actualData[actualData.length - 1];
+    const projectedStartDate = new Date(
+      startDate.year,
+      startDate.month - 1,
+      startDate.day + rawDailyCounts.length - 1
+    );
+    const projectionDates = generateDates(
+      {
+        day: projectedStartDate.getDate(),
+        month: projectedStartDate.getMonth() + 1,
+        year: projectedStartDate.getFullYear(),
+        dayOfWeek: lastActualData.date.split(' ')[0]
+      },
+      daysToExtrapolate + 1
+    );
+
+    // Create the projected data with cumulative sums
+    const projectedData = [];
+
+    // Add bridge point (last actual data point)
+    projectedData.push({
+      date: lastActualData.date,
+      count: lastActualData.count,
+      cumulativeSum: lastActualData.cumulativeSum
+    });
+
+    // Add projected points
+    let projectedCumulativeSum = lastActualData.cumulativeSum;
+    for (let i = 1; i <= daysToExtrapolate; i++) {
+      projectedCumulativeSum += avgDailyCount;
+      projectedData.push({
+        date: projectionDates[i],
+        count: avgDailyCount,
+        cumulativeSum: projectedCumulativeSum
+      });
+    }
+
+    // Generate combined data for the x-axis (excluding the bridge point to avoid duplication)
+    const combinedData = [
+      ...actualData,
+      ...projectedData.slice(1)
+    ];
+
+    // Prepare data for Chart.js
+    const chartLabels = combinedData.map(item => item.date);
+
+    const actualCumulativeData = combinedData.map((item, index) => {
+      if (index < actualData.length) {
+        return item.cumulativeSum;
+      }
+      return null;
+    });
+
+    const projectedCumulativeData = combinedData.map((item, index) => {
+      if (index >= actualData.length - 1) { // -1 to include the bridge point
+        const projIndex = index - (actualData.length - 1);
+        return projectedData[projIndex].cumulativeSum;
+      }
+      return null;
+    });
+
+    const actualDailyData = combinedData.map((item, index) => {
+      if (index < actualData.length) {
+        return item.count;
+      }
+      return null;
+    });
+
+    const projectedDailyData = combinedData.map((item, index) => {
+      if (index >= actualData.length - 1) { // -1 to include the bridge point
+        const projIndex = index - (actualData.length - 1);
+        return projectedData[projIndex].count;
+      }
+      return null;
+    });
+
+    // Create the chart
+    const ctx = document.getElementById('eventChart').getContext('2d');
+    const eventChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: chartLabels,
+        datasets: [
+          {
+            label: 'Actual Cumulative Sum',
+            data: actualCumulativeData,
+            backgroundColor: 'rgba(136, 132, 216, 0.2)',
+            borderColor: 'rgba(136, 132, 216, 1)',
+            borderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            tension: 0.1
+          },
+          {
+            label: 'Projected Cumulative Sum',
+            data: projectedCumulativeData,
+            backgroundColor: 'rgba(255, 115, 0, 0.2)',
+            borderColor: 'rgba(255, 115, 0, 1)',
+            borderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            tension: 0.1
+          },
+          {
+            label: 'Actual Daily Count',
+            data: actualDailyData,
+            backgroundColor: 'rgba(130, 202, 157, 0.2)',
+            borderColor: 'rgba(130, 202, 157, 1)',
+            borderWidth: 1,
+            borderDash: [5, 5],
+            pointRadius: 2,
+            pointHoverRadius: 4,
+            tension: 0.1
+          },
+          {
+            label: 'Projected Daily Count',
+            data: projectedDailyData,
+            backgroundColor: 'rgba(255, 153, 204, 0.2)',
+            borderColor: 'rgba(255, 153, 204, 1)',
+            borderWidth: 1,
+            borderDash: [5, 5],
+            pointRadius: 2,
+            pointHoverRadius: 4,
+            tension: 0.1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            ticks: {
+              maxRotation: 45,
+              minRotation: 45
+            }
+          },
+          y: {
+            beginAtZero: true
+          }
+        },
+        plugins: {
+          annotation: {
+            annotations: {
+              line1: {
+                type: 'line',
+                xMin: actualData.length - 1,
+                xMax: actualData.length - 1,
+                borderColor: 'red',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                label: {
+                  content: 'Actual | Projected',
+                  position: 'start',
+                  backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                  font: {
+                    size: 12
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Fill in the details list
+    const detailsList = document.getElementById('details-list');
+    detailsList.innerHTML = `
+      <li>Projected daily count: ${Math.round(avgDailyCount * 100) / 100} events per day</li>
+      <li>Projected cumulative total by ${projectedData[projectedData.length - 1].date}: ${Math.round(projectedData[projectedData.length - 1].cumulativeSum)}</li>
+      <li>Purple line: Actual cumulative sum | Orange line: Projected cumulative sum</li>
+      <li>Green dashed line: Actual daily count | Pink dashed line: Projected daily count</li>
+    `;
+
+    // Fill in the table
+    const tableBody = document.getElementById('table-body');
+    for (let i = 0; i < actualData.length; i++) {
+      const row = document.createElement('tr');
+
+      // Actual data columns
+      const actualDateCell = document.createElement('td');
+      actualDateCell.textContent = actualData[i].date;
+
+      const actualCountCell = document.createElement('td');
+      actualCountCell.textContent = actualData[i].count;
+      actualCountCell.className = 'text-right';
+
+      const actualCumulativeCell = document.createElement('td');
+      actualCumulativeCell.textContent = Math.round(actualData[i].cumulativeSum);
+      actualCumulativeCell.className = 'text-right';
+
+      row.appendChild(actualDateCell);
+      row.appendChild(actualCountCell);
+      row.appendChild(actualCumulativeCell);
+
+      // Projected data columns (offset by 1 to skip the bridge point)
+      if (i < projectedData.length - 1) {
+        const projectedDateCell = document.createElement('td');
+        projectedDateCell.textContent = projectedData[i + 1].date;
+
+        const projectedCountCell = document.createElement('td');
+        projectedCountCell.textContent = Math.round(projectedData[i + 1].count * 100) / 100;
+        projectedCountCell.className = 'text-right';
+
+        const projectedCumulativeCell = document.createElement('td');
+        projectedCumulativeCell.textContent = Math.round(projectedData[i + 1].cumulativeSum);
+        projectedCumulativeCell.className = 'text-right';
+
+        row.appendChild(projectedDateCell);
+        row.appendChild(projectedCountCell);
+        row.appendChild(projectedCumulativeCell);
+      } else {
+        // Empty cells if we run out of projected data
+        row.appendChild(document.createElement('td'));
+        row.appendChild(document.createElement('td'));
+        row.appendChild(document.createElement('td'));
+      }
+
+      tableBody.appendChild(row);
+    }
+  </script>
+</body>
+</html>
