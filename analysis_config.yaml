@@ -47,7 +47,7 @@ video_database_list:
   video_metadata_file: !join [*root_database, "/videos_in_backup.csv"]
   video_directories: !join [*root_database, "/backup"]
 
-  #-- Event Counts to be recorded in event_count_chart.html
+  #-- Event Counts to be recorded in event_count_chart.html for projections.
   # Mon 3/10/2025: 372
   # Tue 3/11/2025: 119
   # Wed 3/12/2025: 103
@@ -59,7 +59,7 @@ video_database_list:
   # Tue 3/18/2025: 60
   # Wed 3/19/2025: 98
   # Thu 3/20/2025: 83
-  # Fri 3/12/2025:
+  # Fri 3/21/2025: 67
 
 # Tag database files
 tag_database_files:

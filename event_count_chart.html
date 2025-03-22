@@ -37,7 +37,7 @@
     }
     .chart-container {
       position: relative;
-      height: 400px;
+      height: 800px;
       width: 100%;
     }
     .details {
@@ -82,7 +82,7 @@
     // ---- CONFIGURATION - EDIT THESE VALUES ----
 
     // Input your raw daily counts here (just the counts, dates will be generated)
-    const rawDailyCounts = [372, 119, 103, 191, 58, 54, 81, 84, 60, 98, 83];
+    const rawDailyCounts = [372, 119, 103, 191, 58, 54, 81, 84, 60, 98, 83, 67];
 
     // Specify the start date of your data
     const startDate = { day: 10, month: 3, year: 2025, dayOfWeek: 'Mon' };
@@ -286,7 +286,13 @@
             }
           },
           y: {
-            beginAtZero: true
+            beginAtZero: true,
+            ticks: {
+              stepSize: 100  // Controls the interval between ticks
+            },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'  // Optional: makes grid lines more visible
+            }
           }
         },
         plugins: {
