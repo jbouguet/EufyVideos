@@ -82,13 +82,13 @@
     // ---- CONFIGURATION - EDIT THESE VALUES ----
 
     // Input your raw daily counts here (just the counts, dates will be generated)
-    const rawDailyCounts = [372, 119, 103, 191, 58, 54, 81, 84, 60, 98, 83, 67];
+    const rawDailyCounts = [372, 119, 103, 191, 58, 54, 81, 84, 60, 98, 83, 67, 100];
 
     // Specify the start date of your data
     const startDate = { day: 10, month: 3, year: 2025, dayOfWeek: 'Mon' };
 
     // Number of days to extrapolate
-    const daysToExtrapolate = 9;
+    const daysToExtrapolate = 13;
 
     // Projected daily count (default uses average of last 7 days, but you can override)
     // Set to null to auto-calculate, or provide a fixed number
@@ -119,15 +119,26 @@
       return result;
     };
 
-    // Calculate average for projection
-    const calculateProjectedAverage = () => {
+    // Calculate average and standard deviation for projection
+    const calculateProjectionStats = () => {
       if (manualProjectedDailyCount !== null) {
-        return manualProjectedDailyCount;
+        // If manual projection is set, use a default standard deviation of 20% of the average
+        return {
+          average: manualProjectedDailyCount,
+          stdDev: manualProjectedDailyCount * 0.2
+        };
       }
 
-      const daysToAverage = Math.min(7, rawDailyCounts.length);
+      const daysToAverage = Math.min(8, rawDailyCounts.length);
       const recentCounts = rawDailyCounts.slice(-daysToAverage);
-      return recentCounts.reduce((sum, count) => sum + count, 0) / daysToAverage;
+      const average = recentCounts.reduce((sum, count) => sum + count, 0) / daysToAverage;
+
+      // Calculate standard deviation
+      const squaredDifferences = recentCounts.map(count => Math.pow(count - average, 2));
+      const variance = squaredDifferences.reduce((sum, val) => sum + val, 0) / daysToAverage;
+      const stdDev = Math.sqrt(variance);
+
+      return { average, stdDev };
     };
 
     // Generate the dates for actual data
@@ -144,8 +155,10 @@
       };
     });
 
-    // Calculate the projected average
-    const avgDailyCount = calculateProjectedAverage();
+    // Calculate the projected average and standard deviation
+    const projectionStats = calculateProjectionStats();
+    const avgDailyCount = projectionStats.average;
+    const stdDevDailyCount = projectionStats.stdDev;
 
     // Generate projected data starting from the last actual data point
     const lastActualData = actualData[actualData.length - 1];
@@ -164,24 +177,47 @@
       daysToExtrapolate + 1
     );
 
-    // Create the projected data with cumulative sums
+    // Create the projected data with cumulative sums and error bounds
     const projectedData = [];
 
     // Add bridge point (last actual data point)
     projectedData.push({
       date: lastActualData.date,
       count: lastActualData.count,
-      cumulativeSum: lastActualData.cumulativeSum
+      countLower: lastActualData.count,
+      countUpper: lastActualData.count,
+      cumulativeSum: lastActualData.cumulativeSum,
+      cumulativeSumLower: lastActualData.cumulativeSum,
+      cumulativeSumUpper: lastActualData.cumulativeSum
     });
 
     // Add projected points
     let projectedCumulativeSum = lastActualData.cumulativeSum;
+    let cumulativeErrorSquared = 0; // For propagating error in cumulative sum
+
     for (let i = 1; i <= daysToExtrapolate; i++) {
       projectedCumulativeSum += avgDailyCount;
+
+      // For daily counts, the error is just the standard deviation
+      const dailyCountLower = Math.max(0, avgDailyCount - stdDevDailyCount);
+      const dailyCountUpper = avgDailyCount + stdDevDailyCount;
+
+      // For cumulative sums, the error propagates (grows with the square root of the number of days)
+      // We use the sum of squared errors approach for error propagation
+      cumulativeErrorSquared += Math.pow(stdDevDailyCount, 2);
+      const cumulativeError = Math.sqrt(cumulativeErrorSquared);
+
+      const cumulativeSumLower = Math.max(0, projectedCumulativeSum - cumulativeError);
+      const cumulativeSumUpper = projectedCumulativeSum + cumulativeError;
+
       projectedData.push({
         date: projectionDates[i],
         count: avgDailyCount,
-        cumulativeSum: projectedCumulativeSum
+        countLower: dailyCountLower,
+        countUpper: dailyCountUpper,
+        cumulativeSum: projectedCumulativeSum,
+        cumulativeSumLower: cumulativeSumLower,
+        cumulativeSumUpper: cumulativeSumUpper
       });
     }
 
@@ -209,6 +245,23 @@
       return null;
     });
 
+    // Error bounds for projected cumulative data
+    const projectedCumulativeLower = combinedData.map((item, index) => {
+      if (index >= actualData.length - 1) {
+        const projIndex = index - (actualData.length - 1);
+        return projectedData[projIndex].cumulativeSumLower;
+      }
+      return null;
+    });
+
+    const projectedCumulativeUpper = combinedData.map((item, index) => {
+      if (index >= actualData.length - 1) {
+        const projIndex = index - (actualData.length - 1);
+        return projectedData[projIndex].cumulativeSumUpper;
+      }
+      return null;
+    });
+
     const actualDailyData = combinedData.map((item, index) => {
       if (index < actualData.length) {
         return item.count;
@@ -220,6 +273,23 @@
       if (index >= actualData.length - 1) { // -1 to include the bridge point
         const projIndex = index - (actualData.length - 1);
         return projectedData[projIndex].count;
+      }
+      return null;
+    });
+
+    // Error bounds for projected daily data
+    const projectedDailyLower = combinedData.map((item, index) => {
+      if (index >= actualData.length - 1) {
+        const projIndex = index - (actualData.length - 1);
+        return projectedData[projIndex].countLower;
+      }
+      return null;
+    });
+
+    const projectedDailyUpper = combinedData.map((item, index) => {
+      if (index >= actualData.length - 1) {
+        const projIndex = index - (actualData.length - 1);
+        return projectedData[projIndex].countUpper;
       }
       return null;
     });
@@ -252,6 +322,28 @@
             tension: 0.1
           },
           {
+            label: 'Projected Cumulative Uncertainty Interval',
+            data: projectedCumulativeLower,
+            backgroundColor: 'rgba(255, 115, 0, 0)',
+            borderColor: 'rgba(255, 115, 0, 0.5)',
+            borderWidth: 1,
+            borderDash: [5, 5],
+            pointRadius: 0,
+            fill: false,
+            tension: 0.1
+          },
+          {
+            label: 'Projected Cumulative Uncertainty Interval',
+            data: projectedCumulativeUpper,
+            backgroundColor: 'rgba(255, 115, 0, 0.2)',
+            borderColor: 'rgba(255, 115, 0, 0.5)',
+            borderWidth: 1,
+            borderDash: [5, 5],
+            pointRadius: 0,
+            fill: '-1', // Fill to the previous dataset
+            tension: 0.1
+          },
+          {
             label: 'Actual Daily Count',
             data: actualDailyData,
             backgroundColor: 'rgba(130, 202, 157, 0.2)',
@@ -271,6 +363,28 @@
             borderDash: [5, 5],
             pointRadius: 2,
             pointHoverRadius: 4,
+            tension: 0.1
+          },
+          {
+            label: 'Projected Daily Uncertainty Interval',
+            data: projectedDailyLower,
+            backgroundColor: 'rgba(255, 153, 204, 0)',
+            borderColor: 'rgba(255, 153, 204, 0.5)',
+            borderWidth: 1,
+            borderDash: [3, 3],
+            pointRadius: 0,
+            fill: false,
+            tension: 0.1
+          },
+          {
+            label: 'Projected Daily Uncertainty Interval',
+            data: projectedDailyUpper,
+            backgroundColor: 'rgba(255, 153, 204, 0.2)',
+            borderColor: 'rgba(255, 153, 204, 0.5)',
+            borderWidth: 1,
+            borderDash: [3, 3],
+            pointRadius: 0,
+            fill: '-1', // Fill to the previous dataset
             tension: 0.1
           }
         ]
@@ -296,6 +410,24 @@
           }
         },
         plugins: {
+          legend: {
+            labels: {
+              filter: function(legendItem, chartData) {
+                // Filter out duplicate uncertainty interval labels
+                if (legendItem.text === 'Projected Cumulative Uncertainty Interval' ||
+                    legendItem.text === 'Projected Daily Uncertainty Interval') {
+                  // Get all items with this text
+                  const items = chartData.datasets
+                    .map((dataset, index) => ({ text: dataset.label, index }))
+                    .filter(item => item.text === legendItem.text);
+
+                  // Only show the first occurrence of each label
+                  return items[0].index === legendItem.datasetIndex;
+                }
+                return true;
+              }
+            }
+          },
           annotation: {
             annotations: {
               line1: {
@@ -323,10 +455,10 @@
     // Fill in the details list
     const detailsList = document.getElementById('details-list');
     detailsList.innerHTML = `
-      <li>Projected daily count: ${Math.round(avgDailyCount * 100) / 100} events per day</li>
-      <li>Projected cumulative total by ${projectedData[projectedData.length - 1].date}: ${Math.round(projectedData[projectedData.length - 1].cumulativeSum)}</li>
-      <li>Purple line: Actual cumulative sum | Orange line: Projected cumulative sum</li>
-      <li>Green dashed line: Actual daily count | Pink dashed line: Projected daily count</li>
+      <li>Projected daily count: ${Math.round(avgDailyCount * 100) / 100} events per day (±${Math.round(stdDevDailyCount * 100) / 100})</li>
+      <li>Projected cumulative total by ${projectedData[projectedData.length - 1].date}: ${Math.round(projectedData[projectedData.length - 1].cumulativeSum)} (${Math.round(projectedData[projectedData.length - 1].cumulativeSumLower)} - ${Math.round(projectedData[projectedData.length - 1].cumulativeSumUpper)})</li>
+      <li>Purple line: Actual cumulative sum | Orange line: Projected cumulative sum with shaded uncertainty</li>
+      <li>Green dashed line: Actual daily count | Pink dashed line: Projected daily count with shaded uncertainty</li>
     `;
 
     // Fill in the table
@@ -356,11 +488,17 @@
         projectedDateCell.textContent = projectedData[i + 1].date;
 
         const projectedCountCell = document.createElement('td');
-        projectedCountCell.textContent = Math.round(projectedData[i + 1].count * 100) / 100;
+        const countValue = Math.round(projectedData[i + 1].count * 100) / 100;
+        const countLower = Math.round(projectedData[i + 1].countLower * 100) / 100;
+        const countUpper = Math.round(projectedData[i + 1].countUpper * 100) / 100;
+        projectedCountCell.textContent = `${countValue} (${countLower} - ${countUpper})`;
         projectedCountCell.className = 'text-right';
 
         const projectedCumulativeCell = document.createElement('td');
-        projectedCumulativeCell.textContent = Math.round(projectedData[i + 1].cumulativeSum);
+        const cumValue = Math.round(projectedData[i + 1].cumulativeSum);
+        const cumLower = Math.round(projectedData[i + 1].cumulativeSumLower);
+        const cumUpper = Math.round(projectedData[i + 1].cumulativeSumUpper);
+        projectedCumulativeCell.textContent = `${cumValue} (${cumLower} - ${cumUpper})`;
         projectedCumulativeCell.className = 'text-right';
 
         row.appendChild(projectedDateCell);
