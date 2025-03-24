@@ -44,8 +44,10 @@ from termcolor import colored
 from config import Config
 from dashboard import Dashboard
 from logging_config import create_logger
+from security import Occupancy, OccupancyStatus
 from tag_processor import TaggerConfig, TagProcessor, VideoTags
 from tag_visualizer import TagVisualizer, TagVisualizerConfig
+from video_data_aggregator import VideoDataAggregator
 from video_filter import VideoFilter, VideoSelector
 from video_generator import VideoGenerationConfig, VideoGenerator
 from video_metadata import VideoMetadata
@@ -64,6 +66,8 @@ class Story:
         name (str): Unique identifier for the story
         skip (bool): Flag to skip processing this story
         selectors (List[VideoSelector]): Criteria for selecting videos
+        occupancy_status (Optional[List[str]]): List of occupancy statuses to include
+            (e.g., ["OCCUPIED", "NOT_OCCUPIED", "UNKNOWN"])
         video_generation (bool): Whether to create a composite video
         video_generation_config (VideoGenerationConfig): Settings for video generation
         tag_processing (bool): Whether to analyze and generate tags
@@ -75,6 +79,7 @@ class Story:
     name: str
     skip: bool = False
     selectors: Optional[List[VideoSelector]] = None
+    occupancy_status: Optional[List[str]] = field(default=None)
     video_generation: bool = False
     video_generation_config: VideoGenerationConfig = field(
         default_factory=VideoGenerationConfig
@@ -122,9 +127,14 @@ class Story:
             selectors = []
             for selector_dict in story_dict["selectors"]:
                 selectors.append(VideoSelector.from_dict(selector_dict))
+
+        # Handle occupancy_status field
+        occupancy_status = story_dict.get("occupancy_status")
+
         return cls(
             name=story_dict["name"],
             selectors=selectors,
+            occupancy_status=occupancy_status,
             video_generation=story_dict.get("video_generation", False),
             video_generation_config=VideoGenerationConfig.from_dict(
                 story_dict.get("video_generation_config", {})
@@ -217,6 +227,19 @@ class Story:
                         f"'filenames' must be a list or a string in a selector of story: {story_dict['name']}"
                     )
 
+        # Validate occupancy_status
+        if "occupancy_status" in story_dict:
+            occupancy_status = story_dict["occupancy_status"]
+            if not isinstance(occupancy_status, list):
+                raise ValueError(
+                    f"'occupancy_status' must be a list in story: {story_dict['name']}"
+                )
+            for status in occupancy_status:
+                if not isinstance(status, str):
+                    raise ValueError(
+                        f"Each occupancy status must be a string in story: {story_dict['name']}"
+                    )
+
         # Validate tag_processing
         if "tag_processing" in story_dict and not isinstance(
             story_dict["tag_processing"], bool
@@ -258,7 +281,7 @@ class Story:
         self, videos_database: List[VideoMetadata]
     ) -> List[VideoMetadata]:
         """
-        Select videos from the database based on story selectors.
+        Select videos from the database based on story selectors and occupancy status.
 
         Also generates and logs comprehensive statistics about the selected videos.
 
@@ -269,6 +292,31 @@ class Story:
             List[VideoMetadata]: Selected videos matching criteria
         """
         videos = VideoFilter.by_selectors(videos_database, self.selectors)
+
+        # Filter by occupancy status if specified
+        if self.occupancy_status is not None and videos:
+            logger.info(f"Filtering by occupancy status: {self.occupancy_status}")
+
+            # Create data aggregator and compute daily aggregates
+            data_aggregator = VideoDataAggregator(metrics=["activity"])
+            daily_data, _ = data_aggregator.run(videos_database)
+
+            # Create occupancy analyzer
+            occupancy = Occupancy(daily_data["activity"])
+
+            # Filter videos based on occupancy status
+            filtered_videos = []
+            for video in videos:
+                date_str = video.date.strftime("%Y-%m-%d")
+                status = occupancy.status(date_str)
+                if status.value in self.occupancy_status:
+                    filtered_videos.append(video)
+
+            logger.info(
+                f"Filtered from {len(videos)} to {len(filtered_videos)} videos based on occupancy status"
+            )
+            videos = filtered_videos
+
         video_tags = VideoTags.from_videos(videos)
 
         # Calculate statistics
@@ -287,6 +335,14 @@ class Story:
         # Log statistics
         logger.info(f"{colored("Selectors:","light_cyan")}")
         VideoSelector.log(self.selectors)
+
+        # Log occupancy status if specified
+        if self.occupancy_status is not None:
+            logger.info(
+                f"{colored("Occupancy Status:","light_cyan")} {', '.join(self.occupancy_status)}"
+            )
+            # logger.info(f"  - {', '.join(self.occupancy_status)}")
+
         logger.info(f"{colored("Statistics:","light_cyan")}")
 
         logger.info(f"  - {'Number of videos':<23} = {num_videos:,}")

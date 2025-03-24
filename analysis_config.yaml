@@ -84,6 +84,50 @@ process_stories: true
 
 stories:
 
+  - name: 'Occupied'
+    skip: false
+    occupancy_status: ['OCCUPIED']
+
+  - name: 'Not Occupied'
+    skip: false
+    occupancy_status: ['NOT_OCCUPIED']
+
+  - name: 'Unknown'
+    skip: false
+    occupancy_status: ['UNKNOWN']
+
+  # Occupied includes numb(backyard) >=20 or...
+  - name: 'Not_Occupied and Unknown'
+    skip: false
+    occupancy_status: ['NOT_OCCUPIED', 'UNKNOWN']
+    selectors:
+      - devices: ['Backyard', 'Front Door', 'Walkway', 'Back Entrance', 'Front Entrance', 'Gateway']
+
+  # Occupied includes numb(backyard) >=20 or...
+  - name: 'Not_Occupied and Unknown - Walkway'
+    skip: false
+    occupancy_status: ['NOT_OCCUPIED', 'UNKNOWN']
+    selectors:
+      - devices: ['Walkway']
+
+  - name: 'Not_Occupied and Unknown - Gateway'
+    skip: false
+    occupancy_status: ['NOT_OCCUPIED', 'UNKNOWN']
+    selectors:
+      - devices: ['Gateway']
+
+  - name: 'Not_Occupied and Unknown - Front Door'
+    skip: false
+    occupancy_status: ['NOT_OCCUPIED', 'UNKNOWN']
+    selectors:
+      - devices: ['Front Door']
+
+  - name: 'Not_Occupied and Unknown - Backyard'
+    skip: false
+    occupancy_status: ['NOT_OCCUPIED', 'UNKNOWN']
+    selectors:
+      - devices: ['Backyard']
+
   - name: '2025-01-09 -> 2025-03-06 - Backyard'
     skip: true
     selectors:
@@ -122,6 +166,7 @@ stories:
         weekdays: ['monday', 'wednesday', 'friday', 'sunday']
         date_regex: '[0-9]{4}-[0-9]{2}-0[1-2-3-4-5-6-7-8-9]'
       - filenames: ['T8214510234057A4_20240516124636.mp4', 'T8214510234057A4_20240516124545.mp4', 'T8214510234057A4_20240516122436.mp4']
+
 
   - name: '2T8600P1024260D5E_20241118084819'
     skip: true

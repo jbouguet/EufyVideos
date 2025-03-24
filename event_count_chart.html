@@ -82,13 +82,13 @@
     // ---- CONFIGURATION - EDIT THESE VALUES ----
 
     // Input your raw daily counts here (just the counts, dates will be generated)
-    const rawDailyCounts = [372, 119, 103, 191, 58, 54, 81, 84, 60, 98, 83, 67, 100];
+    const rawDailyCounts = [372, 119, 103, 191, 58, 54, 81, 84, 60, 98, 83, 67, 100, 132];
 
     // Specify the start date of your data
     const startDate = { day: 10, month: 3, year: 2025, dayOfWeek: 'Mon' };
 
     // Number of days to extrapolate
-    const daysToExtrapolate = 13;
+    const daysToExtrapolate = 8;
 
     // Projected daily count (default uses average of last 7 days, but you can override)
     // Set to null to auto-calculate, or provide a fixed number
@@ -129,7 +129,7 @@
         };
       }
 
-      const daysToAverage = Math.min(8, rawDailyCounts.length);
+      const daysToAverage = Math.min(10, rawDailyCounts.length);
       const recentCounts = rawDailyCounts.slice(-daysToAverage);
       const average = recentCounts.reduce((sum, count) => sum + count, 0) / daysToAverage;
 
