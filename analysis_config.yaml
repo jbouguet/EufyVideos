@@ -84,46 +84,56 @@ process_stories: true
 
 stories:
 
-  - name: 'Occupied'
+  - name: 'inspect'
     skip: false
+    selectors:
+      - date_range:
+          start: '2024-03-03'
+          end: '2024-03-24'
+        devices: ['Backyard', 'Front Door', 'Walkway', 'Back Entrance', 'Front Entrance', 'Gateway']
+
+  - name: 'Occupied'
+    skip: true
     occupancy_status: ['OCCUPIED']
 
   - name: 'Not Occupied'
-    skip: false
+    skip: true
     occupancy_status: ['NOT_OCCUPIED']
 
   - name: 'Unknown'
-    skip: false
+    skip: true
     occupancy_status: ['UNKNOWN']
+    selectors:
+      - devices: ['Backyard', 'Front Door', 'Walkway', 'Back Entrance', 'Front Entrance', 'Gateway']
 
   # Occupied includes numb(backyard) >=20 or...
   - name: 'Not_Occupied and Unknown'
-    skip: false
+    skip: true
     occupancy_status: ['NOT_OCCUPIED', 'UNKNOWN']
     selectors:
       - devices: ['Backyard', 'Front Door', 'Walkway', 'Back Entrance', 'Front Entrance', 'Gateway']
 
   # Occupied includes numb(backyard) >=20 or...
   - name: 'Not_Occupied and Unknown - Walkway'
-    skip: false
+    skip: true
     occupancy_status: ['NOT_OCCUPIED', 'UNKNOWN']
     selectors:
       - devices: ['Walkway']
 
   - name: 'Not_Occupied and Unknown - Gateway'
-    skip: false
+    skip: true
     occupancy_status: ['NOT_OCCUPIED', 'UNKNOWN']
     selectors:
       - devices: ['Gateway']
 
   - name: 'Not_Occupied and Unknown - Front Door'
-    skip: false
+    skip: true
     occupancy_status: ['NOT_OCCUPIED', 'UNKNOWN']
     selectors:
       - devices: ['Front Door']
 
   - name: 'Not_Occupied and Unknown - Backyard'
-    skip: false
+    skip: true
     occupancy_status: ['NOT_OCCUPIED', 'UNKNOWN']
     selectors:
       - devices: ['Backyard']
