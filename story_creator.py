@@ -296,13 +296,7 @@ class Story:
         # Filter by occupancy status if specified
         if self.occupancy_status is not None and videos:
             logger.info(f"Filtering by occupancy status: {self.occupancy_status}")
-
-            # Create data aggregator and compute daily aggregates
-            data_aggregator = VideoDataAggregator(metrics=["activity"])
-            daily_data, _ = data_aggregator.run(videos_database)
-
-            # Create occupancy analyzer
-            occupancy = Occupancy(daily_data["activity"])
+            occupancy = Occupancy()
 
             # Filter videos based on occupancy status
             filtered_videos = []
@@ -341,7 +335,6 @@ class Story:
             logger.info(
                 f"{colored("Occupancy Status:","light_cyan")} {', '.join(self.occupancy_status)}"
             )
-            # logger.info(f"  - {', '.join(self.occupancy_status)}")
 
         logger.info(f"{colored("Statistics:","light_cyan")}")
 

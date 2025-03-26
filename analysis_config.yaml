@@ -71,7 +71,7 @@ process_stories: true
 stories:
 
   - name: 'inspect'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2024-03-03'
@@ -79,11 +79,11 @@ stories:
         devices: ['Backyard', 'Front Door', 'Walkway', 'Back Entrance', 'Front Entrance', 'Gateway']
 
   - name: 'Occupied'
-    skip: true
+    skip: false
     occupancy_status: ['OCCUPIED']
 
   - name: 'Not Occupied'
-    skip: true
+    skip: false
     occupancy_status: ['NOT_OCCUPIED']
 
   - name: 'Unknown'

@@ -34,7 +34,7 @@ Example usage:
 
 import enum
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pandas as pd
 
@@ -73,7 +73,7 @@ class Occupancy:
         occupancy_cache (Dict[str, OccupancyStatus]): Cache of date to occupancy status
     """
 
-    def __init__(self, daily_data: pd.DataFrame):
+    def __init__(self, daily_data: Optional[pd.DataFrame] = None):
         """
         Initialize the Occupancy class with daily aggregated video activity data.
 
@@ -81,11 +81,78 @@ class Occupancy:
             daily_data: DataFrame containing daily aggregated video activity data
                         from VideoDataAggregator.run()
         """
-        self.daily_data = daily_data
         self.occupancy_cache: Dict[str, OccupancyStatus] = {}
-        self._learn_daily_occupancies()
+        if daily_data is not None:
+            self.set_occupancy_status_from_daily_acivity(daily_data)
+        self.set_occupancy_status_from_calendar()
 
-    def _learn_daily_occupancies(self):
+    def set_occupancy_status_from_calendar(self):
+        """
+        Set occupancy status cache from calendar
+        """
+        calendar = [
+            ("2024-02-27", "2024-03-03", OccupancyStatus.OCCUPIED),
+            ("2024-03-04", "2024-03-07", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-03-08", "2024-03-09", OccupancyStatus.OCCUPIED),
+            ("2024-03-10", "2024-03-10", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-03-11", "2024-03-11", OccupancyStatus.OCCUPIED),
+            ("2024-03-12", "2024-03-12", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-03-13", "2024-03-14", OccupancyStatus.OCCUPIED),
+            ("2024-03-15", "2024-03-17", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-03-18", "2024-03-18", OccupancyStatus.OCCUPIED),
+            ("2024-03-19", "2024-03-21", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-03-22", "2024-03-22", OccupancyStatus.OCCUPIED),
+            ("2024-03-23", "2024-03-23", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-03-24", "2024-04-13", OccupancyStatus.OCCUPIED),
+            ("2024-04-14", "2024-04-17", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-04-18", "2024-04-19", OccupancyStatus.OCCUPIED),
+            ("2024-04-20", "2024-04-20", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-04-21", "2024-04-21", OccupancyStatus.OCCUPIED),
+            ("2024-04-22", "2024-04-23", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-04-24", "2024-04-24", OccupancyStatus.OCCUPIED),
+            ("2024-04-25", "2024-04-27", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-04-28", "2024-04-28", OccupancyStatus.OCCUPIED),
+            ("2024-04-29", "2024-05-01", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-05-02", "2024-05-02", OccupancyStatus.OCCUPIED),
+            ("2024-05-03", "2024-05-10", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-05-11", "2024-05-22", OccupancyStatus.OCCUPIED),
+            ("2024-05-23", "2024-05-31", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-06-01", "2024-06-01", OccupancyStatus.OCCUPIED),
+            ("2024-06-02", "2024-06-09", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-06-10", "2024-07-19", OccupancyStatus.OCCUPIED),
+            ("2024-07-20", "2024-08-29", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-08-30", "2024-09-09", OccupancyStatus.OCCUPIED),
+            ("2024-09-10", "2024-09-21", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-09-23", "2024-10-05", OccupancyStatus.OCCUPIED),
+            ("2024-10-06", "2024-10-08", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-10-09", "2024-10-12", OccupancyStatus.OCCUPIED),
+            ("2024-10-13", "2024-11-01", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-11-02", "2024-11-02", OccupancyStatus.OCCUPIED),
+            ("2024-11-03", "2024-11-15", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-11-16", "2024-11-20", OccupancyStatus.OCCUPIED),
+            ("2024-11-21", "2024-12-09", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-12-10", "2024-12-13", OccupancyStatus.OCCUPIED),
+            ("2024-12-14", "2024-12-25", OccupancyStatus.NOT_OCCUPIED),
+            ("2024-12-26", "2025-01-08", OccupancyStatus.OCCUPIED),
+            ("2025-01-09", "2025-03-05", OccupancyStatus.NOT_OCCUPIED),
+            ("2025-03-06", "2025-03-10", OccupancyStatus.OCCUPIED),
+            ("2025-03-11", "2025-03-24", OccupancyStatus.NOT_OCCUPIED),
+            ("2025-03-25", "2025-04-01", OccupancyStatus.OCCUPIED),
+        ]
+
+        for start_date_str, end_date_str, status in calendar:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+
+            current_date = start_date
+            while current_date <= end_date:
+                date_str = current_date.strftime("%Y-%m-%d")
+                self.occupancy_cache[date_str] = status
+                current_date = datetime(
+                    current_date.year, current_date.month, current_date.day
+                ) + pd.Timedelta(days=1)
+
+    def set_occupancy_status_from_daily_acivity(self, daily_data: pd.DataFrame):
         """
         Analyze daily video activity data to determine occupancy status for each date.
 
@@ -95,11 +162,9 @@ class Occupancy:
         - NOT_OCCUPIED if Backyard activity == 0
         - UNKNOWN otherwise
 
-        A set of dates are manually set to either OCCUPIED or NOT_OCCUPIED
-
         The results are stored in the occupancy_cache dictionary for efficient lookup.
         """
-        for _, row in self.daily_data.iterrows():
+        for _, row in daily_data.iterrows():
             date_str = row["Date"].strftime("%Y-%m-%d")
             self.occupancy_cache[date_str] = OccupancyStatus.UNKNOWN
 
@@ -118,95 +183,8 @@ class Occupancy:
                 front_door_activity = row["Front Door"]
 
                 # Apply naive heuristic
-                if front_door_activity >= 5:  # 5:
+                if front_door_activity >= 5:
                     self.occupancy_cache[date_str] = OccupancyStatus.OCCUPIED
-
-        # Manual Overides:
-        self.occupancy_cache["2024-03-09"] = OccupancyStatus.OCCUPIED
-        self.occupancy_cache["2024-03-13"] = OccupancyStatus.OCCUPIED
-        self.occupancy_cache["2024-03-14"] = OccupancyStatus.OCCUPIED
-        self.occupancy_cache["2024-04-13"] = OccupancyStatus.OCCUPIED
-
-        self.occupancy_cache["2024-07-20"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-07-21"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-07-22"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-07-23"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-07-24"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-07-25"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-07-26"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-07-27"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-07-28"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-07-29"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-07-30"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-07-31"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-01"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-02"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-03"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-04"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-05"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-06"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-07"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-08"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-09"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-10"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-11"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-12"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-13"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-14"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-15"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-16"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-17"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-18"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-19"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-20"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-21"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-22"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-23"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-24"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-25"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-26"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-27"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-28"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-08-29"] = OccupancyStatus.NOT_OCCUPIED
-
-        self.occupancy_cache["2024-09-10"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-09-11"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-09-12"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-09-13"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-09-14"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-09-15"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-09-16"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-09-17"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-09-18"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-09-19"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-09-20"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-09-21"] = OccupancyStatus.NOT_OCCUPIED
-
-        self.occupancy_cache["2024-10-08"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2024-10-12"] = OccupancyStatus.OCCUPIED
-        self.occupancy_cache["2024-12-10"] = OccupancyStatus.OCCUPIED
-        self.occupancy_cache["2024-12-11"] = OccupancyStatus.OCCUPIED
-        self.occupancy_cache["2024-12-28"] = OccupancyStatus.OCCUPIED
-        self.occupancy_cache["2025-01-10"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-01-15"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-01-16"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-01-19"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-01-23"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-01-27"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-01-29"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-02-07"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-02-11"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-02-12"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-02-13"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-02-14"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-02-15"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-02-16"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-02-18"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-02-24"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-02-25"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-03-01"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-03-03"] = OccupancyStatus.NOT_OCCUPIED
-        self.occupancy_cache["2025-03-06"] = OccupancyStatus.OCCUPIED
 
     def status(self, date_str: str) -> OccupancyStatus:
         """
@@ -317,7 +295,8 @@ if __name__ == "__main__":
 
     # Create occupancy analyzer
     logger.info("Analyzing occupancy...")
-    occupancy = Occupancy(daily_data["activity"])
+    # occupancy = Occupancy(daily_data["activity"])
+    occupancy = Occupancy()
 
     # Get all dates with occupancy status
     all_occupancy_data = occupancy.get_all_dates_with_status()
