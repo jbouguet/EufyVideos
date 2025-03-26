@@ -44,10 +44,9 @@ from termcolor import colored
 from config import Config
 from dashboard import Dashboard
 from logging_config import create_logger
-from security import Occupancy, OccupancyStatus
+from occupancy import Occupancy
 from tag_processor import TaggerConfig, TagProcessor, VideoTags
 from tag_visualizer import TagVisualizer, TagVisualizerConfig
-from video_data_aggregator import VideoDataAggregator
 from video_filter import VideoFilter, VideoSelector
 from video_generator import VideoGenerationConfig, VideoGenerator
 from video_metadata import VideoMetadata

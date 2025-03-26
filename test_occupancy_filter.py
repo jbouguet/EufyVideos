@@ -9,14 +9,10 @@ to demonstrate the new functionality.
 
 import os
 import sys
-from typing import List
 
 from logging_config import create_logger, set_logger_level_and_format
-from security import OccupancyStatus
 from story_creator import Story
 from video_database import VideoDatabase, VideoDatabaseList
-from video_filter import DateRange, VideoSelector
-from video_metadata import VideoMetadata
 
 logger = create_logger(__name__)
 
@@ -50,15 +46,10 @@ def main():
     # Create a test story with occupancy status filter
     test_story = Story(
         name="Occupancy_Filter_Test",
-        selectors=[
-            VideoSelector(
-                date_range=DateRange(start="2024-02-27", end="2025-03-10"),
-            )
-        ],
         occupancy_status=[
-            "NOT_OCCUPIED",
+            "OCCUPIED",
             "UNKNOWN",
-        ],  # Only include NOT_OCCUPIED and UNKNOWN days
+        ],  # Only include OCCUPIED and UNKNOWN days
     )
 
     # Process the story

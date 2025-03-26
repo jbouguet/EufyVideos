@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 
 """
-Security module for determining property occupancy status based on video activity data.
+Occupancy module for determining property occupancy status based on a manually maintained calendar and video activity data.
 
-This module provides functionality to analyze video activity data and determine
-whether a property is occupied, not occupied, or has an unknown occupancy status
-for specific dates.
+This module provides functionality to determine whether a property is occupied,
+not occupied, or has an unknown occupancy status for specific dates. By default,
+occupancy status is set via a manually maintained calendar, which can be augmented
+or overwritten with data derived from video activity analysis.
 
 Key components:
 1. OccupancyStatus: Enum defining possible occupancy states
-2. Occupancy: Class that analyzes daily video activity to determine occupancy
+2. Occupancy: Class that manages occupancy status using both a calendar and video activity data
 
 Example usage:
     from video_data_aggregator import VideoDataAggregator
     from video_database import VideoDatabase, VideoDatabaseList
-    from security import Occupancy, OccupancyStatus
+    from occupancy import Occupancy, OccupancyStatus
 
     # Load video database
     video_database = VideoDatabaseList([...]).load_videos()
@@ -61,17 +62,72 @@ class OccupancyStatus(enum.Enum):
 
 class Occupancy:
     """
-    Class for determining property occupancy status based on video activity data.
+    Class for determining property occupancy status based on a calendar and video activity data.
 
-    This class analyzes daily video activity data to determine whether a property
-    is occupied, not occupied, or has an unknown occupancy status for specific dates.
-    It uses a set of heuristics to make this determination and caches the results
-    for efficient lookup.
+    This class manages occupancy status using two primary sources:
+    1. A manually maintained calendar (default source) - This calendar needs to be kept up to date
+       by the user as it contains the expected occupancy schedule.
+    2. Video activity data analysis (optional) - This can augment or be overwritten by the calendar data.
+
+    The class uses a set of heuristics to determine occupancy from video activity and
+    caches all results for efficient lookup.
 
     Attributes:
         daily_data (pd.DataFrame): Daily aggregated video activity data
         occupancy_cache (Dict[str, OccupancyStatus]): Cache of date to occupancy status
     """
+
+    # Occupancy Calendar to be kept up to date by the user
+    # Format: (start_date, end_date, occupancy_status)
+    OCCUPANCY_CALENDAR = [
+        ("2024-02-27", "2024-03-03", OccupancyStatus.OCCUPIED),
+        ("2024-03-04", "2024-03-07", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-03-08", "2024-03-09", OccupancyStatus.OCCUPIED),
+        ("2024-03-10", "2024-03-10", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-03-11", "2024-03-11", OccupancyStatus.OCCUPIED),
+        ("2024-03-12", "2024-03-12", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-03-13", "2024-03-14", OccupancyStatus.OCCUPIED),
+        ("2024-03-15", "2024-03-17", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-03-18", "2024-03-18", OccupancyStatus.OCCUPIED),
+        ("2024-03-19", "2024-03-21", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-03-22", "2024-03-22", OccupancyStatus.OCCUPIED),
+        ("2024-03-23", "2024-03-23", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-03-24", "2024-04-13", OccupancyStatus.OCCUPIED),
+        ("2024-04-14", "2024-04-17", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-04-18", "2024-04-19", OccupancyStatus.OCCUPIED),
+        ("2024-04-20", "2024-04-20", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-04-21", "2024-04-21", OccupancyStatus.OCCUPIED),
+        ("2024-04-22", "2024-04-23", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-04-24", "2024-04-24", OccupancyStatus.OCCUPIED),
+        ("2024-04-25", "2024-04-27", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-04-28", "2024-04-28", OccupancyStatus.OCCUPIED),
+        ("2024-04-29", "2024-05-01", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-05-02", "2024-05-02", OccupancyStatus.OCCUPIED),
+        ("2024-05-03", "2024-05-10", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-05-11", "2024-05-22", OccupancyStatus.OCCUPIED),
+        ("2024-05-23", "2024-05-31", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-06-01", "2024-06-01", OccupancyStatus.OCCUPIED),
+        ("2024-06-02", "2024-06-09", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-06-10", "2024-07-19", OccupancyStatus.OCCUPIED),
+        ("2024-07-20", "2024-08-29", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-08-30", "2024-09-09", OccupancyStatus.OCCUPIED),
+        ("2024-09-10", "2024-09-21", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-09-23", "2024-10-05", OccupancyStatus.OCCUPIED),
+        ("2024-10-06", "2024-10-08", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-10-09", "2024-10-12", OccupancyStatus.OCCUPIED),
+        ("2024-10-13", "2024-11-01", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-11-02", "2024-11-02", OccupancyStatus.OCCUPIED),
+        ("2024-11-03", "2024-11-15", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-11-16", "2024-11-20", OccupancyStatus.OCCUPIED),
+        ("2024-11-21", "2024-12-09", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-12-10", "2024-12-13", OccupancyStatus.OCCUPIED),
+        ("2024-12-14", "2024-12-25", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-12-26", "2025-01-08", OccupancyStatus.OCCUPIED),
+        ("2025-01-09", "2025-03-05", OccupancyStatus.NOT_OCCUPIED),
+        ("2025-03-06", "2025-03-10", OccupancyStatus.OCCUPIED),
+        ("2025-03-11", "2025-03-24", OccupancyStatus.NOT_OCCUPIED),
+        ("2025-03-25", "2025-04-01", OccupancyStatus.OCCUPIED),
+    ]
 
     def __init__(self, daily_data: Optional[pd.DataFrame] = None):
         """
@@ -79,68 +135,28 @@ class Occupancy:
 
         Args:
             daily_data: DataFrame containing daily aggregated video activity data
-                        from VideoDataAggregator.run()
+                        from VideoDataAggregator.run(). If provided, occupancy status
+                        will first be set from this data, then potentially overwritten
+                        by the calendar data.
         """
         self.occupancy_cache: Dict[str, OccupancyStatus] = {}
         if daily_data is not None:
-            self.set_occupancy_status_from_daily_acivity(daily_data)
+            self.set_occupancy_status_from_daily_activity(daily_data)
         self.set_occupancy_status_from_calendar()
 
     def set_occupancy_status_from_calendar(self):
         """
-        Set occupancy status cache from calendar
-        """
-        calendar = [
-            ("2024-02-27", "2024-03-03", OccupancyStatus.OCCUPIED),
-            ("2024-03-04", "2024-03-07", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-03-08", "2024-03-09", OccupancyStatus.OCCUPIED),
-            ("2024-03-10", "2024-03-10", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-03-11", "2024-03-11", OccupancyStatus.OCCUPIED),
-            ("2024-03-12", "2024-03-12", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-03-13", "2024-03-14", OccupancyStatus.OCCUPIED),
-            ("2024-03-15", "2024-03-17", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-03-18", "2024-03-18", OccupancyStatus.OCCUPIED),
-            ("2024-03-19", "2024-03-21", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-03-22", "2024-03-22", OccupancyStatus.OCCUPIED),
-            ("2024-03-23", "2024-03-23", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-03-24", "2024-04-13", OccupancyStatus.OCCUPIED),
-            ("2024-04-14", "2024-04-17", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-04-18", "2024-04-19", OccupancyStatus.OCCUPIED),
-            ("2024-04-20", "2024-04-20", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-04-21", "2024-04-21", OccupancyStatus.OCCUPIED),
-            ("2024-04-22", "2024-04-23", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-04-24", "2024-04-24", OccupancyStatus.OCCUPIED),
-            ("2024-04-25", "2024-04-27", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-04-28", "2024-04-28", OccupancyStatus.OCCUPIED),
-            ("2024-04-29", "2024-05-01", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-05-02", "2024-05-02", OccupancyStatus.OCCUPIED),
-            ("2024-05-03", "2024-05-10", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-05-11", "2024-05-22", OccupancyStatus.OCCUPIED),
-            ("2024-05-23", "2024-05-31", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-06-01", "2024-06-01", OccupancyStatus.OCCUPIED),
-            ("2024-06-02", "2024-06-09", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-06-10", "2024-07-19", OccupancyStatus.OCCUPIED),
-            ("2024-07-20", "2024-08-29", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-08-30", "2024-09-09", OccupancyStatus.OCCUPIED),
-            ("2024-09-10", "2024-09-21", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-09-23", "2024-10-05", OccupancyStatus.OCCUPIED),
-            ("2024-10-06", "2024-10-08", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-10-09", "2024-10-12", OccupancyStatus.OCCUPIED),
-            ("2024-10-13", "2024-11-01", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-11-02", "2024-11-02", OccupancyStatus.OCCUPIED),
-            ("2024-11-03", "2024-11-15", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-11-16", "2024-11-20", OccupancyStatus.OCCUPIED),
-            ("2024-11-21", "2024-12-09", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-12-10", "2024-12-13", OccupancyStatus.OCCUPIED),
-            ("2024-12-14", "2024-12-25", OccupancyStatus.NOT_OCCUPIED),
-            ("2024-12-26", "2025-01-08", OccupancyStatus.OCCUPIED),
-            ("2025-01-09", "2025-03-05", OccupancyStatus.NOT_OCCUPIED),
-            ("2025-03-06", "2025-03-10", OccupancyStatus.OCCUPIED),
-            ("2025-03-11", "2025-03-24", OccupancyStatus.NOT_OCCUPIED),
-            ("2025-03-25", "2025-04-01", OccupancyStatus.OCCUPIED),
-        ]
+        Set occupancy status cache from the manually maintained calendar.
 
-        for start_date_str, end_date_str, status in calendar:
+        This method populates the occupancy_cache with statuses from the OCCUPANCY_CALENDAR.
+        The calendar is the primary source of occupancy data and will overwrite any
+        status previously set from video activity data.
+
+        Note: The OCCUPANCY_CALENDAR should be kept up to date by the user to reflect
+        the expected occupancy schedule.
+        """
+
+        for start_date_str, end_date_str, status in self.OCCUPANCY_CALENDAR:
             start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
             end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
 
@@ -152,7 +168,7 @@ class Occupancy:
                     current_date.year, current_date.month, current_date.day
                 ) + pd.Timedelta(days=1)
 
-    def set_occupancy_status_from_daily_acivity(self, daily_data: pd.DataFrame):
+    def set_occupancy_status_from_daily_activity(self, daily_data: pd.DataFrame):
         """
         Analyze daily video activity data to determine occupancy status for each date.
 
@@ -163,6 +179,8 @@ class Occupancy:
         - UNKNOWN otherwise
 
         The results are stored in the occupancy_cache dictionary for efficient lookup.
+        Note that these results may be overwritten by the calendar data when
+        set_occupancy_status_from_calendar() is called.
         """
         for _, row in daily_data.iterrows():
             date_str = row["Date"].strftime("%Y-%m-%d")
