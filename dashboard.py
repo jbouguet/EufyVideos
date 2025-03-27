@@ -64,12 +64,12 @@ class Dashboard:
         else:
             # Only aggregate across a subset of specified metrics
             self.metrics = metrics
-        # By default, set time interval to 15 minutes = 1 hour / 4 bin_per_hour
+        # By default, set time interval to 5 minutes = 1 hour / 12 bin_per_hour
         if config is None:
-            self.config = {"bins_per_hour": 4}
+            self.config = {"bins_per_hour": 12}
         else:
             self.config = config
-        bins_per_hour = self.config.get("bins_per_hour", 4)
+        bins_per_hour = self.config.get("bins_per_hour", 12)
         self.config["bins_per_hour"] = bins_per_hour
         self.data_aggregator = VideoDataAggregator(
             metrics=self.metrics, config=self.config
@@ -83,8 +83,8 @@ class Dashboard:
         """
         Creates daily and hourly activity graphs from aggregated data.
         """
-        # By default, set time interval to 15 minutes = 1 hour / 4 bin_per_hour
-        bins_per_hour = self.config.get("bins_per_hour", 4)
+        # By default, set time interval to 5 minutes = 1 hour / 12 bin_per_hour
+        bins_per_hour = self.config.get("bins_per_hour", 12)
 
         figs = []
         for metric in self.metrics:
@@ -260,7 +260,7 @@ if __name__ == "__main__":
     min_date = first_video.date_str
     max_date = last_video.date_str
 
-    bins_per_hour = 1
+    bins_per_hour = 12
 
     start_date = min_date
     end_date = max_date
