@@ -27,7 +27,7 @@ from sklearn.tree import plot_tree
 
 from config import Config
 from logging_config import create_logger, set_logger_level_and_format
-from occupancy import Occupancy, OccupancyStatus
+from occupancy import Occupancy, OccupancyMode, OccupancyStatus
 from video_data_aggregator import VideoDataAggregator
 from video_database import VideoDatabase, VideoDatabaseList
 from video_filter import DateRange, TimeRange, VideoFilter, VideoSelector
@@ -144,22 +144,23 @@ def main():
     # Load video data
     daily_data = load_video_data()
 
-    # 1. Create an Occupancy instance with calendar data only
+    # 1. Create an Occupancy instance with calendar data only (default mode)
     logger.info("Creating calendar-based occupancy...")
-    calendar_occupancy = Occupancy()
+    calendar_occupancy = Occupancy(mode=OccupancyMode.CALENDAR)
     calendar_status = calendar_occupancy.occupancy_cache.copy()
 
     # 2. Create an Occupancy instance with heuristic method
     logger.info("Creating heuristic-based occupancy...")
-    heuristic_occupancy = Occupancy()
-    heuristic_occupancy.set_occupancy_status_from_daily_activity(daily_data["activity"])
+    heuristic_occupancy = Occupancy(
+        mode=OccupancyMode.HEURISTIC, daily_data=daily_data["activity"]
+    )
     heuristic_status = heuristic_occupancy.occupancy_cache.copy()
 
     # 3. Train a machine learning model
     logger.info("Training machine learning model...")
-    ml_occupancy = Occupancy()
+    ml_occupancy = Occupancy(mode=OccupancyMode.CALENDAR)  # Start in CALENDAR mode
     try:
-        # Train the model using daily activity data
+        # Train the model using daily activity data (this switches to ML_MODEL mode)
         model_metrics = ml_occupancy.train_occupancy_model(daily_data["activity"])
 
         # Print model evaluation metrics
@@ -201,12 +202,16 @@ def main():
 
         # 5. Load the model from the file
         logger.info(f"Loading model from {model_file}...")
-        new_occupancy = Occupancy()
-        new_occupancy.load_occupancy_model(model_file)
+        new_occupancy = Occupancy(
+            mode=OccupancyMode.ML_MODEL,
+            daily_data=daily_data["activity"],
+            model_filepath=model_file,
+        )
 
         # 6. Apply the model to predict occupancy status
         logger.info("Applying model to predict occupancy status...")
-        ml_occupancy.set_occupancy_status_from_model(daily_data["activity"])
+        # The model is already in ML_MODEL mode after training
+        ml_occupancy.set_occupancy_status_from_daily_activity(daily_data["activity"])
         ml_status = ml_occupancy.occupancy_cache.copy()
 
         # 7. Compare the results

@@ -10,13 +10,13 @@ or overwritten with data derived from video activity analysis.
 
 Key components:
 1. OccupancyStatus: Enum defining possible occupancy states
-2. Occupancy: Class that manages occupancy status using both a calendar and video activity data
-3. Machine learning capabilities to predict occupancy from daily activity data
+2. OccupancyMode: Enum defining different modes of operation
+3. Occupancy: Class that manages occupancy status using different modes
 
 Example usage:
     from video_data_aggregator import VideoDataAggregator
     from video_database import VideoDatabase, VideoDatabaseList
-    from occupancy import Occupancy, OccupancyStatus
+    from occupancy import Occupancy, OccupancyStatus, OccupancyMode
 
     # Load video database
     video_database = VideoDatabaseList([...]).load_videos()
@@ -25,30 +25,32 @@ Example usage:
     data_aggregator = VideoDataAggregator(metrics=["activity"])
     daily_data, _ = data_aggregator.run(video_database)
 
-    # Create occupancy analyzer
-    occupancy = Occupancy(daily_data["activity"])
+    # Create occupancy analyzer in CALENDAR mode (default)
+    occupancy_calendar = Occupancy()
+
+    # Create occupancy analyzer in HEURISTIC mode
+    occupancy_heuristic = Occupancy(mode=OccupancyMode.HEURISTIC, daily_data=daily_data["activity"])
+
+    # Create occupancy analyzer in ML_MODEL mode
+    occupancy_ml = Occupancy(mode=OccupancyMode.ML_MODEL, daily_data=daily_data["activity"])
 
     # Check occupancy for a specific date
-    status = occupancy.status("2025-01-01")
+    status = occupancy_ml.status("2025-01-01")
     if status == OccupancyStatus.OCCUPIED:
         print("Property was occupied on 2025-01-01")
 
-    # Train a machine learning model
-    occupancy.train_occupancy_model(daily_data["activity"])
+    # Train a new model
+    occupancy_ml.train_occupancy_model(daily_data["activity"])
 
     # Save the model
-    occupancy.save_occupancy_model("occupancy_model.txt")
-
-    # Load a model
-    occupancy.load_occupancy_model("occupancy_model.txt")
-
-    # Apply the model to daily activity data
-    occupancy.set_occupancy_status_from_model(daily_data["activity"])
+    occupancy_ml.save_occupancy_model("occupancy_model.txt")
 """
 
 import enum
 import json
 import os
+import pickle
+import sys
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -79,24 +81,40 @@ class OccupancyStatus(enum.Enum):
     UNKNOWN = "UNKNOWN"
 
 
+class OccupancyMode(enum.Enum):
+    """
+    Enum representing the different modes for determining occupancy status.
+
+    Values:
+        CALENDAR: Use the manually maintained calendar
+        HEURISTIC: Use heuristic rules based on daily activity
+        ML_MODEL: Use a trained machine learning model
+    """
+
+    CALENDAR = "CALENDAR"
+    HEURISTIC = "HEURISTIC"
+    ML_MODEL = "ML_MODEL"
+
+
 class Occupancy:
     """
     Class for determining property occupancy status based on a calendar and video activity data.
 
-    This class manages occupancy status using three primary sources:
-    1. A manually maintained calendar (default source) - This calendar needs to be kept up to date
+    This class manages occupancy status using three primary modes:
+    1. CALENDAR (default): Uses a manually maintained calendar that needs to be kept up to date
        by the user as it contains the expected occupancy schedule.
-    2. Video activity data analysis (optional) - This can augment or be overwritten by the calendar data.
-    3. Machine learning model (optional) - A trained model that predicts occupancy from daily activity data.
+    2. HEURISTIC: Uses heuristic rules based on daily activity data to determine occupancy.
+    3. ML_MODEL: Uses a trained machine learning model to predict occupancy from daily activity.
 
-    The class uses a set of heuristics to determine occupancy from video activity and
-    caches all results for efficient lookup. It also provides methods to train, save, load,
-    and apply machine learning models for improved occupancy prediction.
+    The class maintains its mode of operation internally and handles the appropriate behavior
+    based on the selected mode. It also provides methods to train, save, and load machine
+    learning models for improved occupancy prediction.
 
     Attributes:
-        daily_data (pd.DataFrame): Daily aggregated video activity data
+        mode (OccupancyMode): The current mode of operation
         occupancy_cache (Dict[str, OccupancyStatus]): Cache of date to occupancy status
         model (DecisionTreeClassifier): Trained decision tree model for occupancy prediction
+        model_filepath (str): Path to the model file (used in ML_MODEL mode)
     """
 
     # Occupancy Calendar to be kept up to date by the user specified as a list of calendar
@@ -153,35 +171,59 @@ class Occupancy:
         # ("2025-03-25", "2025-04-15", OccupancyStatus.OCCUPIED),
     ]
 
-    def __init__(self, daily_data: Optional[pd.DataFrame] = None):
+    def __init__(
+        self,
+        mode: OccupancyMode = OccupancyMode.CALENDAR,
+        daily_data: Optional[pd.DataFrame] = None,
+        model_filepath: str = "occupancy_model.txt",
+    ):
         """
-        Initialize the Occupancy class with optionally provided daily aggregated video activity data.
+        Initialize the Occupancy class with the specified mode and optional data.
 
         Args:
+            mode: The mode of operation (CALENDAR, HEURISTIC, or ML_MODEL)
             daily_data: [optional] DataFrame containing daily aggregated video activity data
-                        from VideoDataAggregator.run(). If provided, occupancy status
-                        will first be set from this data, then potentially overwritten
-                        by the calendar data OCCUPANCY_CALENDAR.
+                        from VideoDataAggregator.run(). Required for HEURISTIC and ML_MODEL modes.
+            model_filepath: Path to the model file (used in ML_MODEL mode)
         """
         self.occupancy_cache: Dict[str, OccupancyStatus] = {}
         self.model: Optional[DecisionTreeClassifier] = None
         self.feature_names: List[str] = []
+        self.mode = mode
+        self.model_filepath = model_filepath
 
-        if daily_data is not None:
+        # Initialize based on mode
+        if mode == OccupancyMode.CALENDAR:
+            self.set_occupancy_status_from_calendar()
+        elif mode == OccupancyMode.HEURISTIC:
+            if daily_data is None:
+                raise ValueError("daily_data is required for HEURISTIC mode")
             self.set_occupancy_status_from_daily_activity(daily_data)
-        self.set_occupancy_status_from_calendar()
+        elif mode == OccupancyMode.ML_MODEL:
+            if daily_data is None:
+                raise ValueError("daily_data is required for ML_MODEL mode")
+            try:
+                self.load_occupancy_model(model_filepath)
+                self.set_occupancy_status_from_daily_activity(daily_data)
+            except Exception as e:
+                logger.error(f"Error loading model: {e}")
+                logger.info("Falling back to CALENDAR mode")
+                self.mode = OccupancyMode.CALENDAR
+                self.set_occupancy_status_from_calendar()
 
     def set_occupancy_status_from_calendar(self):
         """
         Set occupancy status cache from the manually maintained calendar.
 
-        This method populates the occupancy_cache with statuses from the OCCUPANCY_CALENDAR.
-        Note that these results may be overwritten by the status set from the daily
-        video activity data when set_occupancy_status_from_daily_activity() is called.
+        This method clears the occupancy_cache before populating it with statuses from
+        the OCCUPANCY_CALENDAR, ensuring that the occupancy status is determined solely
+        by the calendar data.
 
         Note: The OCCUPANCY_CALENDAR should be kept up to date by the user to reflect
         the expected occupancy schedule.
         """
+        # Clear the cache before populating with new statuses
+        self.occupancy_cache.clear()
 
         for start_date_str, end_date_str, status in self.OCCUPANCY_CALENDAR:
             start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
@@ -199,16 +241,35 @@ class Occupancy:
         """
         Analyze daily video activity data to determine occupancy status for each date.
 
+        This method dispatches to the appropriate implementation based on the current mode.
+        - In HEURISTIC mode, it uses heuristic rules based on activity metrics.
+        - In ML_MODEL mode, it uses the trained machine learning model.
+        - In CALENDAR mode, it does nothing (calendar data is used instead).
+
+        Args:
+            daily_data: DataFrame containing daily aggregated video activity data
+        """
+        if self.mode == OccupancyMode.HEURISTIC:
+            self._set_occupancy_status_from_heuristic(daily_data)
+        elif self.mode == OccupancyMode.ML_MODEL:
+            self._set_occupancy_status_from_model(daily_data)
+        else:
+            logger.warning(
+                "set_occupancy_status_from_daily_activity called in CALENDAR mode"
+            )
+
+    def _set_occupancy_status_from_heuristic(self, daily_data: pd.DataFrame):
+        """
+        Analyze daily video activity data using heuristic rules.
+
         This method implements heuristics to determine occupancy status based on
         video activity metrics derived from the decision tree model.
 
-        The results are stored in the occupancy_cache dictionary for efficient lookup.
-        Note that these results may be overwritten by the calendar data when
-        set_occupancy_status_from_calendar() is called.
-
-        This method will be deprecated in favor of set_occupancy_status_from_model
-        once the machine learning model is fully tested and validated.
+        The method clears the occupancy_cache before populating it with new statuses,
+        ensuring that the occupancy status is determined solely by the heuristic logic.
         """
+        # Clear the cache before populating with new statuses
+        self.occupancy_cache.clear()
 
         for _, row in daily_data.iterrows():
             date_str = row["Date"].strftime("%Y-%m-%d")
@@ -368,6 +429,9 @@ class Occupancy:
 
         logger.info(f"Model trained with accuracy: {accuracy:.2f}")
 
+        # Update mode to ML_MODEL since we now have a trained model
+        self.mode = OccupancyMode.ML_MODEL
+
         # Return evaluation metrics
         return {
             "accuracy": accuracy,
@@ -378,13 +442,19 @@ class Occupancy:
             ),
         }
 
-    def save_occupancy_model(self, filepath: str) -> None:
+    def save_occupancy_model(self, filepath: Optional[str] = None) -> None:
         """
-        Save the trained model to a human-readable file.
+        Save the trained model to a file.
+
+        This method saves both the trained model using pickle (for accurate predictions)
+        and a human-readable representation of the model (for inspection).
 
         Args:
-            filepath: Path to save the model
+            filepath: Path to save the model. If None, uses the model_filepath from initialization.
         """
+        if filepath is not None:
+            self.model_filepath = filepath
+
         if self.model is None:
             raise ValueError(
                 "No model has been trained. Call train_occupancy_model() first."
@@ -392,14 +462,23 @@ class Occupancy:
 
         # Create directory if it doesn't exist
         os.makedirs(
-            os.path.dirname(filepath) if os.path.dirname(filepath) else ".",
+            (
+                os.path.dirname(self.model_filepath)
+                if os.path.dirname(self.model_filepath)
+                else "."
+            ),
             exist_ok=True,
         )
 
-        # Export decision tree as text
+        # Save the actual trained model using pickle
+        pickle_filepath = f"{os.path.splitext(self.model_filepath)[0]}.pkl"
+        with open(pickle_filepath, "wb") as f:
+            pickle.dump((self.model, self.feature_names), f)
+
+        # Export decision tree as text for human readability
         tree_text = export_text(self.model, feature_names=self.feature_names)
 
-        # Create a dictionary with model information
+        # Create a dictionary with model information for human readability
         model_info = {
             "feature_names": self.feature_names,
             "feature_importances": dict(
@@ -408,65 +487,95 @@ class Occupancy:
             "tree_text": tree_text,
             "model_params": self.model.get_params(),
             "classes": ["NOT_OCCUPIED", "OCCUPIED"],
+            "pickle_filepath": pickle_filepath,  # Reference to the pickle file
         }
 
-        # Save to file
-        with open(filepath, "w") as f:
+        # Save human-readable info to file
+        with open(self.model_filepath, "w") as f:
             json.dump(model_info, f, indent=2)
 
-        logger.info(f"Model saved to {filepath}")
+        logger.info(f"Model saved to {self.model_filepath} and {pickle_filepath}")
 
-    def load_occupancy_model(self, filepath: str) -> None:
+    def load_occupancy_model(self, filepath: Optional[str] = None) -> None:
         """
         Load a model from a file.
 
+        This method loads the trained model from a pickle file for accurate predictions,
+        and also loads the human-readable representation for inspection.
+
         Args:
-            filepath: Path to the model file
+            filepath: Path to the model file. If None, uses the model_filepath from initialization.
         """
+        if filepath is not None:
+            self.model_filepath = filepath
+
         # Load model information
-        with open(filepath, "r") as f:
+        with open(self.model_filepath, "r") as f:
             model_info = json.load(f)
 
-        # Extract feature names
+        # Extract feature names from the JSON file
         self.feature_names = model_info["feature_names"]
 
-        # Create a new model with the same parameters
-        self.model = DecisionTreeClassifier(
-            **{
-                k: v
-                for k, v in model_info["model_params"].items()
-                if k not in ["random_state"]
-            }
-        )
+        # Load the actual trained model from the pickle file
+        pickle_filepath = model_info.get("pickle_filepath")
 
-        logger.info(f"Model loaded from {filepath}")
+        # If pickle_filepath is not in the model_info, try to infer it
+        if pickle_filepath is None:
+            pickle_filepath = f"{os.path.splitext(self.model_filepath)[0]}.pkl"
+
+        if os.path.exists(pickle_filepath):
+            with open(pickle_filepath, "rb") as f:
+                self.model, loaded_feature_names = pickle.load(f)
+
+            # Ensure feature names match
+            if loaded_feature_names != self.feature_names:
+                logger.warning(
+                    "Feature names in pickle file don't match those in JSON file. "
+                    "Using feature names from pickle file."
+                )
+                self.feature_names = loaded_feature_names
+
+            logger.info(f"Model loaded from {pickle_filepath}")
+
+            # Update mode to ML_MODEL since we now have a loaded model
+            self.mode = OccupancyMode.ML_MODEL
+        else:
+            # Fallback to creating a new model with the same parameters
+            logger.warning(
+                f"Pickle file {pickle_filepath} not found. "
+                "Creating a new model with the same parameters, but it won't have the same trained weights."
+            )
+            self.model = DecisionTreeClassifier(
+                **{
+                    k: v
+                    for k, v in model_info["model_params"].items()
+                    if k not in ["random_state"]
+                }
+            )
+
+        logger.info(f"Model information loaded from {self.model_filepath}")
         logger.info(f"Feature importances: {model_info['feature_importances']}")
         logger.info(f"Decision tree structure:\n{model_info['tree_text']}")
 
-        # Note: This doesn't actually load the trained model parameters,
-        # as scikit-learn doesn't provide a way to directly set the tree structure from text.
-        # For a complete solution, we would need to use pickle or joblib to save/load the model.
-        # However, this approach provides human-readable model information and can be used
-        # as a reference for manual implementation of the decision rules.
-        logger.warning(
-            "Note: This is a human-readable representation of the model. "
-            "For actual prediction, you'll need to retrain the model or use "
-            "the decision rules manually."
-        )
-
-    def set_occupancy_status_from_model(self, daily_data: pd.DataFrame) -> None:
+    def _set_occupancy_status_from_model(self, daily_data: pd.DataFrame) -> None:
         """
         Apply the trained model to daily activity data to determine occupancy status.
+
+        This method clears the occupancy_cache before populating it with new statuses,
+        ensuring that the occupancy status is determined solely by the model predictions.
 
         Args:
             daily_data: DataFrame containing daily aggregated video activity data
         """
         if self.model is None:
             raise ValueError(
-                "No model has been trained. Call train_occupancy_model() first."
+                "No model has been trained or loaded. Call train_occupancy_model() or load_occupancy_model() first."
             )
 
         logger.info("Applying model to determine occupancy status...")
+
+        # Clear the cache before populating with new statuses
+        self.occupancy_cache.clear()
 
         for _, row in daily_data.iterrows():
             date_str = row["Date"].strftime("%Y-%m-%d")
@@ -505,6 +614,21 @@ if __name__ == "__main__":
     from logging_config import set_logger_level_and_format
     from video_database import VideoDatabase, VideoDatabaseList
 
+    def write_csv(all_occupancy_data, output_file):
+        # Save to CSV file
+        logger.info(f"Saving occupancy data to {output_file}")
+
+        with open(output_file, "w", newline="") as f:
+            writer = csv.writer(f)
+            # Add a space after the comma to make it more readable
+            writer.writerow(["date", "occupancy_status"])
+            for item in all_occupancy_data:
+                writer.writerow([item["date"], item["status"]])
+
+        logger.info(
+            f"Successfully saved occupancy data for {len(all_occupancy_data)} dates"
+        )
+
     set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
 
     # Load video database
@@ -516,12 +640,17 @@ if __name__ == "__main__":
     out_dir: str = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
 
     logger.info("Loading video database...")
-    video_database = VideoDatabaseList(
+    video_db_list = VideoDatabaseList(
         [
             VideoDatabase(video_directories=None, video_metadata_file=file)
             for file in metadata_files
         ]
-    ).load_videos()
+    )
+    video_database = video_db_list.load_videos()
+
+    if video_database is None:
+        logger.error("Failed to load video database")
+        sys.exit(1)
 
     logger.debug(f"Number of videos: {len(video_database)}")
 
@@ -533,35 +662,43 @@ if __name__ == "__main__":
     # Create occupancy analyzer
     logger.info("Analyzing occupancy...")
 
-    occupancy = Occupancy(daily_data["activity"])
-    # occupancy = Occupancy()
+    # Create occupancy status using different modes
 
-    # Get all dates with occupancy status
-    all_occupancy_data = occupancy.get_all_dates_with_status()
-
-    # Save to CSV file
-    output_file = os.path.join(out_dir, "daily_occupancies.csv")
-    logger.info(f"Saving occupancy data to {output_file}")
-
-    with open(output_file, "w", newline="") as f:
-        writer = csv.writer(f)
-        # Add a space after the comma to make it more readable
-        writer.writerow(["date", "occupancy_status"])
-        for item in all_occupancy_data:
-            writer.writerow([item["date"], item["status"]])
-
-    logger.info(
-        f"Successfully saved occupancy data for {len(all_occupancy_data)} dates"
+    # Manual Calendar
+    write_csv(
+        Occupancy(mode=OccupancyMode.CALENDAR).get_all_dates_with_status(),
+        os.path.join(out_dir, "daily_occupancies_calendar.csv"),
     )
 
-    # Print the content of the CSV file for verification
-    logger.info(f"Content of {output_file}:")
-    with open(output_file, "r", newline="") as f:
-        reader = csv.reader(f)
-        for row in reader:
-            logger.info(f"Row: {row}")
+    # Heuristic
+    write_csv(
+        Occupancy(
+            mode=OccupancyMode.HEURISTIC, daily_data=daily_data["activity"]
+        ).get_all_dates_with_status(),
+        os.path.join(out_dir, "daily_occupancies_heuristic.csv"),
+    )
 
-    # Print sample of the results
-    logger.info("Sample of occupancy results:")
-    for item in all_occupancy_data[:5]:
-        logger.info(f"Date: {item['date']}, Status: {item['status']}")
+    # ML Model:
+    model_file = "occupancy_model.txt"
+
+    # Train and save a new model
+    occupancy_ml_train = Occupancy()  # Start in CALENDAR mode
+    occupancy_ml_train.train_occupancy_model(
+        daily_data["activity"]
+    )  # This switches to ML_MODEL mode
+    occupancy_ml_train.save_occupancy_model(model_file)
+    occupancy_ml_train.set_occupancy_status_from_daily_activity(daily_data["activity"])
+    write_csv(
+        occupancy_ml_train.get_all_dates_with_status(),
+        os.path.join(out_dir, "daily_occupancies_ml_train.csv"),
+    )
+
+    # Load an existing ML model
+    write_csv(
+        Occupancy(
+            mode=OccupancyMode.ML_MODEL,
+            daily_data=daily_data["activity"],
+            model_filepath=model_file,
+        ).get_all_dates_with_status(),
+        os.path.join(out_dir, "daily_occupancies_ml_eval.csv"),
+    )

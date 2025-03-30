@@ -40,5 +40,6 @@
   "classes": [
     "NOT_OCCUPIED",
     "OCCUPIED"
-  ]
+  ],
+  "pickle_filepath": "occupancy_model.pkl"
 }
