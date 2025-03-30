@@ -6,7 +6,7 @@ Test script for the machine learning functionality in the Occupancy class.
 This script demonstrates how to:
 1. Load video data
 2. Create an Occupancy instance
-3. Train a model using daily activity data
+3. Train a model using daily activity data with different methods
 4. Save the model to a file
 5. Load the model from a file
 6. Apply the model to predict occupancy status
@@ -17,24 +17,23 @@ import csv
 import logging
 import os
 import sys
-from datetime import datetime
 
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, classification_report
-from sklearn.tree import plot_tree
 
-from config import Config
-from logging_config import create_logger, set_logger_level_and_format
+from logging_config import (
+    create_logger,
+    set_all_loggers_level_and_format,
+    set_logger_level_and_format,
+)
 from occupancy import Occupancy, OccupancyMode, OccupancyStatus
 from video_data_aggregator import VideoDataAggregator
 from video_database import VideoDatabase, VideoDatabaseList
-from video_filter import DateRange, TimeRange, VideoFilter, VideoSelector
 
 # Set up logging
 logger = create_logger(__name__)
 set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
+set_all_loggers_level_and_format(level=logging.DEBUG, extended_format=True)
 
 
 def load_video_data():
@@ -65,10 +64,53 @@ def load_video_data():
 
     # Get aggregated data
     logger.info("Aggregating video data...")
-    data_aggregator = VideoDataAggregator(metrics=["activity"])
+    metric = "activity"
+    data_aggregator = VideoDataAggregator(metrics=[metric])
     daily_data, _ = data_aggregator.run(video_database)
+    daily_activity_data = daily_data[metric]
 
-    return daily_data
+    # Filter to keep only the important columns
+
+    # important_columns = [
+    #    "Date",
+    #    "Front Door",
+    #    "Walkway",
+    #    "Backyard",
+    #    "Back Entrance",
+    # ]  # Perfect model
+
+    # important_columns = [
+    #    "Date",
+    #    "Front Door",
+    #    "Walkway",
+    #    "Backyard",
+    # ]  # 2 errors: 2024-10-12 and 2024-12-11
+
+    # important_columns = [
+    #    "Date",
+    #    "Front Door",
+    #    "Walkway",
+    #    "Back Entrance",
+    # ]  # 1 error: 2024-12-10
+
+    important_columns = [
+        "Date",
+        "Front Door",
+        "Walkway",
+    ]  # 5 errors: 2024-12-28, 2024-12-26, 2024-12-11, 2024-10-12, 2024-03-19
+
+    # 2024-12-11 and 2024-10-12: seem to directly depend on Back Entrance. Both identified as NOT OCCUPIED.
+    # 2024-12-10 is strange. Not strictly depending on Backyard, but Back Entrance not enough.
+    # 2024-12-28, 2024-12-26 are also strange, both identified as NOT OCCUPIED. 2024-03-19 is thought to be OCCUPIED
+
+    filtered_columns = [
+        col for col in daily_activity_data.columns if col in important_columns
+    ]
+    daily_activity_data = daily_activity_data[filtered_columns]
+
+    logger.info(f"Filtered daily activity data to columns: {filtered_columns}")
+
+    return daily_activity_data
 
 
 def compare_occupancy_methods(calendar_occupancy, heuristic_occupancy, ml_occupancy):
@@ -139,8 +181,72 @@ def calculate_accuracy(comparison_df):
     }
 
 
-def main():
+def train_and_evaluate_model(daily_data, method, params=None):
+    """
+    Train a model using the specified method and evaluate its performance.
 
+    Args:
+        daily_data: Dictionary containing daily activity data
+        method: Training method to use ('simple', 'cross_validation', 'leave_one_out', or 'grid_search')
+        params: Dictionary of additional parameters for the training method
+
+    Returns:
+        Tuple containing:
+            - Trained Occupancy instance
+            - Model metrics
+            - Model file path
+    """
+    if params is None:
+        params = {}
+
+    # Create an Occupancy instance
+    ml_occupancy = Occupancy(mode=OccupancyMode.CALENDAR)  # Start in CALENDAR mode
+
+    # Generate a model file name based on the method and parameters
+    model_file = f"occupancy_model_{method}"
+    if "max_depth" in params:
+        model_file += f"_depth{params['max_depth']}"
+    if "random_state" in params:
+        model_file += f"_seed{params['random_state']}"
+    model_file += ".txt"
+
+    # Train the model using the specified method
+    logger.info(f"Training model using {method} method...")
+    model_metrics = ml_occupancy.train_occupancy_model(
+        daily_data, method=method, **params
+    )
+
+    # Print model evaluation metrics
+    logger.info(f"Model accuracy: {model_metrics['accuracy']:.2f}")
+
+    # Print cross-validation scores if available
+    if "cv_scores" in model_metrics:
+        logger.info(f"Cross-validation scores: {model_metrics['cv_scores']}")
+        logger.info(
+            f"CV mean: {model_metrics['cv_mean']:.2f}, CV std: {model_metrics['cv_std']:.2f}"
+        )
+
+    # Print best parameters if available
+    if "best_params" in model_metrics:
+        logger.info(f"Best parameters: {model_metrics['best_params']}")
+
+    # Print feature importances
+    logger.info("Feature importances:")
+    for feature, importance in sorted(
+        model_metrics["feature_importances"].items(),
+        key=lambda x: x[1],
+        reverse=True,
+    ):
+        logger.info(f"  {feature}: {importance:.4f}")
+
+    # Save the model to a file
+    logger.info(f"Saving model to {model_file}...")
+    ml_occupancy.save_occupancy_model(model_file)
+
+    return ml_occupancy, model_metrics, model_file
+
+
+def main():
     # Load video data
     daily_data = load_video_data()
 
@@ -151,70 +257,74 @@ def main():
 
     # 2. Create an Occupancy instance with heuristic method
     logger.info("Creating heuristic-based occupancy...")
-    heuristic_occupancy = Occupancy(
-        mode=OccupancyMode.HEURISTIC, daily_data=daily_data["activity"]
-    )
+    heuristic_occupancy = Occupancy(mode=OccupancyMode.HEURISTIC, daily_data=daily_data)
     heuristic_status = heuristic_occupancy.occupancy_cache.copy()
 
-    # 3. Train a machine learning model
-    logger.info("Training machine learning model...")
-    ml_occupancy = Occupancy(mode=OccupancyMode.CALENDAR)  # Start in CALENDAR mode
     try:
-        # Train the model using daily activity data (this switches to ML_MODEL mode)
-        model_metrics = ml_occupancy.train_occupancy_model(daily_data["activity"])
+        # 3. Train models using different methods
 
-        # Print model evaluation metrics
-        logger.info(f"Model accuracy: {model_metrics['accuracy']:.2f}")
-        logger.info("Feature importances:")
-        for feature, importance in sorted(
-            model_metrics["feature_importances"].items(),
-            key=lambda x: x[1],
-            reverse=True,
-        ):
-            logger.info(f"  {feature}: {importance:.4f}")
-
-        # Visualize the decision tree
-        if ml_occupancy.model is not None:
-            logger.info("Creating decision tree visualization...")
-            plt.figure(figsize=(20, 10))
-            plot_tree(
-                ml_occupancy.model,
-                feature_names=ml_occupancy.feature_names,
-                class_names=["NOT_OCCUPIED", "OCCUPIED"],
-                filled=True,
-                rounded=True,
-                fontsize=10,
-            )
-            plt.title("Occupancy Decision Tree", fontsize=14)
-
-            # Save the visualization
-            tree_viz_file = "occupancy_decision_tree.png"
-            plt.savefig(tree_viz_file, dpi=300, bbox_inches="tight")
-            logger.info(f"Decision tree visualization saved to {tree_viz_file}")
-            plt.close()
-        else:
-            logger.error("Cannot visualize decision tree: model is None")
-
-        # 4. Save the model to a file
-        model_file = "occupancy_model.txt"
-        logger.info(f"Saving model to {model_file}...")
-        ml_occupancy.save_occupancy_model(model_file)
-
-        # 5. Load the model from the file
-        logger.info(f"Loading model from {model_file}...")
-        new_occupancy = Occupancy(
-            mode=OccupancyMode.ML_MODEL,
-            daily_data=daily_data["activity"],
-            model_filepath=model_file,
+        # Simple train-test split (original method)
+        simple_params = {
+            "random_state": 50,  # Try different random seeds to see the effect
+            "test_size": 0.2,
+            "max_depth": 3,  # Limit tree depth for simplicity
+        }
+        simple_occupancy, simple_metrics, simple_model_file = train_and_evaluate_model(
+            daily_data, "simple", simple_params
         )
 
-        # 6. Apply the model to predict occupancy status
-        logger.info("Applying model to predict occupancy status...")
-        # The model is already in ML_MODEL mode after training
-        ml_occupancy.set_occupancy_status_from_daily_activity(daily_data["activity"])
-        ml_status = ml_occupancy.occupancy_cache.copy()
+        # Cross-validation
+        cv_params = {
+            "random_state": 50,
+            "cv_folds": 5,
+            "max_depth": 3,
+        }
+        cv_occupancy, cv_metrics, cv_model_file = train_and_evaluate_model(
+            daily_data, "cross_validation", cv_params
+        )
 
-        # 7. Compare the results
+        # Leave-one-out cross-validation
+        loo_params = {
+            "random_state": 50,
+            "max_depth": 3,
+        }
+        loo_occupancy, loo_metrics, loo_model_file = train_and_evaluate_model(
+            daily_data, "leave_one_out", loo_params
+        )
+
+        # Grid search with cross-validation
+        grid_params = {
+            "random_state": 50,
+            "cv_folds": 5,
+        }
+        grid_occupancy, grid_metrics, grid_model_file = train_and_evaluate_model(
+            daily_data, "grid_search", grid_params
+        )
+
+        # 4. Compare the results of different methods
+        logger.info("\nComparing model accuracies:")
+        logger.info(f"  Simple train-test split: {simple_metrics['accuracy']:.2f}")
+        logger.info(f"  Cross-validation: {cv_metrics['accuracy']:.2f}")
+        logger.info(f"  Leave-one-out: {loo_metrics['accuracy']:.2f}")
+        logger.info(f"  Grid search: {grid_metrics['accuracy']:.2f}")
+
+        # 5. Use the best model for prediction (in this case, we'll use the grid search model)
+        logger.info("\nUsing grid search model for prediction...")
+
+        # Load the model from the file
+        logger.info(f"Loading model from {grid_model_file}...")
+        best_occupancy = Occupancy(
+            mode=OccupancyMode.ML_MODEL,
+            daily_data=daily_data,
+            model_filepath=grid_model_file,
+        )
+
+        # Apply the model to predict occupancy status
+        logger.info("Applying model to predict occupancy status...")
+        best_occupancy.set_occupancy_status_from_daily_activity(daily_data)
+        ml_status = best_occupancy.occupancy_cache.copy()
+
+        # 6. Compare with calendar and heuristic methods
         logger.info("Comparing occupancy methods...")
         comparison_df = compare_occupancy_methods(
             calendar_status, heuristic_status, ml_status

@@ -54,11 +54,18 @@ import sys
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, classification_report
-from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier, export_text
+from sklearn.model_selection import (
+    GridSearchCV,
+    KFold,
+    LeaveOneOut,
+    cross_val_score,
+    train_test_split,
+)
+from sklearn.tree import DecisionTreeClassifier, export_text, plot_tree
 
 from logging_config import create_logger
 from video_data_aggregator import VideoDataAggregator
@@ -122,7 +129,9 @@ class Occupancy:
     # assumed to be of occupancy status UNKNOWN.
     # Format: (start_date, end_date, occupancy_status)
     OCCUPANCY_CALENDAR = [
-        ("2024-02-27", "2024-03-03", OccupancyStatus.OCCUPIED),
+        ("2024-02-27", "2024-02-27", OccupancyStatus.OCCUPIED),
+        # ("2024-02-28", "2024-02-28", OccupancyStatus.OCCUPIED),
+        ("2024-02-29", "2024-03-03", OccupancyStatus.OCCUPIED),
         ("2024-03-04", "2024-03-07", OccupancyStatus.NOT_OCCUPIED),
         ("2024-03-08", "2024-03-09", OccupancyStatus.OCCUPIED),
         ("2024-03-10", "2024-03-10", OccupancyStatus.NOT_OCCUPIED),
@@ -274,18 +283,8 @@ class Occupancy:
         for _, row in daily_data.iterrows():
             date_str = row["Date"].strftime("%Y-%m-%d")
 
-            # Extract activity values with default of 0 if not present
-            fd = row.get("Front Door", 0)
-            be = row.get("Back Entrance", 0)
-            ww = row.get("Walkway", 0)
-            by = row.get("Backyard", 0)
-
             # Set occupancy status using the decision function
-            if (
-                (fd > 3.5 and ww > 3.0 and (by > 1.5 or ww > 7.5))
-                or (fd <= 3.5 and be > 2.0)
-                or (fd <= 3.5 and be <= 2.0 and not (ww <= 4.5 or by <= 9.0))
-            ):
+            if row.get("Front Door", 0) >= 4 and row.get("Walkway", 0) >= 4:
                 self.occupancy_cache[date_str] = OccupancyStatus.OCCUPIED
             else:
                 self.occupancy_cache[date_str] = OccupancyStatus.NOT_OCCUPIED
@@ -392,62 +391,176 @@ class Occupancy:
         return X, y, feature_cols
 
     def train_occupancy_model(
-        self, daily_data: pd.DataFrame, test_size: float = 0.2, random_state: int = 42
+        self,
+        daily_data: pd.DataFrame,
+        method: str = "cross_validation",
+        test_size: float = 0.2,
+        random_state: int = 42,
+        cv_folds: int = 5,
+        max_depth: Optional[int] = None,
+        min_samples_split: int = 2,
     ) -> Dict[str, Any]:
         """
         Train a decision tree model to predict occupancy status from daily activity data.
 
+        This method supports multiple training approaches to ensure model robustness:
+        - 'simple': Simple train-test split (sensitive to random_state)
+        - 'cross_validation': K-fold cross-validation (more robust)
+        - 'leave_one_out': Leave-one-out cross-validation (thorough but computationally intensive)
+        - 'grid_search': Grid search with cross-validation (finds optimal hyperparameters)
+
         Args:
             daily_data: DataFrame containing daily aggregated video activity data
-            test_size: Proportion of data to use for testing (default: 0.2)
+            method: Training method to use ('simple', 'cross_validation', 'leave_one_out', or 'grid_search')
+            test_size: Proportion of data to use for testing (default: 0.2, used only for 'simple' method)
             random_state: Random seed for reproducibility (default: 42)
+            cv_folds: Number of folds for cross-validation (default: 5, used for 'cross_validation' and 'grid_search')
+            max_depth: Maximum depth of the decision tree (default: None, used for all methods)
+            min_samples_split: Minimum samples required to split a node (default: 2, used for all methods)
 
         Returns:
             Dictionary containing model evaluation metrics
         """
-        logger.info("Training occupancy model...")
+        logger.info(f"Training occupancy model using {method} method...")
 
         # Prepare training data
         X, y, feature_names = self._prepare_training_data(daily_data)
         self.feature_names = feature_names
 
-        # Split data into training and testing sets
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=random_state
+        # Initialize model with base parameters
+        base_model = DecisionTreeClassifier(
+            random_state=random_state,
+            max_depth=max_depth,
+            min_samples_split=min_samples_split,
         )
 
-        # Train decision tree model
-        self.model = DecisionTreeClassifier(random_state=random_state)
-        self.model.fit(X_train, y_train)
+        # Train model using the specified method
+        if method == "simple":
+            # Simple train-test split (original method)
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=test_size, random_state=random_state
+            )
+            self.model = base_model
+            self.model.fit(X_train, y_train)
 
-        # Evaluate model
-        y_pred = self.model.predict(X_test)
-        accuracy = accuracy_score(y_test, y_pred)
-        report = classification_report(
-            y_test, y_pred, target_names=["NOT_OCCUPIED", "OCCUPIED"], output_dict=True
-        )
+            # Evaluate model
+            y_pred = self.model.predict(X_test)
+            accuracy = accuracy_score(y_test, y_pred)
+            report = classification_report(
+                y_test,
+                y_pred,
+                target_names=["NOT_OCCUPIED", "OCCUPIED"],
+                output_dict=True,
+            )
+
+            cv_scores = None
+            best_params = None
+
+        elif method == "cross_validation":
+            # K-fold cross-validation
+            kf = KFold(n_splits=cv_folds, shuffle=True, random_state=random_state)
+            cv_scores = cross_val_score(base_model, X, y, cv=kf)
+
+            # Train final model on all data
+            self.model = base_model
+            self.model.fit(X, y)
+
+            # For reporting purposes
+            accuracy = cv_scores.mean()
+            report = None  # No test set for classification report
+            best_params = None
+
+        elif method == "leave_one_out":
+            # Leave-one-out cross-validation
+            loo = LeaveOneOut()
+            cv_scores = cross_val_score(base_model, X, y, cv=loo)
+
+            # Train final model on all data
+            self.model = base_model
+            self.model.fit(X, y)
+
+            # For reporting purposes
+            accuracy = cv_scores.mean()
+            report = None  # No test set for classification report
+            best_params = None
+
+        elif method == "grid_search":
+            # Grid search with cross-validation
+            param_grid = {
+                "max_depth": [None, 3, 4, 5],
+                "min_samples_split": [2, 3, 5],
+                "min_samples_leaf": [1, 2, 4],
+                "criterion": ["gini", "entropy"],
+            }
+
+            grid_search = GridSearchCV(
+                base_model,
+                param_grid,
+                cv=cv_folds,
+                scoring="accuracy",
+                n_jobs=-1,  # Use all available cores
+            )
+
+            grid_search.fit(X, y)
+
+            # Get best model
+            self.model = grid_search.best_estimator_
+
+            # For reporting purposes
+            accuracy = grid_search.best_score_
+            report = None  # No test set for classification report
+            best_params = grid_search.best_params_
+            cv_scores = grid_search.cv_results_["mean_test_score"]
+
+        else:
+            raise ValueError(
+                f"Unknown method: {method}. Choose from 'simple', 'cross_validation', 'leave_one_out', or 'grid_search'."
+            )
 
         logger.info(f"Model trained with accuracy: {accuracy:.2f}")
+
+        if cv_scores is not None:
+            logger.info(f"Cross-validation scores: {cv_scores}")
+            logger.info(
+                f"Cross-validation mean: {cv_scores.mean():.2f}, std: {cv_scores.std():.2f}"
+            )
+
+        if best_params is not None:
+            logger.info(f"Best parameters: {best_params}")
 
         # Update mode to ML_MODEL since we now have a trained model
         self.mode = OccupancyMode.ML_MODEL
 
         # Return evaluation metrics
-        return {
+        result = {
             "accuracy": accuracy,
-            "classification_report": report,
             "feature_names": feature_names,
             "feature_importances": dict(
                 zip(feature_names, self.model.feature_importances_)
             ),
         }
 
+        if report is not None:
+            result["classification_report"] = report
+
+        if cv_scores is not None:
+            result["cv_scores"] = cv_scores.tolist()
+            result["cv_mean"] = cv_scores.mean()
+            result["cv_std"] = cv_scores.std()
+
+        if best_params is not None:
+            result["best_params"] = best_params
+
+        return result
+
     def save_occupancy_model(self, filepath: Optional[str] = None) -> None:
         """
         Save the trained model to a file.
 
-        This method saves both the trained model using pickle (for accurate predictions)
-        and a human-readable representation of the model (for inspection).
+        This method saves:
+        1. The trained model using pickle (for accurate predictions)
+        2. A human-readable representation of the model as JSON (for inspection)
+        3. A visualization of the decision tree as a PNG image
 
         Args:
             filepath: Path to save the model. If None, uses the model_filepath from initialization.
@@ -494,7 +607,27 @@ class Occupancy:
         with open(self.model_filepath, "w") as f:
             json.dump(model_info, f, indent=2)
 
-        logger.info(f"Model saved to {self.model_filepath} and {pickle_filepath}")
+        # Save visualization of the decision tree
+        logger.info("Creating decision tree visualization...")
+        plt.figure(figsize=(20, 10))
+        plot_tree(
+            self.model,
+            feature_names=self.feature_names,
+            class_names=["NOT_OCCUPIED", "OCCUPIED"],
+            filled=True,
+            rounded=True,
+            fontsize=10,
+        )
+        plt.title("Occupancy Decision Tree", fontsize=14)
+
+        # Save the visualization with the same base name as the model file
+        tree_viz_filepath = f"{os.path.splitext(self.model_filepath)[0]}.png"
+        plt.savefig(tree_viz_filepath, dpi=300, bbox_inches="tight")
+        plt.close()
+
+        logger.info(
+            f"Model saved to {self.model_filepath}, {pickle_filepath}, and {tree_viz_filepath}"
+        )
 
     def load_occupancy_model(self, filepath: Optional[str] = None) -> None:
         """
@@ -640,29 +773,35 @@ if __name__ == "__main__":
     out_dir: str = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
 
     logger.info("Loading video database...")
-    video_db_list = VideoDatabaseList(
+    video_database = VideoDatabaseList(
         [
             VideoDatabase(video_directories=None, video_metadata_file=file)
             for file in metadata_files
         ]
-    )
-    video_database = video_db_list.load_videos()
+    ).load_videos()
 
-    if video_database is None:
-        logger.error("Failed to load video database")
+    # Check if database is empty
+    if not video_database:
+        logger.error("No videos found in database")
         sys.exit(1)
-
     logger.debug(f"Number of videos: {len(video_database)}")
 
-    # Get aggregated data
-    logger.info("Aggregating video data...")
-    data_aggregator = VideoDataAggregator(metrics=["activity"])
+    # Compute daily activity data
+    logger.info("Computing daily activity data...")
+    metric = "activity"
+    data_aggregator = VideoDataAggregator(metrics=[metric])
     daily_data, _ = data_aggregator.run(video_database)
-
-    # Create occupancy analyzer
-    logger.info("Analyzing occupancy...")
+    daily_data = daily_data[metric]
+    important_columns = [
+        "Date",
+        "Front Door",
+        "Walkway",
+    ]
+    filtered_columns = [col for col in daily_data.columns if col in important_columns]
+    daily_data = daily_data[filtered_columns]
 
     # Create occupancy status using different modes
+    logger.info("Analyzing occupancy...")
 
     # Manual Calendar
     write_csv(
@@ -670,10 +809,10 @@ if __name__ == "__main__":
         os.path.join(out_dir, "daily_occupancies_calendar.csv"),
     )
 
-    # Heuristic
+    # Heuristic computed from daily activity data
     write_csv(
         Occupancy(
-            mode=OccupancyMode.HEURISTIC, daily_data=daily_data["activity"]
+            mode=OccupancyMode.HEURISTIC, daily_data=daily_data
         ).get_all_dates_with_status(),
         os.path.join(out_dir, "daily_occupancies_heuristic.csv"),
     )
@@ -681,23 +820,21 @@ if __name__ == "__main__":
     # ML Model:
     model_file = "occupancy_model.txt"
 
-    # Train and save a new model
-    occupancy_ml_train = Occupancy()  # Start in CALENDAR mode
-    occupancy_ml_train.train_occupancy_model(
-        daily_data["activity"]
-    )  # This switches to ML_MODEL mode
+    # Train and save a new model from daily activity data
+    occupancy_ml_train = Occupancy()
+    occupancy_ml_train.train_occupancy_model(daily_data, method="grid_search")
     occupancy_ml_train.save_occupancy_model(model_file)
-    occupancy_ml_train.set_occupancy_status_from_daily_activity(daily_data["activity"])
+    occupancy_ml_train.set_occupancy_status_from_daily_activity(daily_data)
     write_csv(
         occupancy_ml_train.get_all_dates_with_status(),
         os.path.join(out_dir, "daily_occupancies_ml_train.csv"),
     )
 
-    # Load an existing ML model
+    # Load an existing ML model and evalaute it on the daily activity data
     write_csv(
         Occupancy(
             mode=OccupancyMode.ML_MODEL,
-            daily_data=daily_data["activity"],
+            daily_data=daily_data,
             model_filepath=model_file,
         ).get_all_dates_with_status(),
         os.path.join(out_dir, "daily_occupancies_ml_eval.csv"),

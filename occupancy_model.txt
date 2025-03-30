@@ -1,32 +1,18 @@
 {
   "feature_names": [
-    "Back Alleyway",
-    "Back Entrance",
-    "Backyard",
     "Front Door",
-    "Front Entrance",
-    "Front Yard",
-    "Garage",
-    "Gateway",
     "Walkway"
   ],
   "feature_importances": {
-    "Back Alleyway": 0.0,
-    "Back Entrance": 0.041239178069631816,
-    "Backyard": 0.01587492361486167,
-    "Front Door": 0.9169824318173132,
-    "Front Entrance": 0.0,
-    "Front Yard": 0.0,
-    "Garage": 0.0,
-    "Gateway": 0.0,
-    "Walkway": 0.025903466498193438
+    "Front Door": 0.9857623444953122,
+    "Walkway": 0.01423765550468782
   },
-  "tree_text": "|--- Front Door <= 3.50\n|   |--- Back Entrance <= 2.00\n|   |   |--- Walkway <= 4.50\n|   |   |   |--- class: 0\n|   |   |--- Walkway >  4.50\n|   |   |   |--- Backyard <= 9.00\n|   |   |   |   |--- class: 0\n|   |   |   |--- Backyard >  9.00\n|   |   |   |   |--- class: 1\n|   |--- Back Entrance >  2.00\n|   |   |--- class: 1\n|--- Front Door >  3.50\n|   |--- Walkway <= 3.00\n|   |   |--- class: 0\n|   |--- Walkway >  3.00\n|   |   |--- Backyard <= 1.50\n|   |   |   |--- Walkway <= 7.50\n|   |   |   |   |--- class: 0\n|   |   |   |--- Walkway >  7.50\n|   |   |   |   |--- class: 1\n|   |   |--- Backyard >  1.50\n|   |   |   |--- class: 1\n",
+  "tree_text": "|--- Front Door <= 3.50\n|   |--- Front Door <= 2.50\n|   |   |--- Walkway <= 4.50\n|   |   |   |--- class: 0\n|   |   |--- Walkway >  4.50\n|   |   |   |--- class: 0\n|   |--- Front Door >  2.50\n|   |   |--- Walkway <= 3.50\n|   |   |   |--- class: 0\n|   |   |--- Walkway >  3.50\n|   |   |   |--- class: 0\n|--- Front Door >  3.50\n|   |--- Walkway <= 3.00\n|   |   |--- class: 0\n|   |--- Walkway >  3.00\n|   |   |--- Front Door <= 4.50\n|   |   |   |--- class: 1\n|   |   |--- Front Door >  4.50\n|   |   |   |--- class: 1\n",
   "model_params": {
     "ccp_alpha": 0.0,
     "class_weight": null,
     "criterion": "gini",
-    "max_depth": null,
+    "max_depth": 3,
     "max_features": null,
     "max_leaf_nodes": null,
     "min_impurity_decrease": 0.0,
