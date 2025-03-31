@@ -117,11 +117,17 @@ class Occupancy:
     based on the selected mode. It also provides methods to train, save, and load machine
     learning models for improved occupancy prediction.
 
+    The ML_MODEL mode uses a decision tree classifier to predict occupancy status based on
+    daily activity data. The model is trained using the OCCUPANCY_CALENDAR as ground truth
+    and can be saved to a file for later use. The model can also be loaded from a file.
+
     Attributes:
         mode (OccupancyMode): The current mode of operation
         occupancy_cache (Dict[str, OccupancyStatus]): Cache of date to occupancy status
         model (DecisionTreeClassifier): Trained decision tree model for occupancy prediction
+        feature_names (List[str]): Names of features used by the model
         model_filepath (str): Path to the model file (used in ML_MODEL mode)
+        tree_structure (str): Human-readable representation of the decision tree structure
     """
 
     # Occupancy Calendar to be kept up to date by the user specified as a list of calendar

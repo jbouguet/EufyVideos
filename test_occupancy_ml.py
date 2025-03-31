@@ -11,14 +11,19 @@ This script demonstrates how to:
 5. Load the model from a file
 6. Apply the model to predict occupancy status
 7. Compare the results with the original occupancy status from the calendar
+8. Visualize the decision boundaries for 2D models
 """
 
 import csv
+import json
 import logging
 import os
+import re
 import sys
+from datetime import datetime
 
 import pandas as pd
+import plotly.graph_objects as go
 from sklearn.metrics import accuracy_score, classification_report
 
 from logging_config import (
@@ -69,7 +74,7 @@ def load_video_data():
     daily_data, _ = data_aggregator.run(video_database)
     daily_activity_data = daily_data[metric]
 
-    # Filter to keep only the important columns
+    # Filter to keep only important columns (make sure that "Date" is always included)
 
     # important_columns = [
     #    "Date",
@@ -97,7 +102,7 @@ def load_video_data():
         "Date",
         "Front Door",
         "Walkway",
-    ]  # 5 errors: 2024-12-28, 2024-12-26, 2024-12-11, 2024-10-12, 2024-03-19
+    ]  # 5 errors: 2024-03-19, 2024-10-12, 2024-12-11, 2024-12-26, 2024-12-28
 
     # 2024-12-11 and 2024-10-12: seem to directly depend on Back Entrance. Both identified as NOT OCCUPIED.
     # 2024-12-10 is strange. Not strictly depending on Backyard, but Back Entrance not enough.
@@ -181,7 +186,419 @@ def calculate_accuracy(comparison_df):
     }
 
 
-def train_and_evaluate_model(daily_data, method, params=None):
+def visualize_decision_boundaries(
+    daily_data, occupancy_model, calendar_status, output_file
+):
+    """
+    Create a 2D visualization of the decision boundaries for a model with Front Door and Walkway features.
+
+    Args:
+        daily_data: DataFrame containing daily activity data
+        occupancy_model: Trained Occupancy instance with a model
+        calendar_status: Dictionary mapping dates to OccupancyStatus from the calendar
+        output_file: Path to save the HTML visualization
+    """
+    # Check if we have a 2D model with Front Door and Walkway
+    if not (
+        set(occupancy_model.feature_names) == {"Front Door", "Walkway"}
+        or (
+            len(occupancy_model.feature_names) == 2
+            and "Front Door" in occupancy_model.feature_names
+            and "Walkway" in occupancy_model.feature_names
+        )
+    ):
+        logger.info(
+            "Skipping visualization: Model does not use exactly Front Door and Walkway features"
+        )
+        return
+
+    # Extract the decision tree thresholds
+    # For a simple decision tree with Front Door and Walkway, we expect thresholds like:
+    # Front Door <= 3.5 and Walkway <= 3.0
+    # These values might be different based on your trained model
+    front_door_threshold = 3.5  # Default value
+    walkway_threshold = 3.0  # Default value
+
+    # Try to extract thresholds from the model
+    if hasattr(occupancy_model, "model") and occupancy_model.model is not None:
+        # Extract the tree structure
+        tree = occupancy_model.model.tree_
+
+        # Find the root node (node 0) and its primary threshold
+        if tree.feature[0] >= 0:  # Not a leaf node
+            root_feature_name = occupancy_model.feature_names[tree.feature[0]]
+            root_threshold = tree.threshold[0]
+
+            if root_feature_name == "Front Door":
+                front_door_threshold = root_threshold
+
+                # For a Front Door root, find the Walkway threshold in the right branch
+                # The right child of node 0 is at index 2
+                right_child_idx = 2
+
+                # Check if the right child exists and is a decision node
+                if (
+                    right_child_idx < tree.node_count
+                    and tree.feature[right_child_idx] >= 0
+                ):
+                    right_child_feature = occupancy_model.feature_names[
+                        tree.feature[right_child_idx]
+                    ]
+                    if right_child_feature == "Walkway":
+                        walkway_threshold = tree.threshold[right_child_idx]
+
+                # If we didn't find Walkway at the immediate right child, look at the tree structure string
+                # This is more reliable than trying to navigate the tree structure directly
+                if hasattr(occupancy_model, "model") and hasattr(
+                    occupancy_model, "model_filepath"
+                ):
+                    try:
+                        # Load the model information from the JSON file
+                        with open(occupancy_model.model_filepath, "r") as f:
+                            model_info = json.load(f)
+
+                        # Extract the tree structure from the model information
+                        tree_text = model_info.get("tree_text", "")
+
+                        # Find the section after "Front Door > 3.50"
+                        right_branch_pattern = (
+                            r"\|--- Front Door > +3\.50.*?\n(.*?)(?=\n\|---|$)"
+                        )
+                        right_branch_match = re.search(
+                            right_branch_pattern, tree_text, re.DOTALL
+                        )
+
+                        if right_branch_match:
+                            right_branch = right_branch_match.group(1)
+                            # Find Walkway threshold in this branch
+                            walkway_pattern = r"\|--- Walkway <= +([0-9.]+)"
+                            walkway_match = re.search(walkway_pattern, right_branch)
+                            if walkway_match:
+                                walkway_threshold = float(walkway_match.group(1))
+                                logger.debug(
+                                    f"Found Walkway threshold {walkway_threshold} in right branch"
+                                )
+                    except Exception as e:
+                        logger.error(f"Error parsing tree structure: {e}")
+
+            elif root_feature_name == "Walkway":
+                walkway_threshold = root_threshold
+
+                # Similar logic for Walkway root
+                right_child_idx = 2
+                if (
+                    right_child_idx < tree.node_count
+                    and tree.feature[right_child_idx] >= 0
+                ):
+                    right_child_feature = occupancy_model.feature_names[
+                        tree.feature[right_child_idx]
+                    ]
+                    if right_child_feature == "Front Door":
+                        front_door_threshold = tree.threshold[right_child_idx]
+
+    logger.info(
+        f"Decision boundaries: Front Door = {front_door_threshold}, Walkway = {walkway_threshold}"
+    )
+
+    # Prepare data for plotting
+    raw_data = []
+    for _, row in daily_data.iterrows():
+        date_str = row["Date"].strftime("%Y-%m-%d")
+        if date_str in calendar_status:
+            front_door = row.get("Front Door", 0)
+            walkway = row.get("Walkway", 0)
+            calendar_status_value = calendar_status[date_str].value
+
+            # Get the model's prediction for this date
+            model_status = occupancy_model.status(date_str)
+            model_status_value = model_status.value
+
+            # Check if this point is misclassified by the model
+            is_misclassified = model_status != calendar_status[date_str]
+
+            raw_data.append(
+                {
+                    "date": date_str,
+                    "Front Door": front_door,
+                    "Walkway": walkway,
+                    "calendar_status": calendar_status_value,
+                    "model_status": model_status_value,
+                    "misclassified": is_misclassified,
+                }
+            )
+
+    # Convert to DataFrame for easier processing
+    raw_df = pd.DataFrame(raw_data)
+
+    # Group by coordinates and model prediction to count points and check for misclassifications
+    grouped_data = []
+    for (front_door, walkway, model_status), group in raw_df.groupby(
+        ["Front Door", "Walkway", "model_status"]
+    ):
+        # Count correctly classified and misclassified dates
+        misclassified_dates = group[group["misclassified"]]["date"].tolist()
+        correct_count = len(group) - len(misclassified_dates)
+        misclassified_count = len(misclassified_dates)
+
+        # A point has misclassifications if any date at this coordinate is misclassified
+        has_misclassifications = len(misclassified_dates) > 0
+
+        # Total count of dates at this coordinate
+        total_count = len(group)
+
+        grouped_data.append(
+            {
+                "Front Door": front_door,
+                "Walkway": walkway,
+                "model_status": model_status,
+                "total_count": total_count,
+                "correct_count": correct_count,
+                "misclassified_count": misclassified_count,
+                "misclassified_dates": misclassified_dates,
+                "has_misclassifications": has_misclassifications,
+            }
+        )
+
+    # Convert to DataFrame for plotting
+    plot_df = pd.DataFrame(grouped_data)
+
+    # Create figure
+    fig = go.Figure()
+
+    # Add scatter points for model's OCCUPIED prediction
+    occupied_df = plot_df[plot_df["model_status"] == "OCCUPIED"]
+    misclassified_occupied = occupied_df[occupied_df["has_misclassifications"]]
+    correctly_classified_occupied = occupied_df[~occupied_df["has_misclassifications"]]
+
+    # Correctly classified OCCUPIED points (no misclassifications)
+    if not correctly_classified_occupied.empty:
+        fig.add_trace(
+            go.Scatter(
+                x=correctly_classified_occupied["Front Door"],
+                y=correctly_classified_occupied["Walkway"],
+                mode="markers",
+                name="Model: OCCUPIED (all correctly classified)",
+                marker=dict(
+                    color="green",
+                    size=correctly_classified_occupied["total_count"].apply(
+                        lambda x: min(10 + x * 2, 30)
+                    ),
+                    opacity=0.7,
+                ),
+                text=[
+                    f"Correctly classified: {correct_count}<br>Misclassified: 0"
+                    for correct_count in correctly_classified_occupied["correct_count"]
+                ],
+                hovertemplate="Coordinates: (%{x}, %{y})<br>%{text}<extra></extra>",
+            )
+        )
+
+    # OCCUPIED points with some misclassifications
+    if not misclassified_occupied.empty:
+        fig.add_trace(
+            go.Scatter(
+                x=misclassified_occupied["Front Door"],
+                y=misclassified_occupied["Walkway"],
+                mode="markers",
+                name="Model: OCCUPIED (some misclassified)",
+                marker=dict(
+                    color="green",
+                    size=misclassified_occupied["total_count"].apply(
+                        lambda x: min(10 + x * 2, 30)
+                    ),
+                    opacity=0.7,
+                    line=dict(color="red", width=2),
+                ),
+                text=[
+                    f"Correctly classified: {correct_count}<br>Misclassified: {misclassified_count}<br>Misclassified dates: {', '.join(misclassified_dates)}"
+                    for correct_count, misclassified_count, misclassified_dates in zip(
+                        misclassified_occupied["correct_count"],
+                        misclassified_occupied["misclassified_count"],
+                        misclassified_occupied["misclassified_dates"],
+                    )
+                ],
+                hovertemplate="Coordinates: (%{x}, %{y})<br>%{text}<extra></extra>",
+            )
+        )
+
+    # Add scatter points for model's NOT_OCCUPIED prediction
+    not_occupied_df = plot_df[plot_df["model_status"] == "NOT_OCCUPIED"]
+    misclassified_not_occupied = not_occupied_df[
+        not_occupied_df["has_misclassifications"]
+    ]
+    correctly_classified_not_occupied = not_occupied_df[
+        ~not_occupied_df["has_misclassifications"]
+    ]
+
+    # Correctly classified NOT_OCCUPIED points (no misclassifications)
+    if not correctly_classified_not_occupied.empty:
+        fig.add_trace(
+            go.Scatter(
+                x=correctly_classified_not_occupied["Front Door"],
+                y=correctly_classified_not_occupied["Walkway"],
+                mode="markers",
+                name="Model: NOT_OCCUPIED (all correctly classified)",
+                marker=dict(
+                    color="blue",
+                    size=correctly_classified_not_occupied["total_count"].apply(
+                        lambda x: min(10 + x * 2, 30)
+                    ),
+                    opacity=0.7,
+                ),
+                text=[
+                    f"Correctly classified: {correct_count}<br>Misclassified: 0"
+                    for correct_count in correctly_classified_not_occupied[
+                        "correct_count"
+                    ]
+                ],
+                hovertemplate="Coordinates: (%{x}, %{y})<br>%{text}<extra></extra>",
+            )
+        )
+
+    # NOT_OCCUPIED points with some misclassifications
+    if not misclassified_not_occupied.empty:
+        fig.add_trace(
+            go.Scatter(
+                x=misclassified_not_occupied["Front Door"],
+                y=misclassified_not_occupied["Walkway"],
+                mode="markers",
+                name="Model: NOT_OCCUPIED (some misclassified)",
+                marker=dict(
+                    color="blue",
+                    size=misclassified_not_occupied["total_count"].apply(
+                        lambda x: min(10 + x * 2, 30)
+                    ),
+                    opacity=0.7,
+                    line=dict(color="red", width=2),
+                ),
+                text=[
+                    f"Correctly classified: {correct_count}<br>Misclassified: {misclassified_count}<br>Misclassified dates: {', '.join(misclassified_dates)}"
+                    for correct_count, misclassified_count, misclassified_dates in zip(
+                        misclassified_not_occupied["correct_count"],
+                        misclassified_not_occupied["misclassified_count"],
+                        misclassified_not_occupied["misclassified_dates"],
+                    )
+                ],
+                hovertemplate="Coordinates: (%{x}, %{y})<br>%{text}<extra></extra>",
+            )
+        )
+
+    # Add decision boundaries
+    # Vertical line for Front Door threshold
+    fig.add_shape(
+        type="line",
+        x0=front_door_threshold,
+        y0=0,  # Start at 0 for linear scale
+        x1=front_door_threshold,
+        y1=plot_df["Walkway"].max() * 1.1,
+        line=dict(color="red", width=2, dash="dash"),
+        name="Front Door Threshold",
+    )
+
+    # Horizontal line for Walkway threshold
+    fig.add_shape(
+        type="line",
+        x0=0,  # Start at 0 for linear scale
+        y0=walkway_threshold,
+        x1=plot_df["Front Door"].max() * 1.1,
+        y1=walkway_threshold,
+        line=dict(color="red", width=2, dash="dash"),
+        name="Walkway Threshold",
+    )
+
+    # Add annotations for the thresholds
+    fig.add_annotation(
+        x=front_door_threshold,
+        y=plot_df["Walkway"].max() * 0.9,
+        text=f"Front Door = {front_door_threshold}",
+        showarrow=True,
+        arrowhead=1,
+        ax=50,
+        ay=0,
+    )
+
+    fig.add_annotation(
+        x=plot_df["Front Door"].max() * 0.9,
+        y=walkway_threshold,
+        text=f"Walkway = {walkway_threshold}",
+        showarrow=True,
+        arrowhead=1,
+        ax=0,
+        ay=-50,
+    )
+
+    # Update layout with linear scales
+    fig.update_layout(
+        title="Decision Boundaries for Occupancy Model",
+        xaxis_title="Front Door Activity",
+        yaxis_title="Walkway Activity",
+        xaxis=dict(
+            range=[
+                -0.5,  # Start slightly below 0 for linear scale
+                plot_df["Front Door"].max() * 1.1,
+            ]
+        ),
+        yaxis=dict(
+            range=[
+                -0.5,  # Start slightly below 0 for linear scale
+                plot_df["Walkway"].max() * 1.1,
+            ]
+        ),
+        legend=dict(
+            x=0.01,
+            y=0.99,
+            bgcolor="rgba(255, 255, 255, 0.5)",
+            bordercolor="rgba(0, 0, 0, 0.5)",
+            borderwidth=1,
+        ),
+        width=1000,
+        height=800,
+        hovermode="closest",
+    )
+
+    # Add quadrant labels
+    # Top-right quadrant
+    fig.add_annotation(
+        x=plot_df["Front Door"].max() * 0.7,
+        y=plot_df["Walkway"].max() * 0.7,
+        text="OCCUPIED Region",
+        showarrow=False,
+        font=dict(size=14, color="green"),
+    )
+
+    # Bottom-left quadrant
+    fig.add_annotation(
+        x=2,  # Fixed position for linear scale
+        y=1,  # Fixed position for linear scale
+        text="NOT_OCCUPIED Region",
+        showarrow=False,
+        font=dict(size=14, color="blue"),
+    )
+
+    # Count total points and misclassified points
+    total_dates = len(raw_df)
+    misclassified_dates = raw_df["misclassified"].sum()
+    accuracy = (
+        (total_dates - misclassified_dates) / total_dates if total_dates > 0 else 0
+    )
+
+    # Add accuracy information
+    fig.add_annotation(
+        x=0.5,
+        y=1.05,
+        xref="paper",
+        yref="paper",
+        text=f"Model Accuracy: {accuracy:.2%} ({total_dates - misclassified_dates}/{total_dates})",
+        showarrow=False,
+        font=dict(size=14),
+    )
+
+    # Save the figure
+    fig.write_html(output_file)
+    logger.info(f"Decision boundary visualization saved to {output_file}")
+
+
+def train_and_evaluate_model(daily_data, out_dir="", method="simple", params=None):
     """
     Train a model using the specified method and evaluate its performance.
 
@@ -209,6 +626,7 @@ def train_and_evaluate_model(daily_data, method, params=None):
     if "random_state" in params:
         model_file += f"_seed{params['random_state']}"
     model_file += ".txt"
+    model_file = os.path.join(out_dir, model_file)
 
     # Train the model using the specified method
     logger.info(f"Training model using {method} method...")
@@ -247,6 +665,10 @@ def train_and_evaluate_model(daily_data, method, params=None):
 
 
 def main():
+
+    # Path to the output directory for model files, comparison, graphs, etc...
+    out_dir: str = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
+
     # Load video data
     daily_data = load_video_data()
 
@@ -270,7 +692,10 @@ def main():
             "max_depth": 3,  # Limit tree depth for simplicity
         }
         simple_occupancy, simple_metrics, simple_model_file = train_and_evaluate_model(
-            daily_data, "simple", simple_params
+            daily_data,
+            out_dir=out_dir,
+            method="simple",
+            params=simple_params,
         )
 
         # Cross-validation
@@ -280,7 +705,10 @@ def main():
             "max_depth": 3,
         }
         cv_occupancy, cv_metrics, cv_model_file = train_and_evaluate_model(
-            daily_data, "cross_validation", cv_params
+            daily_data,
+            out_dir=out_dir,
+            method="cross_validation",
+            params=cv_params,
         )
 
         # Leave-one-out cross-validation
@@ -289,7 +717,10 @@ def main():
             "max_depth": 3,
         }
         loo_occupancy, loo_metrics, loo_model_file = train_and_evaluate_model(
-            daily_data, "leave_one_out", loo_params
+            daily_data,
+            out_dir=out_dir,
+            method="leave_one_out",
+            params=loo_params,
         )
 
         # Grid search with cross-validation
@@ -298,7 +729,10 @@ def main():
             "cv_folds": 5,
         }
         grid_occupancy, grid_metrics, grid_model_file = train_and_evaluate_model(
-            daily_data, "grid_search", grid_params
+            daily_data,
+            out_dir=out_dir,
+            method="grid_search",
+            params=grid_params,
         )
 
         # 4. Compare the results of different methods
@@ -331,7 +765,7 @@ def main():
         )
 
         # Save comparison results to CSV
-        comparison_file = "occupancy_comparison.csv"
+        comparison_file = os.path.join(out_dir, "occupancy_comparison.csv")
         logger.info(f"Saving comparison results to {comparison_file}...")
         comparison_df.to_csv(comparison_file, index=False)
 
@@ -350,6 +784,15 @@ def main():
         # Print sample of comparison results
         logger.info("Sample of comparison results:")
         print(comparison_df.head(10))
+
+        # 7. Visualize decision boundaries if we have a 2D model
+        logger.info("Creating decision boundary visualization...")
+        visualize_decision_boundaries(
+            daily_data,
+            best_occupancy,
+            calendar_status,
+            os.path.join(out_dir, "occupancy_decision_boundaries.html"),
+        )
 
     except Exception as e:
         logger.error(f"Error in machine learning process: {e}")
