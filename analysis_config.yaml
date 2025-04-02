@@ -72,18 +72,9 @@ stories:
 
 
   - name: 'misclassified_dates'
-    skip: false
-    selectors:
-      - date_regex: "2024-03-19|2024-10-12|2024-12-11|2024-12-26|2024-12-28"
-        #devices: ['Backyard', 'Front Door', 'Walkway', 'Back Entrance', 'Front Entrance', 'Gateway']
-
-  - name: 'inspect'
     skip: true
     selectors:
-      - date_range:
-          start: '2024-04-13'
-          end: '2024-04-13'
-        devices: ['Backyard', 'Front Door', 'Walkway', 'Back Entrance', 'Front Entrance', 'Gateway']
+      - date_regex: "2024-03-19|2024-10-12|2024-12-11|2024-12-26|2024-12-28"
 
   - name: 'Occupied'
     skip: true
