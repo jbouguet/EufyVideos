@@ -14,17 +14,14 @@ This script demonstrates how to:
 8. Visualize the decision boundaries for 2D models
 """
 
-import csv
 import json
 import logging
 import os
 import re
 import sys
-from datetime import datetime
 
 import pandas as pd
 import plotly.graph_objects as go
-from sklearn.metrics import accuracy_score, classification_report
 
 from logging_config import (
     create_logger,
@@ -76,37 +73,14 @@ def load_video_data():
 
     # Filter to keep only important columns (make sure that "Date" is always included)
 
-    # important_columns = [
-    #    "Date",
-    #    "Front Door",
-    #    "Walkway",
-    #    "Backyard",
-    #    "Back Entrance",
-    # ]  # Perfect model
-
-    # important_columns = [
-    #    "Date",
-    #    "Front Door",
-    #    "Walkway",
-    #    "Backyard",
-    # ]  # 2 errors: 2024-10-12 and 2024-12-11
-
-    # important_columns = [
-    #    "Date",
-    #    "Front Door",
-    #    "Walkway",
-    #    "Back Entrance",
-    # ]  # 1 error: 2024-12-10
-
     important_columns = [
         "Date",
-        "Front Door",
-        "Walkway",
-    ]  # 5 errors: 2024-03-19, 2024-10-12, 2024-12-11, 2024-12-26, 2024-12-28
-
-    # 2024-12-11 and 2024-10-12: seem to directly depend on Back Entrance. Both identified as NOT OCCUPIED.
-    # 2024-12-10 is strange. Not strictly depending on Backyard, but Back Entrance not enough.
-    # 2024-12-28, 2024-12-26 are also strange, both identified as NOT OCCUPIED. 2024-03-19 is thought to be OCCUPIED
+        "Front Door",  # 404/414
+        "Backyard",  # 409/414
+        "Gateway",  # 409/414
+        "Walkway",  # 409/414
+        "Back Entrance",  # 410/414
+    ]  # Best model
 
     filtered_columns = [
         col for col in daily_activity_data.columns if col in important_columns
@@ -118,7 +92,9 @@ def load_video_data():
     return daily_activity_data
 
 
-def compare_occupancy_methods(calendar_occupancy, heuristic_occupancy, ml_occupancy):
+def compare_occupancy_methods(
+    calendar_occupancy, heuristic_occupancy, ml_occupancy, daily_data=None
+):
     """
     Compare the occupancy status determined by different methods.
 
@@ -126,6 +102,7 @@ def compare_occupancy_methods(calendar_occupancy, heuristic_occupancy, ml_occupa
         calendar_occupancy: Occupancy status from the calendar
         heuristic_occupancy: Occupancy status from the heuristic method
         ml_occupancy: Occupancy status from the machine learning model
+        daily_data: DataFrame containing daily activity data
 
     Returns:
         DataFrame with comparison results
@@ -137,19 +114,32 @@ def compare_occupancy_methods(calendar_occupancy, heuristic_occupancy, ml_occupa
 
     # Create comparison data
     comparison_data = []
+
+    # Create a date lookup dictionary from daily_data if provided
+    daily_data_dict = {}
+    if daily_data is not None:
+        for _, row in daily_data.iterrows():
+            date_str = row["Date"].strftime("%Y-%m-%d")
+            daily_data_dict[date_str] = row
+
     for date_str in sorted(all_dates):
-        comparison_data.append(
-            {
-                "date": date_str,
-                "calendar": calendar_occupancy.get(
-                    date_str, OccupancyStatus.UNKNOWN
-                ).value,
-                "heuristic": heuristic_occupancy.get(
-                    date_str, OccupancyStatus.UNKNOWN
-                ).value,
-                "ml_model": ml_occupancy.get(date_str, OccupancyStatus.UNKNOWN).value,
-            }
-        )
+        data_entry = {
+            "date": date_str,
+            "calendar": calendar_occupancy.get(date_str, OccupancyStatus.UNKNOWN).value,
+            "heuristic": heuristic_occupancy.get(
+                date_str, OccupancyStatus.UNKNOWN
+            ).value,
+            "ml_model": ml_occupancy.get(date_str, OccupancyStatus.UNKNOWN).value,
+        }
+
+        # Add daily activity data if provided and date exists in daily_data
+        if daily_data is not None and date_str in daily_data_dict:
+            # Add all columns except 'Date' from daily_data
+            for col in daily_data.columns:
+                if col != "Date":
+                    data_entry[col] = daily_data_dict[date_str][col]
+
+        comparison_data.append(data_entry)
 
     return pd.DataFrame(comparison_data)
 
@@ -682,14 +672,17 @@ def main():
     heuristic_occupancy = Occupancy(mode=OccupancyMode.HEURISTIC, daily_data=daily_data)
     heuristic_status = heuristic_occupancy.occupancy_cache.copy()
 
+    random_state = 500
+    max_depth = 3
+
     try:
         # 3. Train models using different methods
 
         # Simple train-test split (original method)
         simple_params = {
-            "random_state": 50,  # Try different random seeds to see the effect
+            "random_state": random_state,  # Try different random seeds to see the effect
             "test_size": 0.2,
-            "max_depth": 3,  # Limit tree depth for simplicity
+            "max_depth": max_depth,  # Limit tree depth for simplicity
         }
         simple_occupancy, simple_metrics, simple_model_file = train_and_evaluate_model(
             daily_data,
@@ -700,9 +693,9 @@ def main():
 
         # Cross-validation
         cv_params = {
-            "random_state": 50,
+            "random_state": random_state,
             "cv_folds": 5,
-            "max_depth": 3,
+            "max_depth": max_depth,
         }
         cv_occupancy, cv_metrics, cv_model_file = train_and_evaluate_model(
             daily_data,
@@ -713,8 +706,8 @@ def main():
 
         # Leave-one-out cross-validation
         loo_params = {
-            "random_state": 50,
-            "max_depth": 3,
+            "random_state": random_state,
+            "max_depth": max_depth,
         }
         loo_occupancy, loo_metrics, loo_model_file = train_and_evaluate_model(
             daily_data,
@@ -723,34 +716,21 @@ def main():
             params=loo_params,
         )
 
-        # Grid search with cross-validation
-        grid_params = {
-            "random_state": 50,
-            "cv_folds": 5,
-        }
-        grid_occupancy, grid_metrics, grid_model_file = train_and_evaluate_model(
-            daily_data,
-            out_dir=out_dir,
-            method="grid_search",
-            params=grid_params,
-        )
-
         # 4. Compare the results of different methods
         logger.info("\nComparing model accuracies:")
         logger.info(f"  Simple train-test split: {simple_metrics['accuracy']:.2f}")
         logger.info(f"  Cross-validation: {cv_metrics['accuracy']:.2f}")
         logger.info(f"  Leave-one-out: {loo_metrics['accuracy']:.2f}")
-        logger.info(f"  Grid search: {grid_metrics['accuracy']:.2f}")
 
-        # 5. Use the best model for prediction (in this case, we'll use the grid search model)
-        logger.info("\nUsing grid search model for prediction...")
+        # 5. Use the best model for prediction (in this case, we'll use the Leave-one-out cross-validation)
+        logger.info("\nUsing Leave-one-out cross-validation model for prediction...")
 
         # Load the model from the file
-        logger.info(f"Loading model from {grid_model_file}...")
+        logger.info(f"Loading model from {loo_model_file}...")
         best_occupancy = Occupancy(
             mode=OccupancyMode.ML_MODEL,
             daily_data=daily_data,
-            model_filepath=grid_model_file,
+            model_filepath=loo_model_file,
         )
 
         # Apply the model to predict occupancy status
@@ -761,13 +741,24 @@ def main():
         # 6. Compare with calendar and heuristic methods
         logger.info("Comparing occupancy methods...")
         comparison_df = compare_occupancy_methods(
-            calendar_status, heuristic_status, ml_status
+            calendar_status, heuristic_status, ml_status, daily_data
         )
 
         # Save comparison results to CSV
         comparison_file = os.path.join(out_dir, "occupancy_comparison.csv")
         logger.info(f"Saving comparison results to {comparison_file}...")
         comparison_df.to_csv(comparison_file, index=False)
+
+        # Create a filtered DataFrame for errors (where heuristic or ml_model differs from calendar)
+        errors_df = comparison_df[
+            (comparison_df["calendar"] != comparison_df["heuristic"])
+            | (comparison_df["calendar"] != comparison_df["ml_model"])
+        ]
+
+        # Save errors to a separate CSV file
+        errors_file = os.path.join(out_dir, "occupancy_comparison_errors.csv")
+        logger.info(f"Saving error cases to {errors_file}...")
+        errors_df.to_csv(errors_file, index=False)
 
         # Calculate and print accuracy metrics
         accuracy_metrics = calculate_accuracy(comparison_df)
@@ -784,6 +775,10 @@ def main():
         # Print sample of comparison results
         logger.info("Sample of comparison results:")
         print(comparison_df.head(10))
+
+        # Print sample of comparison results
+        logger.info("Sample of comparison results for errors:")
+        print(errors_df.head(10))
 
         # 7. Visualize decision boundaries if we have a 2D model
         logger.info("Creating decision boundary visualization...")

@@ -1,9 +1,21 @@
 # Base directory definitions
 directories:
+  # Mac:
   root_database: &root_database "/Users/jbouguet/Documents/EufySecurityVideos/record"
   stories_output: &stories_output "/Users/jbouguet/Documents/EufySecurityVideos/stories"
+
+  # 2TB USB Stick:
+  #root_database: &root_database "/Volumes/SSK Drive/record"
+  #stories_output: &stories_output "/Volumes/SSK Drive/stories"
+
+  # 1TB USB Stick:
   #root_database: &root_database "/Volumes/Eufy Videos/record"
   #stories_output: &stories_output "/Volumes/Eufy Videos/stories"
+
+  # Seagate Disk:
+  #root_database: &root_database "/Volumes/Seagate Hub/EufySecurityVideos/EufyVideos/record"
+  #stories_output: &stories_output "/Volumes/Seagate Hub/EufySecurityVideos/EufyVideos/stories"
+
   tags_database: &tags_dir !join [*root_database, "/tags_database"]
   batch_dirs: &batch_dirs
     - !join [*root_database, "/Batch001"]
@@ -36,6 +48,8 @@ directories:
     - !join [*root_database, "/Batch028"]
     - !join [*root_database, "/Batch029"]
     - !join [*root_database, "/Batch030"]
+    - !join [*root_database, "/Batch031"]
+    - !join [*root_database, "/Batch032"]
 
 # Video database configuration
 video_database_list:
@@ -69,12 +83,40 @@ output_directory: *stories_output
 process_stories: true
 
 stories:
+  - name: '2025-04-17'
+    skip: false
+    selectors:
+      - date_regex: "2025-04-17"
 
-
-  - name: 'misclassified_dates'
+  - name: '2025-04-13'
     skip: true
     selectors:
-      - date_regex: "2024-03-19|2024-10-12|2024-12-11|2024-12-26|2024-12-28"
+      - date_regex: "2025-04-13"
+
+  - name: '2025-03-30'
+    skip: true
+    selectors:
+      - date_regex: "2025-03-30"
+
+  - name: '2025-04-12'
+    skip: true
+    selectors:
+      - date_regex: "2025-04-12"
+
+  - name: '2025-04-11'
+    skip: true
+    selectors:
+      - date_regex: "2025-04-11"
+
+  - name: '2025-04-10'
+    skip: true
+    selectors:
+      - date_regex: "2025-04-10"
+
+  - name: '2025-04-09'
+    skip: true
+    selectors:
+      - date_regex: "2025-04-09"
 
   - name: 'Occupied'
     skip: true
@@ -83,6 +125,47 @@ stories:
   - name: 'Not Occupied'
     skip: true
     occupancy_status: ['NOT_OCCUPIED']
+
+  - name: '2025-04-08'
+    skip: true
+    selectors:
+      - date_regex: "2025-04-08"
+
+  - name: '2025-04-07 - Backyard'
+    skip: true
+    selectors:
+      - date_regex: "2025-04-07"
+        devices: ['Backyard']
+
+  - name: '2025-04-07'
+    skip: true
+    selectors:
+      - date_regex: "2025-04-07"
+
+  - name: '2025-04-06'
+    skip: true
+    selectors:
+      - date_regex: "2025-04-06"
+
+  - name: '2025-04-05'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2025-04-05'
+          end: '2025-04-05'
+
+  - name: 'Front Yard Camera Change'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2025-04-04'
+          end: '2025-04-05'
+        devices: ['Front Yard']
+
+  - name: 'misclassified_dates'
+    skip: true
+    selectors:
+      - date_regex: "2024-03-19|2024-10-12|2024-12-11|2024-12-26|2024-12-28"
 
   - name: 'Unknown'
     skip: true

@@ -182,8 +182,8 @@ class Occupancy:
         ("2024-12-26", "2025-01-08", OccupancyStatus.OCCUPIED),
         ("2025-01-09", "2025-03-05", OccupancyStatus.NOT_OCCUPIED),
         ("2025-03-06", "2025-03-10", OccupancyStatus.OCCUPIED),
-        # ("2025-03-11", "2025-03-24", OccupancyStatus.NOT_OCCUPIED),
-        # ("2025-03-25", "2025-04-15", OccupancyStatus.OCCUPIED),
+        ("2025-03-11", "2025-03-24", OccupancyStatus.NOT_OCCUPIED),
+        ("2025-03-25", "2025-04-17", OccupancyStatus.OCCUPIED),
     ]
 
     def __init__(
@@ -288,9 +288,14 @@ class Occupancy:
 
         for _, row in daily_data.iterrows():
             date_str = row["Date"].strftime("%Y-%m-%d")
+            fd = row.get("Front Door", 0)
+            by = row.get("Backyard", 0)
+            be = row.get("Back Entrance", 0)
+            gw = row.get("Gateway", 0)
+            ww = row.get("Walkway", 0)
 
             # Set occupancy status using the decision function
-            if row.get("Front Door", 0) >= 4 and row.get("Walkway", 0) >= 4:
+            if (fd >= 4 and ww >= 3) or (by >= 36 and gw >= 1) or (be >= 4):
                 self.occupancy_cache[date_str] = OccupancyStatus.OCCUPIED
             else:
                 self.occupancy_cache[date_str] = OccupancyStatus.NOT_OCCUPIED
@@ -800,9 +805,12 @@ if __name__ == "__main__":
     daily_data = daily_data[metric]
     important_columns = [
         "Date",
-        "Front Door",
-        "Walkway",
-    ]
+        "Front Door",  # 404/414
+        "Backyard",  # 409/414
+        "Gateway",  # 409/414
+        "Walkway",  # 409/414
+        "Back Entrance",  # 410/414
+    ]  # Best model
     filtered_columns = [col for col in daily_data.columns if col in important_columns]
     daily_data = daily_data[filtered_columns]
 
@@ -828,7 +836,14 @@ if __name__ == "__main__":
 
     # Train and save a new model from daily activity data
     occupancy_ml_train = Occupancy()
-    occupancy_ml_train.train_occupancy_model(daily_data, method="grid_search")
+    # Leave-one-out cross-validation
+    params = {
+        "random_state": 500,
+        "max_depth": 3,
+    }
+    occupancy_ml_train.train_occupancy_model(
+        daily_data, method="leave_one_out", **params
+    )
     occupancy_ml_train.save_occupancy_model(model_file)
     occupancy_ml_train.set_occupancy_status_from_daily_activity(daily_data)
     write_csv(

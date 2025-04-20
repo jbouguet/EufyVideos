@@ -380,15 +380,17 @@ class Story:
         self.to_file(config_filename)
         VideoMetadata.export_videos_to_metadata_file(videos, video_metadata_file)
         VideoMetadata.export_videos_to_playlist_file(videos, playlist_filename)
-        Dashboard().create_graphs_file(videos, graphs_filename)
-        PlotCreator.create_graphs_file(videos, scatter_plots_filename)
 
         logger.info(f"{colored("Output Files:","light_cyan")}")
         logger.info(f"  - config file:        {config_filename}")
         logger.info(f"  - metadata file:      {video_metadata_file}")
         logger.info(f"  - playlist file:      {playlist_filename}")
-        logger.info(f"  - graphs file:        {graphs_filename}")
-        logger.info(f"  - scatter plots file: {scatter_plots_filename}")
+
+        if len(videos) > 0:
+            Dashboard().create_graphs_file(videos, graphs_filename)
+            PlotCreator.create_graphs_file(videos, scatter_plots_filename)
+            logger.info(f"  - graphs file:        {graphs_filename}")
+            logger.info(f"  - scatter plots file: {scatter_plots_filename}")
 
     def process_new_tags(
         self, videos: List[VideoMetadata], output_directory: str
@@ -474,6 +476,9 @@ class Story:
 
         # Generate statistics and analytics
         self.generate_statistics_files(videos, output_directory)
+
+        if len(videos) == 0:
+            return
 
         # Process video tags
         self.process_new_tags(videos, output_directory)

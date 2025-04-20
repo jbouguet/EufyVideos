@@ -1,13 +1,19 @@
 {
   "feature_names": [
+    "Back Entrance",
+    "Backyard",
     "Front Door",
+    "Gateway",
     "Walkway"
   ],
   "feature_importances": {
-    "Front Door": 0.9857623444953122,
-    "Walkway": 0.01423765550468782
+    "Back Entrance": 0.010105370617191387,
+    "Backyard": 0.03658183466423215,
+    "Front Door": 0.9353209564455144,
+    "Gateway": 0.007861212582290533,
+    "Walkway": 0.010130625690771443
   },
-  "tree_text": "|--- Front Door <= 3.50\n|   |--- Front Door <= 2.50\n|   |   |--- Walkway <= 4.50\n|   |   |   |--- class: 0\n|   |   |--- Walkway >  4.50\n|   |   |   |--- class: 0\n|   |--- Front Door >  2.50\n|   |   |--- Walkway <= 3.50\n|   |   |   |--- class: 0\n|   |   |--- Walkway >  3.50\n|   |   |   |--- class: 0\n|--- Front Door >  3.50\n|   |--- Walkway <= 3.00\n|   |   |--- class: 0\n|   |--- Walkway >  3.00\n|   |   |--- Front Door <= 4.50\n|   |   |   |--- class: 1\n|   |   |--- Front Door >  4.50\n|   |   |   |--- class: 1\n",
+  "tree_text": "|--- Front Door <= 3.50\n|   |--- Backyard <= 35.00\n|   |   |--- Back Entrance <= 3.00\n|   |   |   |--- class: 0\n|   |   |--- Back Entrance >  3.00\n|   |   |   |--- class: 1\n|   |--- Backyard >  35.00\n|   |   |--- Gateway <= 0.50\n|   |   |   |--- class: 0\n|   |   |--- Gateway >  0.50\n|   |   |   |--- class: 1\n|--- Front Door >  3.50\n|   |--- Walkway <= 2.50\n|   |   |--- class: 0\n|   |--- Walkway >  2.50\n|   |   |--- Backyard <= 1.50\n|   |   |   |--- class: 1\n|   |   |--- Backyard >  1.50\n|   |   |   |--- class: 1\n",
   "model_params": {
     "ccp_alpha": 0.0,
     "class_weight": null,
@@ -20,7 +26,7 @@
     "min_samples_split": 2,
     "min_weight_fraction_leaf": 0.0,
     "monotonic_cst": null,
-    "random_state": 42,
+    "random_state": 500,
     "splitter": "best"
   },
   "classes": [
