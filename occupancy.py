@@ -145,8 +145,8 @@ class Occupancy:
         ("2024-03-12", "2024-03-12", OccupancyStatus.NOT_OCCUPIED),
         ("2024-03-13", "2024-03-13", OccupancyStatus.OCCUPIED),
         ("2024-03-14", "2024-03-17", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-03-18", "2024-03-18", OccupancyStatus.OCCUPIED),
-        ("2024-03-19", "2024-03-21", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-03-18", "2024-03-19", OccupancyStatus.OCCUPIED),
+        ("2024-03-20", "2024-03-21", OccupancyStatus.NOT_OCCUPIED),
         ("2024-03-22", "2024-03-22", OccupancyStatus.OCCUPIED),
         ("2024-03-23", "2024-03-23", OccupancyStatus.NOT_OCCUPIED),
         ("2024-03-24", "2024-04-12", OccupancyStatus.OCCUPIED),
@@ -177,13 +177,23 @@ class Occupancy:
         ("2024-11-03", "2024-11-15", OccupancyStatus.NOT_OCCUPIED),
         ("2024-11-16", "2024-11-20", OccupancyStatus.OCCUPIED),
         ("2024-11-21", "2024-12-09", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-12-10", "2024-12-13", OccupancyStatus.OCCUPIED),
+        ("2024-12-10", "2024-12-10", OccupancyStatus.OCCUPIED),
+        (
+            "2024-12-11",
+            "2024-12-11",
+            OccupancyStatus.NOT_OCCUPIED,
+        ),  # misclassified date
+        ("2024-12-12", "2024-12-13", OccupancyStatus.OCCUPIED),
         ("2024-12-14", "2024-12-25", OccupancyStatus.NOT_OCCUPIED),
         ("2024-12-26", "2025-01-08", OccupancyStatus.OCCUPIED),
         ("2025-01-09", "2025-03-05", OccupancyStatus.NOT_OCCUPIED),
         ("2025-03-06", "2025-03-10", OccupancyStatus.OCCUPIED),
         ("2025-03-11", "2025-03-24", OccupancyStatus.NOT_OCCUPIED),
-        ("2025-03-25", "2025-04-17", OccupancyStatus.OCCUPIED),
+        ("2025-03-25", "2025-03-28", OccupancyStatus.OCCUPIED),
+        ("2025-03-29", "2025-03-30", OccupancyStatus.OCCUPIED),  # misclassified dates
+        ("2025-03-31", "2025-04-17", OccupancyStatus.OCCUPIED),
+        ("2025-04-18", "2025-04-20", OccupancyStatus.NOT_OCCUPIED),
+        ("2025-04-21", "2025-04-23", OccupancyStatus.OCCUPIED),
     ]
 
     def __init__(
@@ -295,7 +305,7 @@ class Occupancy:
             ww = row.get("Walkway", 0)
 
             # Set occupancy status using the decision function
-            if (fd >= 4 and ww >= 3) or (by >= 36 and gw >= 1) or (be >= 4):
+            if (fd > 3.5 and ww > 2.5) or (by > 35 and gw > 0.5) or (be > 3):
                 self.occupancy_cache[date_str] = OccupancyStatus.OCCUPIED
             else:
                 self.occupancy_cache[date_str] = OccupancyStatus.NOT_OCCUPIED
@@ -406,7 +416,7 @@ class Occupancy:
         daily_data: pd.DataFrame,
         method: str = "cross_validation",
         test_size: float = 0.2,
-        random_state: int = 42,
+        random_state: int = 500,
         cv_folds: int = 5,
         max_depth: Optional[int] = None,
         min_samples_split: int = 2,
