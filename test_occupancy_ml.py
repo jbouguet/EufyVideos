@@ -38,7 +38,7 @@ set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
 set_all_loggers_level_and_format(level=logging.DEBUG, extended_format=True)
 
 
-def load_video_data():
+def load_video_data(metric: str = "activity"):
     """
     Load and filter video data from the video database.
 
@@ -66,7 +66,6 @@ def load_video_data():
 
     # Get aggregated data
     logger.info("Aggregating video data...")
-    metric = "activity"
     data_aggregator = VideoDataAggregator(metrics=[metric])
     daily_data, _ = data_aggregator.run(video_database)
     daily_activity_data = daily_data[metric]
@@ -660,7 +659,8 @@ def main():
     out_dir: str = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
 
     # Load video data
-    daily_data = load_video_data()
+    metric: str = "activity"  # "duration"
+    daily_data = load_video_data(metric)
 
     # 1. Create an Occupancy instance with calendar data only (default mode)
     logger.info("Creating calendar-based occupancy...")
