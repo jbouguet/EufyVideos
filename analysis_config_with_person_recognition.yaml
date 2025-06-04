@@ -1,0 +1,192 @@
+# Enhanced Analysis Configuration with Person Recognition
+# This file demonstrates how to integrate person recognition into the existing
+# EufyVideos analysis workflow
+
+# Base directory definitions (same as original)
+directories:
+  # Mac:
+  root_database: &root_database "/Users/jbouguet/Documents/EufySecurityVideos/record"
+  stories_output: &stories_output "/Users/jbouguet/Documents/EufySecurityVideos/stories"
+  
+  tags_database: &tags_dir !join [*root_database, "/tags_database"]
+  batch_dirs: &batch_dirs
+    - !join [*root_database, "/Batch022"]  # Simplified for demo
+
+# Person Recognition Database Configuration
+person_recognition:
+  database_file: &person_db_file !join [*root_database, "/person_recognition/persons.json"]
+  embeddings_dir: &embeddings_dir !join [*root_database, "/person_recognition/embeddings"]
+  crops_dir: &crops_dir !join [*root_database, "/person_recognition/crops"]
+
+# Video database configuration (same as original)
+video_database_list:
+- force_video_directories_scanning: false
+  video_metadata_file: !join [*root_database, "/videos_in_batches.csv"]
+  video_directories: *batch_dirs
+
+# Enhanced tag database files (will include person recognition data)
+tag_database_files:
+- !join [*tags_dir, "/person_recognition_demo_tags.json"]
+
+output_directory: *stories_output
+process_stories: true
+
+stories:
+
+  # Demo Story: Person Recognition Test
+  - name: 'Person Recognition Demo'
+    skip: false
+    selectors:
+      - filenames: ['T8600P102338033E_20240930085536.mp4']
+    
+    # Enhanced tag processing with person recognition
+    tag_processing: true
+    tag_processing_config:
+      # Base YOLO settings
+      model: "Yolo11x_Optimized"
+      task: "Track"
+      num_frames_per_second: 2.0
+      conf_threshold: 0.3
+      batch_size: 8
+      
+      # Person recognition settings
+      enable_person_recognition: true
+      person_database_file: *person_db_file
+      person_embeddings_file: !join [*embeddings_dir, "/T8600P102338033E_20240930085536_embeddings.json"]
+      person_crops_dir: *crops_dir
+      
+      # Person detection parameters
+      person_crop_size: [224, 224]
+      person_min_confidence: 0.6
+      person_min_bbox_area: 2000
+      max_crops_per_track: 10
+      
+      # Embedding generation parameters
+      embedding_device: "mps"  # Use Mac GPU acceleration
+      embedding_dim: 512
+      clip_weight: 0.7
+      reid_weight: 0.3
+      
+      # Person identification parameters
+      similarity_threshold: 0.75
+      auto_label_confidence: 0.8
+      enable_auto_labeling: true
+    
+    # Enhanced tag video generation (shows person identities)
+    tag_video_generation: true
+    tag_video_generation_config:
+      output_size:
+        width: 1600
+        height: 900
+      show_person_identities: true  # New feature
+    
+    # Standard video generation
+    video_generation: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 5
+        offset_in_seconds: 0
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 1600
+
+  # Example: Backyard Planning with Person Recognition
+  - name: '2024-11-18 - Backyard Planning with Person Recognition'
+    skip: true  # Set to false to run
+    selectors:
+      - filenames: ['T8600P1024260D5E_20241118084615.mp4', 'T8600P1024260D5E_20241118084819.mp4', 'T8600P1024260D5E_20241118084902.mp4', 'T8600P1024260D5E_20241118085102.mp4', 'T8600P1024260D5E_20241118085306.mp4']
+    
+    tag_processing: true
+    tag_processing_config:
+      # Base settings
+      model: "Yolo11x_Optimized"
+      task: "Track"
+      num_frames_per_second: 3.0
+      conf_threshold: 0.2
+      batch_size: 8
+      
+      # Person recognition enabled
+      enable_person_recognition: true
+      person_database_file: *person_db_file
+      person_embeddings_file: !join [*embeddings_dir, "/backyard_planning_embeddings.json"]
+      person_crops_dir: !join [*crops_dir, "/backyard_planning"]
+      
+      # Enhanced person detection for outdoor scene
+      person_min_confidence: 0.5
+      person_min_bbox_area: 1500  # Smaller for distant people
+      max_crops_per_track: 15     # More crops for longer tracks
+      
+      # High accuracy identification
+      auto_label_confidence: 0.85
+      enable_auto_labeling: true
+    
+    tag_video_generation: true
+    tag_video_generation_config:
+      output_size:
+        width: 1600
+        height: 900
+      show_person_identities: true
+    
+    video_generation: false
+
+  # Example: Family Activity Recognition
+  - name: 'Family Activity Recognition'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2024-11-18'
+          end: '2024-11-18'
+        time_range:
+          start: '08:40:00'
+          end: '09:10:00'
+        devices: ['Backyard']
+    
+    tag_processing: true
+    tag_processing_config:
+      model: "Yolo11x_Optimized"
+      task: "Track"
+      num_frames_per_second: 1.0
+      conf_threshold: 0.2
+      batch_size: 8
+      
+      # Person recognition for family identification
+      enable_person_recognition: true
+      person_database_file: *person_db_file
+      person_embeddings_file: !join [*embeddings_dir, "/family_activity_embeddings.json"]
+      person_crops_dir: !join [*crops_dir, "/family_activity"]
+      
+      # Family-optimized settings
+      person_min_confidence: 0.4  # Lower threshold for family members
+      auto_label_confidence: 0.75 # Moderate confidence for known family
+      enable_auto_labeling: true
+    
+    tag_video_generation: true
+    tag_video_generation_config:
+      output_size:
+        width: 1600
+        height: 900
+      show_person_identities: true
+      highlight_family_members: true  # Special highlighting for family
+
+  # Traditional story without person recognition (backward compatibility)
+  - name: 'Traditional Object Detection Only'
+    skip: true
+    selectors:
+      - filenames: ['T8600P102338033E_20240930085536.mp4']
+    
+    tag_processing: true
+    tag_processing_config:
+      model: "Yolo11x_Optimized"
+      task: "Track"
+      num_frames_per_second: 2.0
+      conf_threshold: 0.2
+      batch_size: 8
+      # enable_person_recognition: false  # Default - no person recognition
+    
+    tag_video_generation: true
+    tag_video_generation_config:
+      output_size:
+        width: 1600
+        height: 900
+    
+    video_generation: false

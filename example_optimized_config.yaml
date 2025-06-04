@@ -1,0 +1,78 @@
+# Example configuration showing how to use optimized YOLO detectors
+# Copy this section into your existing analysis_config.yaml stories section
+
+stories:
+  # Example story using optimized YOLO11X detector
+  - name: 'Test Optimized Detection - Backyard Planning'
+    skip: false
+    selectors:
+      - filenames: 
+          - 'T8600P1024260D5E_20241118084615.mp4'
+          - 'T8600P1024260D5E_20241118084819.mp4'
+    
+    # Enable tag processing with optimized detector
+    tag_processing: true
+    tag_processing_config:
+      model: "Yolo11x_Optimized"      # Use optimized version instead of "Yolo11x"
+      task: "Track"                   # Track or Detect
+      num_frames_per_second: 2.0      # Frame sampling rate
+      conf_threshold: 0.2             # Detection confidence threshold
+      batch_size: 8                   # NEW: Batch size for GPU processing
+    
+    # Optional: Generate visualization videos with detected objects
+    tag_video_generation: false
+    tag_video_generation_config:
+      output_size:
+        width: 1600
+        height: 900
+    
+    # Regular video generation (unchanged)
+    video_generation: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 10
+        offset_in_seconds: 0
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 1600
+
+  # Example comparing original vs optimized performance
+  - name: 'Performance Comparison - Original'
+    skip: true  # Set to false to run
+    selectors:
+      - filenames: ['T8600P1024260D5E_20241118084615.mp4']
+    tag_processing: true
+    tag_processing_config:
+      model: "Yolo11x"                # Original detector
+      task: "Track"
+      num_frames_per_second: 2.0
+      conf_threshold: 0.2
+
+  - name: 'Performance Comparison - Optimized'
+    skip: true  # Set to false to run
+    selectors:
+      - filenames: ['T8600P1024260D5E_20241118084615.mp4']
+    tag_processing: true
+    tag_processing_config:
+      model: "Yolo11x_Optimized"      # Optimized detector
+      task: "Track"
+      num_frames_per_second: 2.0
+      conf_threshold: 0.2
+      batch_size: 8                   # GPU batch processing
+
+# Available optimized models:
+# - "Yolo11n_Optimized" - Nano model (fastest, least accurate)
+# - "Yolo11s_Optimized" - Small model
+# - "Yolo11m_Optimized" - Medium model  
+# - "Yolo11l_Optimized" - Large model
+# - "Yolo11x_Optimized" - Extra large model (most accurate, recommended for production)
+
+# Batch size recommendations:
+# - Mac M1/M2: 4-8 (depending on available memory)
+# - Mac M3/M4: 8-16 (higher memory bandwidth)
+# - CPU fallback: 1-2 (batch processing not beneficial)
+
+# Performance expectations with optimized detectors:
+# - YOLO11x: 20-25% speedup + 70% memory reduction
+# - YOLO11n: May be slower due to GPU overhead (use original)
+# - Best results with larger models on GPU-enabled systems

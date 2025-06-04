@@ -1,0 +1,55 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "created_at": "2025-06-03T09:36:42.538534",
+    "total_persons": 3,
+    "total_track_labels": 1
+  },
+  "persons": [
+    {
+      "person_id": "jean_yves_bouguet",
+      "name": "Jean-Yves Bouguet",
+      "description": "Father, homeowner",
+      "aliases": [
+        "JY",
+        "Dad"
+      ],
+      "created_at": "2025-06-03T09:36:42.537064",
+      "updated_at": "2025-06-03T09:36:42.537067"
+    },
+    {
+      "person_id": "chittra_chaivorapol",
+      "name": "Chittra Chaivorapol",
+      "description": "Mother",
+      "aliases": [
+        "Mom",
+        "Chittra"
+      ],
+      "created_at": "2025-06-03T09:36:42.537353",
+      "updated_at": "2025-06-03T09:36:42.537355"
+    },
+    {
+      "person_id": "lucas_bouguet",
+      "name": "Lucas Bouguet",
+      "description": "Son",
+      "aliases": [
+        "Luke"
+      ],
+      "created_at": "2025-06-03T09:36:42.537616",
+      "updated_at": "2025-06-03T09:36:42.537622"
+    }
+  ],
+  "track_labels": [
+    {
+      "video_filename": "T8600P102338033E_20240930085536.mp4",
+      "track_id": -1782532371728406741,
+      "person_id": "jean_yves_bouguet",
+      "person_name": "Jean-Yves Bouguet",
+      "confidence": 1.0,
+      "labeled_by": "manual",
+      "created_at": "2025-06-03T09:36:42.538401",
+      "updated_at": "2025-06-03T09:36:42.538409",
+      "notes": "Demo labeling - first track"
+    }
+  ]
+}

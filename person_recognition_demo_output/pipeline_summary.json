@@ -1,0 +1,22 @@
+{
+  "video_file": "T8600P102338033E_20240930085536.mp4",
+  "processing_results": {
+    "person_tracks_detected": 2,
+    "total_detections": 219,
+    "embeddings_generated": 20,
+    "clusters_formed": 2,
+    "persons_in_database": 3,
+    "labeled_tracks": 2
+  },
+  "quality_metrics": {
+    "average_detection_confidence": 0.8878399095250062,
+    "average_embedding_quality": 1.0,
+    "highest_inter_track_similarity": 0.8112384373877424
+  },
+  "files_created": {
+    "person_tracks": "person_tracks.json",
+    "embeddings": "person_embeddings.json",
+    "database": "persons.json",
+    "crop_images": "20 files"
+  }
+}

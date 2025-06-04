@@ -35,11 +35,12 @@ class ObjectDetector(ABC):
 
 class ObjectDetectorFactory:
     @staticmethod
-    def create_detector(model: str, conf_threshold: float = 0.2) -> ObjectDetector:
+    def create_detector(model: str, conf_threshold: float = 0.2, batch_size: int = 8) -> ObjectDetector:
         from object_detector_florence2 import Florence2ObjectDetector
 
         # from object_detector_tensorflow import TensorFlowObjectDetector
         from object_detector_yolo import YoloObjectDetector
+        from object_detector_yolo_optimized import OptimizedYoloObjectDetector
         from tag_processor import Model
 
         match model:
@@ -53,6 +54,8 @@ class ObjectDetectorFactory:
                     model_name="microsoft/Florence-2-large",
                     conf_threshold=conf_threshold,
                 )
+            
+            # Original YOLO detectors
             case Model.YOLO11N.value:
                 return YoloObjectDetector(
                     model_name="yolo11n.pt", conf_threshold=conf_threshold
@@ -73,5 +76,38 @@ class ObjectDetectorFactory:
                 return YoloObjectDetector(
                     model_name="yolo11x.pt", conf_threshold=conf_threshold
                 )
+            
+            # Optimized YOLO detectors with GPU acceleration and batch processing
+            case Model.YOLO11N_OPTIMIZED.value:
+                return OptimizedYoloObjectDetector(
+                    model_name="yolo11n.pt", 
+                    conf_threshold=conf_threshold,
+                    batch_size=batch_size
+                )
+            case Model.YOLO11S_OPTIMIZED.value:
+                return OptimizedYoloObjectDetector(
+                    model_name="yolo11s.pt", 
+                    conf_threshold=conf_threshold,
+                    batch_size=batch_size
+                )
+            case Model.YOLO11M_OPTIMIZED.value:
+                return OptimizedYoloObjectDetector(
+                    model_name="yolo11m.pt", 
+                    conf_threshold=conf_threshold,
+                    batch_size=batch_size
+                )
+            case Model.YOLO11L_OPTIMIZED.value:
+                return OptimizedYoloObjectDetector(
+                    model_name="yolo11l.pt", 
+                    conf_threshold=conf_threshold,
+                    batch_size=batch_size
+                )
+            case Model.YOLO11X_OPTIMIZED.value:
+                return OptimizedYoloObjectDetector(
+                    model_name="yolo11x.pt", 
+                    conf_threshold=conf_threshold,
+                    batch_size=batch_size
+                )
+            
             case _:
                 raise ValueError(f"Invalid model: {model}")

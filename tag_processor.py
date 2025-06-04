@@ -37,6 +37,7 @@ class Model(Enum):
     Each model has different characteristics:
     - FLORENCE2: Microsoft's Florence-2 vision model
     - YOLO11*: Various sizes of YOLO v11 models (N=Nano to X=Extra Large)
+    - YOLO11*_OPTIMIZED: GPU-accelerated versions with batch processing
     - TENSORFLOW: Google's TensorFlow-based EfficientDet model [no longer supported]
 
     """
@@ -48,6 +49,13 @@ class Model(Enum):
     YOLO11M = "Yolo11m"
     YOLO11L = "Yolo11l"
     YOLO11X = "Yolo11x"
+    
+    # Optimized versions with GPU acceleration and batch processing
+    YOLO11N_OPTIMIZED = "Yolo11n_Optimized"
+    YOLO11S_OPTIMIZED = "Yolo11s_Optimized"
+    YOLO11M_OPTIMIZED = "Yolo11m_Optimized"
+    YOLO11L_OPTIMIZED = "Yolo11l_Optimized"
+    YOLO11X_OPTIMIZED = "Yolo11x_Optimized"
 
 
 class Task(Enum):
@@ -70,6 +78,7 @@ class TaggerConfig:
     task: str = Task.TRACK.value
     num_frames_per_second: float = 1
     conf_threshold: float = 0.2
+    batch_size: int = 8  # For optimized detectors
 
     def get_identifier(self) -> str:
         """Generate a unique identifier for this configuration."""
@@ -86,6 +95,10 @@ class TaggerConfig:
             if config_dict["num_frames_per_second"] <= 0:
                 raise ValueError("num_frames_per_second must be positive")
 
+        if "batch_size" in config_dict:
+            if config_dict["batch_size"] <= 0:
+                raise ValueError("batch_size must be positive")
+
         return cls(
             model=config_dict.get("model", cls.model),
             task=config_dict.get("task", cls.task),
@@ -93,6 +106,7 @@ class TaggerConfig:
                 "num_frames_per_second", cls.num_frames_per_second
             ),
             conf_threshold=config_dict.get("conf_threshold", cls.conf_threshold),
+            batch_size=config_dict.get("batch_size", cls.batch_size),
         )
 
 
@@ -406,6 +420,7 @@ class TagProcessor:
         self.object_detector = ObjectDetectorFactory.create_detector(
             model=self.tag_processing_config.model,
             conf_threshold=self.tag_processing_config.conf_threshold,
+            batch_size=self.tag_processing_config.batch_size,
         )
 
     def run(self, videos: Union[VideoMetadata, List[VideoMetadata]]) -> VideoTags:

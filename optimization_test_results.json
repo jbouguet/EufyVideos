@@ -1,0 +1,58 @@
+[
+  {
+    "detector_type": "YoloObjectDetector",
+    "model_name": "yolo11n.pt",
+    "device": "cpu",
+    "batch_size": null,
+    "num_frames": 30,
+    "total_time": 3.057698965072632,
+    "fps": 9.811299393002015,
+    "detections_found": 374,
+    "memory_peak_mb": 382.84375,
+    "gpu_available": false,
+    "video_path": "T8600P1024260D5E_20241118084615.mp4",
+    "timestamp": "2025-06-03 07:04:51"
+  },
+  {
+    "detector_type": "OptimizedYoloObjectDetector",
+    "model_name": "yolo11n.pt",
+    "device": "mps",
+    "batch_size": 8,
+    "num_frames": 30,
+    "total_time": 12.29150104522705,
+    "fps": 2.4407108529392665,
+    "detections_found": 251,
+    "memory_peak_mb": -141.953125,
+    "gpu_available": true,
+    "video_path": "T8600P1024260D5E_20241118084615.mp4",
+    "timestamp": "2025-06-03 07:05:03"
+  },
+  {
+    "detector_type": "YoloObjectDetector",
+    "model_name": "yolo11n.pt",
+    "device": "cpu",
+    "batch_size": null,
+    "num_frames": 30,
+    "total_time": 2.237868070602417,
+    "fps": 13.405615994120792,
+    "detections_found": 346,
+    "memory_peak_mb": 349.359375,
+    "gpu_available": false,
+    "video_path": "T8600P1024260D5E_20241118084819.mp4",
+    "timestamp": "2025-06-03 07:05:05"
+  },
+  {
+    "detector_type": "OptimizedYoloObjectDetector",
+    "model_name": "yolo11n.pt",
+    "device": "mps",
+    "batch_size": 8,
+    "num_frames": 30,
+    "total_time": 2.318438768386841,
+    "fps": 12.939742213193693,
+    "detections_found": 338,
+    "memory_peak_mb": -339.5,
+    "gpu_available": true,
+    "video_path": "T8600P1024260D5E_20241118084819.mp4",
+    "timestamp": "2025-06-03 07:05:07"
+  }
+]
