@@ -85,6 +85,30 @@ process_stories: true
 
 stories:
 
+  - name: 'person detector'
+    skip: false
+    selectors:
+      - filenames: ['T8600P1024260D5E_20241118084615.mp4', 'T8600P1024260D5E_20241118084819.mp4', 'T8600P1024260D5E_20241118084902.mp4', 'T8600P1024260D5E_20241118085102.mp4', 'T8600P1024260D5E_20241118085306.mp4', 'T8600P102338033E_20240930085536.mp4' , 'T8600P1024260D5E_20241119181809.mp4']
+    tag_processing: false
+    tag_processing_config:
+      model: "Yolo11x"
+      task: "Track"
+      num_frames_per_second: 15
+      conf_threshold: 0.2
+    tag_video_generation: false
+    tag_video_generation_config:
+      output_size:
+        width: 1600
+        height: 900
+    video_generation: false
+    video_generation_config:
+      input_fragments:
+        duration_in_seconds: 1
+        offset_in_seconds: 1
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 800
+
   - name: 'Front Yard FPs - 2025-04-19'
     skip: true
     selectors:
