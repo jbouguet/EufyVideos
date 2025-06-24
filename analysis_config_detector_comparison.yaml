@@ -1,0 +1,136 @@
+# Configuration for comparing YOLO detector implementations
+# This file allows testing the optimized vs non-optimized YOLO detectors 
+# to debug the bounding box lag issue
+
+# Base directory definitions
+directories:
+  root_database: &root_database "/Users/jbouguet/Documents/EufySecurityVideos/record"
+  stories_output: &stories_output "/Users/jbouguet/Documents/EufySecurityVideos/stories"
+  tags_database: &tags_dir !join [*root_database, "/tags_database"]
+  batch_dirs: &batch_dirs
+    - !join [*root_database, "/Batch022"]
+
+# Video database configuration
+video_database_list:
+- force_video_directories_scanning: false
+  video_metadata_file: !join [*root_database, "/videos_in_batches.csv"]
+  video_directories: *batch_dirs
+
+# Tag database files
+tag_database_files:
+- !join [*tags_dir, "/detector_comparison_tags.json"]
+
+output_directory: *stories_output
+process_stories: true
+
+stories:
+
+  # Story 1: Non-optimized YOLO without GPU acceleration (baseline)
+  - name: 'YOLO11n - CPU Only'
+    skip: false
+    selectors:
+      - filenames: ['T8600P1024260D5E_20241118084615.mp4']  # Single test video
+
+    tag_processing: true
+    tag_processing_config:
+      model: "Yolo11n"                    # Non-optimized version
+      task: "Track"
+      num_frames_per_second: 3.0          # Same as your test
+      conf_threshold: 0.3                 # Same as your test
+      batch_size: 1                       # Same as your test
+      enable_gpu: false                   # CPU only for baseline
+
+    tag_video_generation: true
+    tag_video_generation_config:
+      output_size:
+        width: 1600
+        height: 900
+
+    video_generation: false
+
+  # Story 2: Non-optimized YOLO with GPU acceleration
+  - name: 'YOLO11n - MPS GPU'
+    skip: true
+    selectors:
+      - filenames: ['T8600P1024260D5E_20241118084615.mp4']  # Same test video
+
+    tag_processing: true
+    tag_processing_config:
+      model: "Yolo11n"                    # Non-optimized version
+      task: "Track"
+      num_frames_per_second: 3.0          # Same as your test
+      conf_threshold: 0.3                 # Same as your test  
+      batch_size: 1                       # Same as your test
+      enable_gpu: true                    # Enable MPS GPU acceleration
+
+    tag_video_generation: true
+    tag_video_generation_config:
+      output_size:
+        width: 1600
+        height: 900
+
+    video_generation: false
+
+  # Story 3: Optimized YOLO (the one with lag issues)
+  - name: 'YOLO11n - Optimized'
+    skip: true
+    selectors:
+      - filenames: ['T8600P1024260D5E_20241118084615.mp4']  # Same test video
+
+    tag_processing: true
+    tag_processing_config:
+      model: "Yolo11n_Optimized"         # Optimized version with suspected lag
+      task: "Track"
+      num_frames_per_second: 3.0          # Same as your test
+      conf_threshold: 0.3                 # Same as your test
+      batch_size: 1                       # Same as your test (you tested this)
+
+    tag_video_generation: true
+    tag_video_generation_config:
+      output_size:
+        width: 1600
+        height: 900
+
+    video_generation: false
+
+  # Story 4: Multiple test videos for thorough comparison
+  - name: 'Multiple Videos - CPU vs GPU vs Optimized'
+    skip: true
+    selectors:
+      - filenames: ['T8600P1024260D5E_20241118084615.mp4', 'T8600P1024260D5E_20241118084819.mp4', 'T8600P102338033E_20240930085536.mp4']
+
+    tag_processing: true
+    tag_processing_config:
+      model: "Yolo11n"                    # Choose which to test
+      task: "Track"
+      num_frames_per_second: 3.0
+      conf_threshold: 0.3
+      batch_size: 1
+      enable_gpu: false                   # Change this to true/false as needed
+
+    tag_video_generation: true
+    tag_video_generation_config:
+      output_size:
+        width: 1600
+        height: 900
+
+    video_generation: false
+
+# Performance comparison notes:
+# 
+# To test and compare:
+# 1. Run "YOLO11n - CPU Only" first (baseline, slowest but correct)
+# 2. Run "YOLO11n - MPS GPU" (should be faster, same accuracy)  
+# 3. Run "YOLO11n - Optimized" (fastest but with lag issues)
+# 4. Compare the generated videos to see bounding box behavior
+#
+# Expected results:
+# - CPU Only: Correct tracking, slow processing
+# - MPS GPU: Correct tracking, faster processing  
+# - Optimized: Fast processing but bounding boxes lag behind moving objects
+#
+# This will help isolate whether the issue is:
+# - GPU acceleration in general
+# - Batch processing in the optimized version
+# - Frame loading optimization in the optimized version
+# - Something else in the optimized implementation

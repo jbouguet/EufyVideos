@@ -3,10 +3,14 @@ import os
 from typing import Any, Dict, List
 
 import cv2
+import torch
 from tqdm import tqdm
 from ultralytics import YOLO
 
 from object_detector_base import ObjectDetector
+from logging_config import create_logger
+
+logger = create_logger(__name__)
 
 
 @contextlib.contextmanager
@@ -109,9 +113,26 @@ class YoloObjectDetector(ObjectDetector):
         "toothbrush",
     }
 
-    def __init__(self, model_name: str = "yolo11x.pt", conf_threshold: float = 0.2):
+    def __init__(self, model_name: str = "yolo11x.pt", conf_threshold: float = 0.2, enable_gpu: bool = False):
+        """
+        Initialize YOLO detector with optional GPU acceleration.
+        
+        Args:
+            model_name: YOLO model name (e.g., 'yolo11x.pt')
+            conf_threshold: Confidence threshold for detections
+            enable_gpu: Whether to use GPU acceleration (MPS on Mac, CUDA on others)
+        """
         super().__init__(model_name, conf_threshold)
+        
+        # Determine best available device
+        self.device = self._get_best_device(enable_gpu)
+        
+        # Initialize model
         self.model = YOLO(model_name)
+        
+        # Move model to device if GPU acceleration is enabled
+        if self.device != "cpu":
+            self.model.to(self.device)
 
         # Get all class names from the model
         self.all_class_names = self.model.names
@@ -122,6 +143,30 @@ class YoloObjectDetector(ObjectDetector):
             for class_idx, class_name in self.all_class_names.items()
             if class_name in self.ALLOWED_CLASSES
         }
+        
+        logger.info(f"YOLO detector initialized:")
+        logger.info(f"  Device: {self.device}")
+        logger.info(f"  Model: {model_name}")
+        logger.info(f"  Filtered classes: {len(self.filtered_class_indices)}")
+
+    def _get_best_device(self, enable_gpu: bool) -> str:
+        """Determine the best available device for inference."""
+        if not enable_gpu:
+            logger.info("GPU acceleration disabled - using CPU")
+            return "cpu"
+        
+        # Check for MPS (Mac M-series)
+        if torch.backends.mps.is_available():
+            logger.info("MPS (Metal Performance Shaders) available - using GPU acceleration")
+            return "mps"
+        
+        # Check for CUDA
+        if torch.cuda.is_available():
+            logger.info("CUDA available - using GPU acceleration")
+            return "cuda"
+        
+        logger.info("No GPU acceleration available - using CPU")
+        return "cpu"
 
     @classmethod
     def get_allowed_classes(cls) -> List[str]:
@@ -155,7 +200,7 @@ class YoloObjectDetector(ObjectDetector):
             if not ret:
                 continue
 
-            results = self.model(frame, conf=self.conf_threshold, verbose=False)
+            results = self.model(frame, conf=self.conf_threshold, verbose=False, device=self.device)
 
             for r in results:
                 boxes = r.boxes
@@ -214,7 +259,7 @@ class YoloObjectDetector(ObjectDetector):
                 continue
 
             results = self.model.track(
-                frame, persist=True, conf=self.conf_threshold, verbose=False
+                frame, persist=True, conf=self.conf_threshold, verbose=False, device=self.device
             )
 
             for r in results:

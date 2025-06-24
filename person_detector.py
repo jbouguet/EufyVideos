@@ -47,7 +47,7 @@ logger = create_logger(__name__)
 class PersonCrop:
     """Data structure for a person crop extracted from video."""
     
-    track_id: int
+    track_id: Union[int, str]  # Can be int (tracking mode) or str (detection mode)
     frame_number: int
     confidence: float
     bbox: Dict[str, int]  # {x1, y1, x2, y2}
@@ -77,7 +77,7 @@ class PersonCrop:
 class PersonTrack:
     """Data structure for a person track across multiple frames."""
     
-    track_id: int
+    track_id: Union[int, str]  # Can be int (tracking mode) or str (detection mode)
     video_filename: str
     crops: List[PersonCrop] = field(default_factory=list)
     person_label: Optional[str] = None  # For manual labeling
@@ -371,13 +371,31 @@ class PersonDetector:
         """
         os.makedirs(output_dir, exist_ok=True)
         
-        # Generate filename: video_trackID_frameNUM.jpg
+        # Generate filename: video_frame-NUM_track-ID.jpg or video_frame-NUM_detect-INFO.jpg
         video_name = os.path.splitext(crop.video_filename)[0]
-        filename = f"{video_name}_track{crop.track_id:03d}_frame{crop.frame_number:06d}.jpg"
+        frame_str = f"frame-{crop.frame_number:06d}"
+        
+        # Handle both integer track_ids (tracking mode) and string track_ids (detection mode)
+        if isinstance(crop.track_id, int):
+            # Tracking mode: video_frame-000714_track-123.jpg
+            identifier_str = f"track-{crop.track_id}"
+        else:
+            # Detection mode: video_frame-000224_detect-224_1711_395_1931_883.jpg
+            track_id_str = str(crop.track_id).replace('/', '_').replace('\\', '_')
+            if track_id_str.startswith('det_'):
+                # Remove 'det_' prefix and use 'detect-' instead
+                detect_info = track_id_str[4:]  # Remove 'det_' prefix
+                identifier_str = f"detect-{detect_info}"
+            else:
+                # Fallback for other string formats
+                identifier_str = f"track-{track_id_str}"
+        
+        filename = f"{video_name}_{frame_str}_{identifier_str}.jpg"
         filepath = os.path.join(output_dir, filename)
         
         # Save image
-        cv2.imwrite(filepath, crop.crop_image)
+        if crop.crop_image is not None:
+            cv2.imwrite(filepath, crop.crop_image)
         
         return filepath
     

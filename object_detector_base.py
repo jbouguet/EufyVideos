@@ -35,7 +35,9 @@ class ObjectDetector(ABC):
 
 class ObjectDetectorFactory:
     @staticmethod
-    def create_detector(model: str, conf_threshold: float = 0.2, batch_size: int = 8) -> ObjectDetector:
+    def create_detector(
+        model: str, conf_threshold: float = 0.2, batch_size: int = 8, enable_gpu: bool = False
+    ) -> ObjectDetector:
         from object_detector_florence2 import Florence2ObjectDetector
 
         # from object_detector_tensorflow import TensorFlowObjectDetector
@@ -54,60 +56,109 @@ class ObjectDetectorFactory:
                     model_name="microsoft/Florence-2-large",
                     conf_threshold=conf_threshold,
                 )
-            
+
             # Original YOLO detectors
+            case Model.YOLO10N.value:
+                return YoloObjectDetector(
+                    model_name="yolo10n.pt", conf_threshold=conf_threshold, enable_gpu=enable_gpu
+                )
+            case Model.YOLO10S.value:
+                return YoloObjectDetector(
+                    model_name="yolo10s.pt", conf_threshold=conf_threshold, enable_gpu=enable_gpu
+                )
+            case Model.YOLO10M.value:
+                return YoloObjectDetector(
+                    model_name="yolo10m.pt", conf_threshold=conf_threshold, enable_gpu=enable_gpu
+                )
+            case Model.YOLO10L.value:
+                return YoloObjectDetector(
+                    model_name="yolo10l.pt", conf_threshold=conf_threshold, enable_gpu=enable_gpu
+                )
+            case Model.YOLO10X.value:
+                return YoloObjectDetector(
+                    model_name="yolo10x.pt", conf_threshold=conf_threshold, enable_gpu=enable_gpu
+                )
             case Model.YOLO11N.value:
                 return YoloObjectDetector(
-                    model_name="yolo11n.pt", conf_threshold=conf_threshold
+                    model_name="yolo11n.pt", conf_threshold=conf_threshold, enable_gpu=enable_gpu
                 )
             case Model.YOLO11S.value:
                 return YoloObjectDetector(
-                    model_name="yolo11s.pt", conf_threshold=conf_threshold
+                    model_name="yolo11s.pt", conf_threshold=conf_threshold, enable_gpu=enable_gpu
                 )
             case Model.YOLO11M.value:
                 return YoloObjectDetector(
-                    model_name="yolo11m.pt", conf_threshold=conf_threshold
+                    model_name="yolo11m.pt", conf_threshold=conf_threshold, enable_gpu=enable_gpu
                 )
             case Model.YOLO11L.value:
                 return YoloObjectDetector(
-                    model_name="yolo11l.pt", conf_threshold=conf_threshold
+                    model_name="yolo11l.pt", conf_threshold=conf_threshold, enable_gpu=enable_gpu
                 )
             case Model.YOLO11X.value:
                 return YoloObjectDetector(
-                    model_name="yolo11x.pt", conf_threshold=conf_threshold
+                    model_name="yolo11x.pt", conf_threshold=conf_threshold, enable_gpu=enable_gpu
                 )
-            
+
             # Optimized YOLO detectors with GPU acceleration and batch processing
+            case Model.YOLO10N_OPTIMIZED.value:
+                return OptimizedYoloObjectDetector(
+                    model_name="yolo10n.pt",
+                    conf_threshold=conf_threshold,
+                    batch_size=batch_size,
+                )
+            case Model.YOLO10S_OPTIMIZED.value:
+                return OptimizedYoloObjectDetector(
+                    model_name="yolo10s.pt",
+                    conf_threshold=conf_threshold,
+                    batch_size=batch_size,
+                )
+            case Model.YOLO10M_OPTIMIZED.value:
+                return OptimizedYoloObjectDetector(
+                    model_name="yolo10m.pt",
+                    conf_threshold=conf_threshold,
+                    batch_size=batch_size,
+                )
+            case Model.YOLO10L_OPTIMIZED.value:
+                return OptimizedYoloObjectDetector(
+                    model_name="yolo10l.pt",
+                    conf_threshold=conf_threshold,
+                    batch_size=batch_size,
+                )
+            case Model.YOLO10X_OPTIMIZED.value:
+                return OptimizedYoloObjectDetector(
+                    model_name="yolo10x.pt",
+                    conf_threshold=conf_threshold,
+                    batch_size=batch_size,
+                )
             case Model.YOLO11N_OPTIMIZED.value:
                 return OptimizedYoloObjectDetector(
-                    model_name="yolo11n.pt", 
+                    model_name="yolo11n.pt",
                     conf_threshold=conf_threshold,
-                    batch_size=batch_size
+                    batch_size=batch_size,
                 )
             case Model.YOLO11S_OPTIMIZED.value:
                 return OptimizedYoloObjectDetector(
-                    model_name="yolo11s.pt", 
+                    model_name="yolo11s.pt",
                     conf_threshold=conf_threshold,
-                    batch_size=batch_size
+                    batch_size=batch_size,
                 )
             case Model.YOLO11M_OPTIMIZED.value:
                 return OptimizedYoloObjectDetector(
-                    model_name="yolo11m.pt", 
+                    model_name="yolo11m.pt",
                     conf_threshold=conf_threshold,
-                    batch_size=batch_size
+                    batch_size=batch_size,
                 )
             case Model.YOLO11L_OPTIMIZED.value:
                 return OptimizedYoloObjectDetector(
-                    model_name="yolo11l.pt", 
+                    model_name="yolo11l.pt",
                     conf_threshold=conf_threshold,
-                    batch_size=batch_size
+                    batch_size=batch_size,
                 )
             case Model.YOLO11X_OPTIMIZED.value:
                 return OptimizedYoloObjectDetector(
-                    model_name="yolo11x.pt", 
+                    model_name="yolo11x.pt",
                     conf_threshold=conf_threshold,
-                    batch_size=batch_size
+                    batch_size=batch_size,
                 )
-            
             case _:
                 raise ValueError(f"Invalid model: {model}")

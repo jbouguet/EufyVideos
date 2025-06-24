@@ -1,0 +1,85 @@
+{
+  "original": [
+    {
+      "model_name": "yolo11n.pt",
+      "implementation": "original",
+      "num_frames": 20,
+      "init_time": 0.128,
+      "detection_time": 3.07,
+      "detection_fps": 6.52,
+      "tracking_time": 2.038,
+      "tracking_fps": 9.81,
+      "total_detections": 185,
+      "total_tracks": 150
+    },
+    {
+      "model_name": "yolo11s.pt",
+      "implementation": "original",
+      "num_frames": 20,
+      "init_time": 0.097,
+      "detection_time": 2.725,
+      "detection_fps": 7.34,
+      "tracking_time": 1.78,
+      "tracking_fps": 11.24,
+      "total_detections": 317,
+      "total_tracks": 275
+    },
+    {
+      "model_name": "yolo11m.pt",
+      "implementation": "original",
+      "num_frames": 20,
+      "init_time": 0.136,
+      "detection_time": 2.291,
+      "detection_fps": 8.73,
+      "tracking_time": 2.086,
+      "tracking_fps": 9.59,
+      "total_detections": 274,
+      "total_tracks": 251
+    }
+  ],
+  "optimized": [
+    {
+      "model_name": "yolo11n.pt",
+      "implementation": "optimized",
+      "num_frames": 20,
+      "init_time": 0.095,
+      "detection_time": 1.581,
+      "detection_fps": 12.65,
+      "tracking_time": 1.653,
+      "tracking_fps": 12.1,
+      "total_detections": 185,
+      "total_tracks": 150
+    },
+    {
+      "model_name": "yolo11s.pt",
+      "implementation": "optimized",
+      "num_frames": 20,
+      "init_time": 0.095,
+      "detection_time": 1.729,
+      "detection_fps": 11.57,
+      "tracking_time": 1.72,
+      "tracking_fps": 11.63,
+      "total_detections": 317,
+      "total_tracks": 275
+    },
+    {
+      "model_name": "yolo11m.pt",
+      "implementation": "optimized",
+      "num_frames": 20,
+      "init_time": 0.123,
+      "detection_time": 1.881,
+      "detection_fps": 10.63,
+      "tracking_time": 1.845,
+      "tracking_fps": 10.84,
+      "total_detections": 274,
+      "total_tracks": 251
+    }
+  ],
+  "metadata": {
+    "test_video": "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch010/T8600P1024260D5E_20241118084615.mp4",
+    "video_duration": 120.465,
+    "num_frames": 20,
+    "gpu_available": true,
+    "timestamp": "2025-06-09 06:48:26"
+  }
+}

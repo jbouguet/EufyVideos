@@ -174,42 +174,34 @@ class OptimizedYoloObjectDetector(ObjectDetector):
 
     def _load_frames_efficiently(self, video_path: str, frames_to_sample: List[int]) -> List[np.ndarray]:
         """
-        Load frames efficiently with minimal seeking.
+        Load frames efficiently while preserving original sampling order.
         
         Args:
             video_path: Path to video file
-            frames_to_sample: List of frame indices to extract
+            frames_to_sample: List of frame indices to extract (in original sampling order)
             
         Returns:
-            List of loaded frames
+            List of loaded frames in the same order as frames_to_sample
         """
         frames = []
         
         with suppress_stdout_stderr():
             cap = cv2.VideoCapture(video_path)
             
-            # Sort frame indices for sequential reading when possible
-            sorted_frames = sorted(frames_to_sample)
-            current_frame = 0
-            
-            for target_frame in sorted_frames:
-                # Skip frames if we need to jump forward
-                while current_frame < target_frame:
-                    ret = cap.grab()  # Faster than read() when we don't need the frame
-                    if not ret:
-                        break
-                    current_frame += 1
-                
-                # Read the actual frame we need
-                if current_frame == target_frame:
-                    ret, frame = cap.retrieve()
-                    if ret:
-                        frames.append(frame)
-                    current_frame += 1
+            # Load frames in the ORIGINAL sampling order, not sorted order
+            # This is critical for tracking continuity!
+            for target_frame in frames_to_sample:
+                # Seek to specific frame
+                cap.set(cv2.CAP_PROP_POS_FRAMES, target_frame)
+                ret, frame = cap.read()
+                if ret:
+                    frames.append(frame)
+                else:
+                    logger.warning(f"Failed to read frame {target_frame} from {video_path}")
             
             cap.release()
         
-        logger.debug("Loaded %d frames from %s", len(frames), video_path)
+        logger.debug("Loaded %d frames from %s in original sampling order", len(frames), video_path)
         return frames
 
     def _process_frames_in_batches(self, 
@@ -343,7 +335,10 @@ class OptimizedYoloObjectDetector(ObjectDetector):
 
     def track_objects(self, video_path: str, num_frames: int = 10) -> List[Dict[str, Any]]:
         """
-        Optimized object tracking with batch processing.
+        Optimized object tracking with sequential processing to maintain temporal continuity.
+        
+        Note: Tracking requires sequential frame-by-frame processing to maintain temporal
+        relationships. Batch processing breaks tracking continuity and causes lag.
         
         Args:
             video_path: Path to video file
@@ -371,21 +366,63 @@ class OptimizedYoloObjectDetector(ObjectDetector):
         frames_to_sample = list(range(0, frame_count, stride))[:num_frames]
         
         logger.info(f"Tracking {len(frames_to_sample)} frames from {video_path}")
-        logger.info(f"Using device: {self.device}, batch size: {self.batch_size}")
+        logger.info(f"Using device: {self.device} (sequential processing for tracking accuracy)")
         
-        # Load frames efficiently
+        # Load frames efficiently (keep the optimized loading)
         frames = self._load_frames_efficiently(video_path, frames_to_sample)
         
         if not frames:
             logger.warning(f"No frames loaded from {video_path}")
             return []
         
-        # Process frames in batches
+        # Process frames SEQUENTIALLY for tracking (not in batches!)
+        all_tracks = []
+        prev_track_ids = set()
+        
         with tqdm(total=len(frames), desc="Tracking objects", unit="frame", colour="blue") as pbar:
-            all_tracks = self._process_frames_in_batches(
-                frames, frames_to_sample[:len(frames)], is_tracking=True
-            )
-            pbar.update(len(frames))
+            for frame, frame_num in zip(frames, frames_to_sample[:len(frames)]):
+                # Single frame tracking to maintain temporal continuity
+                results = self.model.track(
+                    frame, 
+                    persist=True, 
+                    conf=self.conf_threshold, 
+                    verbose=False
+                )
+                
+                # Process result for this frame
+                for result in results:
+                    if result.boxes is not None:
+                        for box in result.boxes:
+                            class_idx = int(box.cls)
+                            if class_idx in self.filtered_class_indices:
+                                x1, y1, x2, y2 = box.xyxy[0].tolist()
+                                
+                                track_id = None
+                                is_new_track = False
+                                if hasattr(box, "id") and box.id is not None:
+                                    track_id = int(box.id)
+                                    if track_id not in prev_track_ids:
+                                        is_new_track = True
+                                        prev_track_ids.add(track_id)
+                                
+                                detection = {
+                                    "type": "TRACKED_OBJECT",
+                                    "value": self.filtered_class_indices[class_idx],
+                                    "confidence": f"{float(box.conf):.2f}",
+                                    "frame_number": int(frame_num),
+                                    "bounding_box": {
+                                        "x1": int(x1),
+                                        "y1": int(y1),
+                                        "x2": int(x2),
+                                        "y2": int(y2),
+                                    },
+                                    "track_id": track_id,
+                                    "is_new_track": is_new_track,
+                                }
+                                
+                                all_tracks.append(detection)
+                
+                pbar.update(1)
         
         processing_time = time.time() - start_time
         fps = len(frames) / processing_time if processing_time > 0 else 0

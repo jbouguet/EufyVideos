@@ -51,7 +51,6 @@ directories:
     - !join [*root_database, "/Batch031"]
     - !join [*root_database, "/Batch032"]
     - !join [*root_database, "/Batch033"]
-    - !join [*root_database, "/Batch034"]
 
 # Person Recognition Database Configuration
 person_recognition:
@@ -94,7 +93,7 @@ process_stories: true
 stories:
 
   - name: 'person detector'
-    skip: true
+    skip: false
     selectors:
       - filenames: ['T8600P1024260D5E_20241118084615.mp4', 'T8600P1024260D5E_20241118084819.mp4', 'T8600P1024260D5E_20241118084902.mp4', 'T8600P1024260D5E_20241118085102.mp4', 'T8600P1024260D5E_20241118085306.mp4', 'T8600P102338033E_20240930085536.mp4' , 'T8600P1024260D5E_20241119181809.mp4']
 

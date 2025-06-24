@@ -36,21 +36,33 @@ class Model(Enum):
 
     Each model has different characteristics:
     - FLORENCE2: Microsoft's Florence-2 vision model
+    - YOLO10*: Various sizes of YOLO v10 models (N=Nano to X=Extra Large)
     - YOLO11*: Various sizes of YOLO v11 models (N=Nano to X=Extra Large)
-    - YOLO11*_OPTIMIZED: GPU-accelerated versions with batch processing
+    - YOLO10*_OPTIMIZED: GPU-accelerated of YOLO v10 models with batch processing
+    - YOLO11*_OPTIMIZED: GPU-accelerated of YOLO v11 models with batch processing
     - TENSORFLOW: Google's TensorFlow-based EfficientDet model [no longer supported]
 
     """
 
     # TENSORFLOW = "TensorFlow"
     FLORENCE2 = "Florence-2"
+    YOLO10N = "Yolo10n"
+    YOLO10S = "Yolo10s"
+    YOLO10M = "Yolo10m"
+    YOLO10L = "Yolo10l"
+    YOLO10X = "Yolo10x"
     YOLO11N = "Yolo11n"
     YOLO11S = "Yolo11s"
     YOLO11M = "Yolo11m"
     YOLO11L = "Yolo11l"
     YOLO11X = "Yolo11x"
-    
+
     # Optimized versions with GPU acceleration and batch processing
+    YOLO10N_OPTIMIZED = "Yolo10n_Optimized"
+    YOLO10S_OPTIMIZED = "Yolo10s_Optimized"
+    YOLO10M_OPTIMIZED = "Yolo10m_Optimized"
+    YOLO10L_OPTIMIZED = "Yolo10l_Optimized"
+    YOLO10X_OPTIMIZED = "Yolo10x_Optimized"
     YOLO11N_OPTIMIZED = "Yolo11n_Optimized"
     YOLO11S_OPTIMIZED = "Yolo11s_Optimized"
     YOLO11M_OPTIMIZED = "Yolo11m_Optimized"
@@ -79,6 +91,7 @@ class TaggerConfig:
     num_frames_per_second: float = 1
     conf_threshold: float = 0.2
     batch_size: int = 8  # For optimized detectors
+    enable_gpu: bool = False  # Enable GPU acceleration for non-optimized YOLO models
 
     def get_identifier(self) -> str:
         """Generate a unique identifier for this configuration."""
@@ -107,6 +120,7 @@ class TaggerConfig:
             ),
             conf_threshold=config_dict.get("conf_threshold", cls.conf_threshold),
             batch_size=config_dict.get("batch_size", cls.batch_size),
+            enable_gpu=config_dict.get("enable_gpu", cls.enable_gpu),
         )
 
 
@@ -364,7 +378,28 @@ class VideoTags:
         (IoU) is larger than the input threshold iou_thresh.
         Within a group of near duplicate tags, the one belonging to the
         longest track will be kept as representative.
+        
+        Note: If track_id is missing (detection mode), deduplication is skipped
+        and original tags are returned unchanged.
         """
+        # Check if any tags have track_id - if not, skip deduplication
+        has_track_ids = False
+        for file_tags in self.tags.values():
+            for frame_tags in file_tags.values():
+                for tag in frame_tags.values():
+                    if "track_id" in tag:
+                        has_track_ids = True
+                        break
+                if has_track_ids:
+                    break
+            if has_track_ids:
+                break
+        
+        # Skip deduplication if no track_ids found (detection mode)
+        if not has_track_ids:
+            logger.info("No track_id found in tags - skipping deduplication (detection mode)")
+            return self
+        
         track_lengths = defaultdict(int)
         for file_tags in self.tags.values():
             for frame_tags in file_tags.values():
@@ -389,7 +424,8 @@ class VideoTags:
                 for group in value_groups.values():
                     while group:
                         hash_key, tag = group.pop(0)
-                        track_len = track_lengths[tag["track_id"]]
+                        # Safe access to track_id with fallback
+                        track_len = track_lengths.get(tag.get("track_id", 0), 0)
                         best_tag = (hash_key, tag, track_len)
 
                         # Compare with remaining tags in the group
@@ -397,7 +433,7 @@ class VideoTags:
                         while i < len(group):
                             other_hash, other_tag = group[i]
                             if VideoTags.compute_iou(tag, other_tag) > iou_thresh:
-                                other_track_len = track_lengths[other_tag["track_id"]]
+                                other_track_len = track_lengths.get(other_tag.get("track_id", 0), 0)
                                 if other_track_len > best_tag[2]:
                                     best_tag = (other_hash, other_tag, other_track_len)
                                 group.pop(i)
@@ -421,6 +457,7 @@ class TagProcessor:
             model=self.tag_processing_config.model,
             conf_threshold=self.tag_processing_config.conf_threshold,
             batch_size=self.tag_processing_config.batch_size,
+            enable_gpu=self.tag_processing_config.enable_gpu,
         )
 
     def run(self, videos: Union[VideoMetadata, List[VideoMetadata]]) -> VideoTags:
@@ -433,6 +470,15 @@ class TagProcessor:
 
     def _compute_video_tags(self, videos: List[VideoMetadata]) -> TagDict:
         """Internal method to compute tags for all videos."""
+        import time
+        
+        start_time = time.time()
+        total_frames = 0
+        total_results = 0
+        
+        logger.info(f"Starting batch processing of {len(videos)} videos")
+        logger.info(f"Configuration: {self.tag_processing_config.task} mode with {self.tag_processing_config.model}")
+        
         tags: TagDict = {}
         unique_run_key = hash(datetime.now().isoformat())
         for video in tqdm(
@@ -444,6 +490,14 @@ class TagProcessor:
             leave=False,
         ):
             raw_tags = self._compute_task_specific_tags(video)
+            
+            # Track stats
+            video_frames = ceil(
+                self.tag_processing_config.num_frames_per_second
+                * video.duration.total_seconds()
+            )
+            total_frames += video_frames
+            total_results += len(raw_tags) if raw_tags else 0
 
             if raw_tags:
                 filename = video.filename
@@ -477,27 +531,62 @@ class TagProcessor:
                 sorted(tags[filename].items(), key=lambda x: int(x[0]))
             )
 
+        # Log overall processing statistics
+        total_time = time.time() - start_time
+        overall_fps = total_frames / total_time if total_time > 0 else 0
+        
+        logger.info("=" * 60)
+        logger.info("BATCH PROCESSING COMPLETED")
+        logger.info("=" * 60)
+        logger.info(f"Videos processed: {len(videos)}")
+        logger.info(f"Total frames: {total_frames}")
+        logger.info(f"Total execution time: {total_time:.2f}s")
+        logger.info(f"Overall processing speed: {overall_fps:.1f} FPS")
+        logger.info(f"Total results: {total_results} {self.tag_processing_config.task.lower()}ions")
+        logger.info(f"Average time per video: {total_time/len(videos):.2f}s")
+        logger.info("=" * 60)
+
         return tags
 
     def _compute_task_specific_tags(self, video: VideoMetadata) -> List[Dict[str, Any]]:
         """Compute tags based on configured task (detect or track)."""
+        import time
+        
         num_frames = ceil(
             self.tag_processing_config.num_frames_per_second
             * video.duration.total_seconds()
         )
+        
+        start_time = time.time()
+        task_name = self.tag_processing_config.task
+        
         match self.tag_processing_config.task:
             case Task.DETECT.value:
-                return self.object_detector.detect_objects(
+                result = self.object_detector.detect_objects(
                     video.full_path, num_frames=num_frames
                 )
             case Task.TRACK.value:
-                return self.object_detector.track_objects(
+                result = self.object_detector.track_objects(
                     video.full_path, num_frames=num_frames
                 )
             case _:
                 raise ValueError(
                     f"Invalid task: {self.tag_processing_config.task}. Must be one of {[dt.value for dt in Task]}"
                 )
+        
+        execution_time = time.time() - start_time
+        fps = num_frames / execution_time if execution_time > 0 else 0
+        
+        logger.info("Detector execution completed:")
+        logger.info(f"  Video: {video.filename}")
+        logger.info(f"  Task: {task_name}")
+        logger.info(f"  Model: {self.tag_processing_config.model}")
+        logger.info(f"  Frames processed: {num_frames}")
+        logger.info(f"  Total execution time: {execution_time:.2f}s")
+        logger.info(f"  Processing speed: {fps:.1f} FPS")
+        logger.info(f"  Results: {len(result)} {task_name.lower()}ions")
+        
+        return result
 
 
 if __name__ == "__main__":

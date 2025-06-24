@@ -36,7 +36,7 @@ Example Usage:
 import os
 from dataclasses import dataclass, field
 from math import ceil
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import yaml
 from termcolor import colored
@@ -46,6 +46,7 @@ from dashboard import Dashboard
 from logging_config import create_logger
 from occupancy import Occupancy
 from tag_processor import TaggerConfig, TagProcessor, VideoTags
+from person_recognition_processor import PersonRecognitionProcessor, PersonRecognitionConfig
 from tag_visualizer import TagVisualizer, TagVisualizerConfig
 from video_filter import VideoFilter, VideoSelector
 from video_generator import VideoGenerationConfig, VideoGenerator
@@ -84,7 +85,7 @@ class Story:
         default_factory=VideoGenerationConfig
     )
     tag_processing: bool = False
-    tag_processing_config: TaggerConfig = field(default_factory=TaggerConfig)
+    tag_processing_config: Union[TaggerConfig, PersonRecognitionConfig] = field(default_factory=TaggerConfig)
     tag_video_generation: bool = False
     tag_video_generation_config: TagVisualizerConfig = field(
         default_factory=TagVisualizerConfig
@@ -144,10 +145,27 @@ class Story:
             skip=story_dict.get("skip", False),
             tag_processing=story_dict.get("tag_processing", False),
             tag_video_generation=story_dict.get("tag_video_generation", False),
-            tag_processing_config=TaggerConfig.from_dict(
+            tag_processing_config=cls._create_tag_processing_config(
                 story_dict.get("tag_processing_config", {})
             ),
         )
+
+    @classmethod
+    def _create_tag_processing_config(cls, config_dict: Dict[str, Any]) -> Union[TaggerConfig, PersonRecognitionConfig]:
+        """
+        Create appropriate tag processing config based on whether person recognition is enabled.
+        
+        Args:
+            config_dict: Dictionary containing tag processing configuration
+            
+        Returns:
+            TaggerConfig or PersonRecognitionConfig depending on enable_person_recognition flag
+        """
+        if config_dict.get("enable_person_recognition", False):
+            logger.info("Person recognition enabled in config - creating PersonRecognitionConfig")
+            return PersonRecognitionConfig.from_dict(config_dict)
+        else:
+            return TaggerConfig.from_dict(config_dict)
 
     @classmethod
     def from_file(cls, story_filename: str) -> "Story":
@@ -425,8 +443,30 @@ class Story:
                 f"at {tagging_frame_rate}fps with a confidence threshold of {self.tag_processing_config.conf_threshold}"
             )
             logger.info(f"Number of frames to be tagged: {num_tagged_frames:,}")
-            tag_processor = TagProcessor(self.tag_processing_config)
-            video_tags = tag_processor.run(videos).to_file(tag_filename)
+            
+            # Check if person recognition is enabled by checking config type
+            if isinstance(self.tag_processing_config, PersonRecognitionConfig):
+                logger.info("Person recognition enabled - using PersonRecognitionProcessor")
+                person_processor = PersonRecognitionProcessor(self.tag_processing_config)
+                
+                # Process videos individually for person recognition
+                all_video_tags = []
+                for video in videos:
+                    video_tags = person_processor.run(video)
+                    all_video_tags.append(video_tags)
+                
+                # Merge all video tags
+                if all_video_tags:
+                    merged_tags = all_video_tags[0]
+                    for video_tags in all_video_tags[1:]:
+                        merged_tags.tags.update(video_tags.tags)
+                    video_tags = merged_tags.to_file(tag_filename)
+                else:
+                    video_tags = VideoTags().to_file(tag_filename)
+            else:
+                logger.info("Using basic TagProcessor (no person recognition)")
+                tag_processor = TagProcessor(self.tag_processing_config)
+                video_tags = tag_processor.run(videos).to_file(tag_filename)
             logger.info(
                 f"{video_tags.stats} newly computed tags are saved to {tag_filename}."
             )
