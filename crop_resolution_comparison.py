@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import yaml
 
-from enhanced_person_clustering import EnhancedPersonClusterer, EnhancedPersonCluster
+from person_clustering import PersonClusterer, PersonCluster
 from person_embedding import PersonEmbeddingGenerator, PersonEmbedding  
 from logging_config import create_logger
 
@@ -42,7 +42,7 @@ class ResolutionTestResult:
     largest_cluster: int
     smallest_cluster: int
     processing_time: float
-    clusters: List[EnhancedPersonCluster]
+    clusters: List[PersonCluster]
 
 
 class CropResolutionTester:
@@ -161,7 +161,7 @@ class CropResolutionTester:
             ResolutionTestResult with clustering outcome
         """
         # Use the best clustering parameters from our tuning
-        clusterer = EnhancedPersonClusterer(
+        clusterer = PersonClusterer(
             similarity_threshold=0.91,  # Conservative
             quality_threshold=0.6,
             use_dbscan=False,  # Use hierarchical (best from tuning)
@@ -188,7 +188,7 @@ class CropResolutionTester:
             )
         
         # Perform clustering
-        clusters = clusterer.cluster_embeddings_enhanced(embeddings)
+        clusters = clusterer.cluster_embeddings(embeddings)
         
         # Calculate statistics
         if clusters:

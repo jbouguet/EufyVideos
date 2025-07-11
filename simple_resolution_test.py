@@ -19,7 +19,7 @@ from typing import List, Tuple
 import json
 
 from person_embedding import PersonEmbeddingGenerator, PersonEmbedding
-from enhanced_person_clustering import EnhancedPersonClusterer
+from person_clustering import PersonClusterer
 from logging_config import create_logger
 
 logger = create_logger(__name__)
@@ -143,7 +143,7 @@ def cluster_and_analyze(embeddings: List[PersonEmbedding], resolution_name: str)
     embeddings = calculate_embedding_quality(embeddings)
     
     # Use conservative clustering settings
-    clusterer = EnhancedPersonClusterer(
+    clusterer = PersonClusterer(
         similarity_threshold=0.88,  # Slightly more permissive for this test
         quality_threshold=0.3,     # Lower quality threshold for test data
         use_dbscan=False,          # Use hierarchical
@@ -169,7 +169,7 @@ def cluster_and_analyze(embeddings: List[PersonEmbedding], resolution_name: str)
         
         # Load and cluster
         loaded_embeddings = PersonEmbeddingGenerator.load_embeddings(embeddings_file)
-        clusters = clusterer.cluster_embeddings_enhanced(loaded_embeddings)
+        clusters = clusterer.cluster_embeddings(loaded_embeddings)
     
     if not clusters:
         logger.warning(f"No clusters found for {resolution_name}")

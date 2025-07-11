@@ -33,7 +33,7 @@ from typing import List, Dict, Any, Optional, Tuple
 import math
 from datetime import datetime
 
-from enhanced_person_clustering import EnhancedPersonCluster, EnhancedPersonClusterer
+from person_clustering import PersonCluster, PersonClusterer
 from person_embedding import PersonEmbedding
 from logging_config import create_logger
 
@@ -76,30 +76,46 @@ class ClusterVisualInspector:
         logger.info(f"  Output dir: {output_dir}")
     
     def load_clusters(self):
-        """Load enhanced clusters from JSON file."""
-        logger.info("Loading enhanced clusters...")
+        """Load clusters from JSON file (supports both standard and conservative formats)."""
+        logger.info("Loading clusters...")
         
         with open(self.clusters_file, 'r') as f:
             data = json.load(f)
         
+        # Detect clustering type from metadata
+        clustering_type = data.get('metadata', {}).get('clustering_type', 'standard')
+        logger.info(f"Detected clustering type: {clustering_type}")
+        
         self.clusters = []
         for cluster_data in data['clusters']:
-            cluster = EnhancedPersonCluster(
-                cluster_id=cluster_data['cluster_id'],
-                cluster_size=cluster_data['cluster_size'],
-                avg_similarity=cluster_data['avg_similarity'],
-                min_similarity=cluster_data['min_similarity'],
-                quality_score=cluster_data['quality_score']
-            )
+            # Handle different formats
+            if clustering_type == 'conservative':
+                # Conservative clustering format - assign defaults for missing fields
+                cluster = PersonCluster(
+                    cluster_id=cluster_data['cluster_id'],
+                    cluster_size=cluster_data['cluster_size'],
+                    avg_similarity=0.95,  # Conservative default (temporal/track clustering)
+                    min_similarity=0.90,  # Conservative default
+                    quality_score=0.95    # Conservative default (high confidence)
+                )
+            else:
+                # Standard clustering format
+                cluster = PersonCluster(
+                    cluster_id=cluster_data['cluster_id'],
+                    cluster_size=cluster_data['cluster_size'],
+                    avg_similarity=cluster_data['avg_similarity'],
+                    min_similarity=cluster_data['min_similarity'],
+                    quality_score=cluster_data['quality_score']
+                )
             
-            # Load embeddings
+            # Load embeddings (format is same for both types)
             for emb_data in cluster_data['embeddings']:
                 embedding = PersonEmbedding.from_dict(emb_data)
                 cluster.embeddings.append(embedding)
             
             self.clusters.append(cluster)
         
-        logger.info(f"Loaded {len(self.clusters)} clusters for inspection")
+        logger.info(f"Loaded {len(self.clusters)} {clustering_type} clusters for inspection")
     
     def find_crop_image(self, embedding: PersonEmbedding) -> Optional[str]:
         """
@@ -152,12 +168,12 @@ class ClusterVisualInspector:
         
         return None
     
-    def load_crop_images(self, cluster: EnhancedPersonCluster) -> List[Tuple[np.ndarray, PersonEmbedding]]:
+    def load_crop_images(self, cluster: PersonCluster) -> List[Tuple[np.ndarray, PersonEmbedding]]:
         """
         Load all crop images for a cluster.
         
         Args:
-            cluster: EnhancedPersonCluster object
+            cluster: PersonCluster object
             
         Returns:
             List of (image, embedding) tuples
@@ -179,12 +195,12 @@ class ClusterVisualInspector:
         
         return crop_images
     
-    def create_cluster_grid(self, cluster: EnhancedPersonCluster, save_path: str) -> bool:
+    def create_cluster_grid(self, cluster: PersonCluster, save_path: str) -> bool:
         """
         Create a visual grid of all crops in a cluster.
         
         Args:
-            cluster: EnhancedPersonCluster object
+            cluster: PersonCluster object
             save_path: Path to save the grid image
             
         Returns:
@@ -456,10 +472,10 @@ class ClusterVisualInspector:
 def main():
     """Run cluster visual inspection."""
     
-    # Configuration
-    clusters_file = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/enhanced_clustering/enhanced_clusters.json"
+    # Configuration - use conservative clustering results
+    clusters_file = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/conservative_clustering/conservative_clusters.json"
     crops_base_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/crops"
-    output_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/visual_inspection"
+    output_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/conservative_visual_inspection"
     
     try:
         # Create visual inspector

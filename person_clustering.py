@@ -1,34 +1,32 @@
 #!/usr/bin/env python3
 """
-Enhanced Person Clustering Module
+Person Clustering Module
 
-This module provides improved clustering with better precision for person identification.
-Key improvements over basic clustering:
+This module provides clustering with good precision for person identification.
+Key features:
 1. Higher similarity thresholds for better precision
 2. Multi-pass clustering with quality filtering
 3. Better handling of poor-quality embeddings
-4. Face-based filtering for more reliable clustering
-5. Temporal consistency checks
+4. Temporal consistency checks
 
 Usage:
-    python enhanced_person_clustering.py
+    python person_clustering.py
 """
 
 import json
 import os
+import sys
+import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
-import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 from sklearn.cluster import DBSCAN, AgglomerativeClustering
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.preprocessing import StandardScaler
 
 from logging_config import create_logger
 from person_embedding import PersonEmbedding, PersonEmbeddingGenerator
@@ -37,8 +35,8 @@ logger = create_logger(__name__)
 
 
 @dataclass
-class EnhancedPersonCluster:
-    """Enhanced cluster with quality metrics."""
+class PersonCluster:
+    """Cluster with quality metrics."""
 
     cluster_id: int
     embeddings: List[PersonEmbedding] = field(default_factory=list)
@@ -95,7 +93,7 @@ class EnhancedPersonCluster:
         )
         avg_confidence = np.mean([emb.confidence for emb in self.embeddings])
 
-        self.quality_score = (
+        self.quality_score = float(
             0.4 * self.avg_similarity
             + 0.3 * self.min_similarity
             + 0.2 * avg_embedding_quality
@@ -103,9 +101,9 @@ class EnhancedPersonCluster:
         )
 
 
-class EnhancedPersonClusterer:
+class PersonClusterer:
     """
-    Enhanced clustering system with improved precision and quality filtering.
+    Clustering system with improved precision and quality filtering.
     """
 
     def __init__(
@@ -118,7 +116,7 @@ class EnhancedPersonClusterer:
         min_samples: int = 2,
     ):
         """
-        Initialize enhanced clustering system.
+        Initialize clustering system.
 
         Args:
             similarity_threshold: Higher threshold for better precision
@@ -135,16 +133,16 @@ class EnhancedPersonClusterer:
         self.eps = eps
         self.min_samples = min_samples
 
-        logger.info(f"EnhancedPersonClusterer initialized:")
-        logger.info(f"  Similarity threshold: {similarity_threshold}")
-        logger.info(f"  Quality threshold: {quality_threshold}")
-        logger.info(f"  Algorithm: {'DBSCAN' if use_dbscan else 'Hierarchical'}")
-        logger.info(f"  Min cluster size: {min_cluster_size}")
-        logger.info(f"  Min samples: {min_samples}")
+        logger.info("PersonClusterer initialized:")
+        logger.info("  Similarity threshold: %.2f", similarity_threshold)
+        logger.info("  Quality threshold: %.2f", quality_threshold)
+        logger.info("  Algorithm: %s", 'DBSCAN' if use_dbscan else 'Hierarchical')
+        logger.info("  Min cluster size: %d", min_cluster_size)
+        logger.info("  Min samples: %d", min_samples)
 
     def load_and_filter_embeddings(self, embeddings_dir: str) -> List[PersonEmbedding]:
         """
-        Load embeddings with enhanced quality filtering.
+        Load embeddings with quality filtering.
 
         Args:
             embeddings_dir: Directory containing embedding JSON files
@@ -152,7 +150,7 @@ class EnhancedPersonClusterer:
         Returns:
             List of high-quality PersonEmbedding objects
         """
-        logger.info(f"Loading and filtering embeddings from {embeddings_dir}")
+        logger.info("Loading and filtering embeddings from %s", embeddings_dir)
 
         all_embeddings = []
 
@@ -160,27 +158,24 @@ class EnhancedPersonClusterer:
         embeddings_path = Path(embeddings_dir)
         json_files = list(embeddings_path.glob("*_embeddings.json"))
 
-        logger.info(f"Found {len(json_files)} embedding files")
+        logger.info("Found %d embedding files", len(json_files))
 
         for json_file in json_files:
             try:
                 embeddings = PersonEmbeddingGenerator.load_embeddings(str(json_file))
                 all_embeddings.extend(embeddings)
-                logger.info(
-                    f"  Loaded {len(embeddings)} embeddings from {json_file.name}"
-                )
-            except Exception as e:
-                logger.warning(f"  Failed to load {json_file.name}: {e}")
+                logger.info("  Loaded %d embeddings from %s", len(embeddings), json_file.name)
+            except (json.JSONDecodeError, FileNotFoundError, KeyError) as e:
+                logger.warning("  Failed to load %s: %s", json_file.name, e)
 
-        logger.info(f"Total embeddings before filtering: {len(all_embeddings)}")
+        logger.info("Total embeddings before filtering: %d", len(all_embeddings))
 
         # Apply quality filtering
         filtered_embeddings = self._filter_low_quality_embeddings(all_embeddings)
 
-        logger.info(f"Total embeddings after filtering: {len(filtered_embeddings)}")
-        logger.info(
-            f"Filtered out {len(all_embeddings) - len(filtered_embeddings)} low-quality embeddings"
-        )
+        logger.info("Total embeddings after filtering: %d", len(filtered_embeddings))
+        logger.info("Filtered out %d low-quality embeddings", 
+                   len(all_embeddings) - len(filtered_embeddings))
 
         return filtered_embeddings
 
@@ -206,30 +201,28 @@ class EnhancedPersonClusterer:
             if quality_ok and confidence_ok and embedding_ok and variance_ok:
                 filtered.append(emb)
             else:
-                logger.debug(
-                    f"Filtered out embedding: quality={emb.embedding_quality:.3f}, "
-                    f"confidence={emb.confidence:.3f}, std={embedding_std:.4f}"
-                )
+                logger.debug("Filtered out embedding: quality=%.3f, confidence=%.3f, std=%.4f",
+                            emb.embedding_quality, emb.confidence, embedding_std)
 
         return filtered
 
-    def cluster_embeddings_enhanced(
+    def cluster_embeddings(
         self, embeddings: List[PersonEmbedding]
-    ) -> List[EnhancedPersonCluster]:
+    ) -> List[PersonCluster]:
         """
-        Perform enhanced clustering with improved precision.
+        Perform clustering with improved precision.
 
         Args:
             embeddings: List of PersonEmbedding objects to cluster
 
         Returns:
-            List of EnhancedPersonCluster objects
+            List of PersonCluster objects
         """
         if len(embeddings) < 2:
             logger.warning("Not enough embeddings for clustering")
             return []
 
-        logger.info(f"Enhanced clustering of {len(embeddings)} embeddings...")
+        logger.info("Clustering %d embeddings...", len(embeddings))
 
         # Create embedding matrix
         embedding_matrix = np.array([emb.embedding for emb in embeddings])
@@ -256,21 +249,19 @@ class EnhancedPersonClusterer:
         # Sort by quality score (best first)
         valid_clusters.sort(key=lambda x: x.quality_score, reverse=True)
 
-        logger.info(f"Enhanced clustering completed:")
-        logger.info(f"  Valid clusters: {len(valid_clusters)}")
-        logger.info(
-            f"  Average cluster quality: {np.mean([c.quality_score for c in valid_clusters]):.3f}"
-        )
+        logger.info("Clustering completed:")
+        logger.info("  Valid clusters: %d", len(valid_clusters))
+        logger.info("  Average cluster quality: %.3f", 
+                   np.mean([c.quality_score for c in valid_clusters]))
 
         return valid_clusters
 
     def _cluster_with_dbscan(
         self, embedding_matrix: np.ndarray, embeddings: List[PersonEmbedding]
-    ) -> List[EnhancedPersonCluster]:
+    ) -> List[PersonCluster]:
         """Cluster using DBSCAN algorithm."""
-        logger.info(
-            f"Using DBSCAN clustering (eps={self.eps}, min_samples={self.min_samples})"
-        )
+        logger.info("Using DBSCAN clustering (eps=%.2f, min_samples=%d)", 
+                   self.eps, self.min_samples)
 
         # Use DBSCAN with cosine distance
         # Convert similarity to distance, ensuring no negative values
@@ -299,11 +290,10 @@ class EnhancedPersonClusterer:
 
     def _cluster_hierarchical(
         self, embedding_matrix: np.ndarray, embeddings: List[PersonEmbedding]
-    ) -> List[EnhancedPersonCluster]:
+    ) -> List[PersonCluster]:
         """Cluster using hierarchical clustering."""
-        logger.info(
-            f"Using hierarchical clustering (threshold={self.similarity_threshold})"
-        )
+        logger.info("Using hierarchical clustering (threshold=%.2f)", 
+                   self.similarity_threshold)
 
         # Compute distance matrix with safety checks
         similarity_matrix = cosine_similarity(embedding_matrix)
@@ -334,7 +324,7 @@ class EnhancedPersonClusterer:
 
     def _create_clusters_from_labels(
         self, cluster_labels: np.ndarray, embeddings: List[PersonEmbedding]
-    ) -> List[EnhancedPersonCluster]:
+    ) -> List[PersonCluster]:
         """Create cluster objects from clustering labels."""
 
         # Group embeddings by cluster label
@@ -343,10 +333,10 @@ class EnhancedPersonClusterer:
             if label != -1:  # -1 indicates noise in DBSCAN
                 cluster_groups[label].append(emb)
 
-        # Create EnhancedPersonCluster objects
+        # Create PersonCluster objects
         clusters = []
         for cluster_id, cluster_embeddings in cluster_groups.items():
-            cluster = EnhancedPersonCluster(
+            cluster = PersonCluster(
                 cluster_id=cluster_id, embeddings=cluster_embeddings
             )
             clusters.append(cluster)
@@ -354,12 +344,12 @@ class EnhancedPersonClusterer:
         return clusters
 
     def analyze_cluster_quality(
-        self, clusters: List[EnhancedPersonCluster], output_dir: str
+        self, clusters: List[PersonCluster], output_dir: str
     ):
         """Create detailed quality analysis of clusters."""
         os.makedirs(output_dir, exist_ok=True)
 
-        logger.info(f"Creating enhanced cluster analysis in {output_dir}")
+        logger.info("Creating cluster analysis in %s", output_dir)
 
         # 1. Quality score distribution
         self._plot_quality_distribution(clusters, output_dir)
@@ -368,10 +358,10 @@ class EnhancedPersonClusterer:
         self._plot_similarity_analysis(clusters, output_dir)
 
         # 3. Create detailed report
-        self._create_enhanced_report(clusters, output_dir)
+        self._create_detailed_report(clusters, output_dir)
 
     def _plot_quality_distribution(
-        self, clusters: List[EnhancedPersonCluster], output_dir: str
+        self, clusters: List[PersonCluster], output_dir: str
     ):
         """Plot cluster quality score distribution."""
         quality_scores = [cluster.quality_score for cluster in clusters]
@@ -433,14 +423,14 @@ class EnhancedPersonClusterer:
 
         plt.tight_layout()
         plt.savefig(
-            os.path.join(output_dir, "enhanced_cluster_quality.png"),
+            os.path.join(output_dir, "cluster_quality.png"),
             dpi=300,
             bbox_inches="tight",
         )
         plt.close()
 
     def _plot_similarity_analysis(
-        self, clusters: List[EnhancedPersonCluster], output_dir: str
+        self, clusters: List[PersonCluster], output_dir: str
     ):
         """Create detailed similarity analysis plots."""
 
@@ -500,14 +490,14 @@ class EnhancedPersonClusterer:
         )
         plt.close()
 
-    def _create_enhanced_report(
-        self, clusters: List[EnhancedPersonCluster], output_dir: str
+    def _create_detailed_report(
+        self, clusters: List[PersonCluster], output_dir: str
     ):
-        """Create detailed enhanced clustering report."""
-        report_path = os.path.join(output_dir, "enhanced_cluster_report.txt")
+        """Create detailed clustering report."""
+        report_path = os.path.join(output_dir, "cluster_report.txt")
 
-        with open(report_path, "w") as f:
-            f.write("ENHANCED PERSON CLUSTERING REPORT\n")
+        with open(report_path, "w", encoding="utf-8") as f:
+            f.write("PERSON CLUSTERING REPORT\n")
             f.write("=" * 60 + "\n\n")
             f.write(f"Generated: {datetime.now().isoformat()}\n")
             f.write(f"Algorithm: {'DBSCAN' if self.use_dbscan else 'Hierarchical'}\n")
@@ -576,23 +566,23 @@ class EnhancedPersonClusterer:
 
 
 def main():
-    """Run enhanced person clustering."""
+    """Run person clustering."""
 
     # Paths
     embeddings_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/embeddings"
-    output_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/enhanced_clustering"
+    output_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/clustering"
 
     logger.info("=" * 60)
-    logger.info("ENHANCED PERSON CLUSTERING")
+    logger.info("PERSON CLUSTERING")
     logger.info("=" * 60)
 
     if not os.path.exists(embeddings_dir):
-        logger.error(f"Embeddings directory not found: {embeddings_dir}")
+        logger.error("Embeddings directory not found: %s", embeddings_dir)
         return 1
 
     try:
-        # Create enhanced clusterer with balanced conservative settings
-        clusterer = EnhancedPersonClusterer(
+        # Create clusterer with balanced conservative settings
+        clusterer = PersonClusterer(
             similarity_threshold=0.88,  # Conservative but allows more granular clusters
             quality_threshold=0.5,  # Balanced quality filter
             use_dbscan=False,  # Use hierarchical for better control
@@ -608,8 +598,8 @@ def main():
             logger.error("No valid embeddings found after filtering")
             return 1
 
-        # Perform enhanced clustering
-        clusters = clusterer.cluster_embeddings_enhanced(embeddings)
+        # Perform clustering
+        clusters = clusterer.cluster_embeddings(embeddings)
 
         if not clusters:
             logger.warning("No clusters found - try lowering thresholds")
@@ -619,37 +609,34 @@ def main():
         os.makedirs(output_dir, exist_ok=True)
         clusterer.analyze_cluster_quality(clusters, output_dir)
 
-        # Save enhanced cluster data
-        enhanced_clusters_file = os.path.join(output_dir, "enhanced_clusters.json")
-        save_enhanced_clusters(clusters, enhanced_clusters_file)
+        # Save cluster data
+        clusters_file = os.path.join(output_dir, "clusters.json")
+        save_clusters(clusters, clusters_file)
 
         # Print results
         logger.info("\n" + "=" * 60)
-        logger.info("ENHANCED CLUSTERING RESULTS")
+        logger.info("CLUSTERING RESULTS")
         logger.info("=" * 60)
-        logger.info(f"High-quality clusters discovered: {len(clusters)}")
+        logger.info("High-quality clusters discovered: %d", len(clusters))
 
         for i, cluster in enumerate(clusters[:5]):
-            logger.info(
-                f"Cluster {i+1}: size={cluster.cluster_size}, "
-                f"quality={cluster.quality_score:.3f}, "
-                f"similarity={cluster.avg_similarity:.3f}"
-            )
+            logger.info("Cluster %d: size=%d, quality=%.3f, similarity=%.3f",
+                       i+1, cluster.cluster_size, cluster.quality_score, cluster.avg_similarity)
 
-        logger.info(f"\nResults saved to: {output_dir}")
+        logger.info("\nResults saved to: %s", output_dir)
 
         return 0
 
     except Exception as e:
-        logger.error(f"Enhanced clustering failed: {e}")
+        logger.error("Clustering failed: %s", e)
         import traceback
 
         traceback.print_exc()
         return 1
 
 
-def save_enhanced_clusters(clusters: List[EnhancedPersonCluster], output_file: str):
-    """Save enhanced clustering results."""
+def save_clusters(clusters: List[PersonCluster], output_file: str):
+    """Save clustering results."""
 
     def convert_numpy_types(obj):
         """Convert numpy types to native Python types for JSON serialization."""
@@ -665,7 +652,7 @@ def save_enhanced_clusters(clusters: List[EnhancedPersonCluster], output_file: s
         "metadata": {
             "timestamp": datetime.now().isoformat(),
             "total_clusters": len(clusters),
-            "clustering_type": "enhanced",
+            "clustering_type": "standard",
         },
         "clusters": [],
     }
@@ -714,11 +701,11 @@ def save_enhanced_clusters(clusters: List[EnhancedPersonCluster], output_file: s
         }
         cluster_data["clusters"].append(cluster_info)
 
-    with open(output_file, "w") as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(cluster_data, f, indent=2)
 
-    logger.info(f"Enhanced clusters saved to {output_file}")
+    logger.info("Clusters saved to %s", output_file)
 
 
 if __name__ == "__main__":
-    exit(main())
+    sys.exit(main())

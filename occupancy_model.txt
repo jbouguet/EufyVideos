@@ -1,19 +1,17 @@
 {
   "feature_names": [
-    "Back Entrance",
     "Backyard",
     "Front Door",
     "Gateway",
     "Walkway"
   ],
   "feature_importances": {
-    "Back Entrance": 0.009017122769796973,
-    "Backyard": 0.0392284484813913,
-    "Front Door": 0.9351117960938493,
-    "Gateway": 0.007589327897163101,
-    "Walkway": 0.009053304757799288
+    "Backyard": 1.0,
+    "Front Door": 0.0,
+    "Gateway": 0.0,
+    "Walkway": 0.0
   },
-  "tree_text": "|--- Front Door <= 3.50\n|   |--- Backyard <= 35.00\n|   |   |--- Back Entrance <= 3.00\n|   |   |   |--- class: 0\n|   |   |--- Back Entrance >  3.00\n|   |   |   |--- class: 1\n|   |--- Backyard >  35.00\n|   |   |--- Gateway <= 0.50\n|   |   |   |--- class: 0\n|   |   |--- Gateway >  0.50\n|   |   |   |--- class: 1\n|--- Front Door >  3.50\n|   |--- Walkway <= 2.50\n|   |   |--- class: 0\n|   |--- Walkway >  2.50\n|   |   |--- class: 1\n",
+  "tree_text": "|--- Backyard <= 20.00\n|   |--- class: 0\n|--- Backyard >  20.00\n|   |--- class: 1\n",
   "model_params": {
     "ccp_alpha": 0.0,
     "class_weight": null,
@@ -26,7 +24,7 @@
     "min_samples_split": 2,
     "min_weight_fraction_leaf": 0.0,
     "monotonic_cst": null,
-    "random_state": 500,
+    "random_state": 1000,
     "splitter": "best"
   },
   "classes": [

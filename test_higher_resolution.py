@@ -16,7 +16,7 @@ Usage:
 import os
 import shutil
 import tempfile
-from enhanced_person_clustering import EnhancedPersonClusterer
+from person_clustering import PersonClusterer
 from logging_config import create_logger
 
 logger = create_logger(__name__)
@@ -97,7 +97,7 @@ def cluster_and_analyze(embeddings_dir, resolution_name):
     logger.info(f"Clustering embeddings for {resolution_name}")
     
     # Use the best settings from our parameter tuning
-    clusterer = EnhancedPersonClusterer(
+    clusterer = PersonClusterer(
         similarity_threshold=0.91,  # Hierarchical conservative
         quality_threshold=0.6,
         use_dbscan=False,  # Use hierarchical clustering
@@ -112,7 +112,7 @@ def cluster_and_analyze(embeddings_dir, resolution_name):
         return None
     
     # Perform clustering  
-    clusters = clusterer.cluster_embeddings_enhanced(embeddings)
+    clusters = clusterer.cluster_embeddings(embeddings)
     
     if not clusters:
         logger.warning(f"No clusters found for {resolution_name}")

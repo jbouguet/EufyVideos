@@ -39,7 +39,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import uuid
 
-from enhanced_person_clustering import EnhancedPersonCluster, EnhancedPersonClusterer
+from person_clustering import PersonCluster, PersonClusterer
 from person_embedding import PersonEmbedding
 from logging_config import create_logger
 
@@ -140,7 +140,7 @@ class ClusterLabelingManager:
         self.visual_inspection_dir = visual_inspection_dir
         
         # Data structures
-        self.clusters: List[EnhancedPersonCluster] = []
+        self.clusters: List[PersonCluster] = []
         self.cluster_labels: Dict[int, ClusterLabel] = {}
         self.mega_clusters: Dict[str, MegaCluster] = {}
         self.cluster_to_mega: Dict[int, str] = {}  # cluster_id -> mega_id
@@ -167,7 +167,7 @@ class ClusterLabelingManager:
         
         self.clusters = []
         for cluster_data in data['clusters']:
-            cluster = EnhancedPersonCluster(
+            cluster = PersonCluster(
                 cluster_id=cluster_data['cluster_id'],
                 cluster_size=cluster_data['cluster_size'],
                 avg_similarity=cluster_data['avg_similarity'],

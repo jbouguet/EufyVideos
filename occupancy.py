@@ -135,67 +135,57 @@ class Occupancy:
     # assumed to be of occupancy status UNKNOWN.
     # Format: (start_date, end_date, occupancy_status)
     OCCUPANCY_CALENDAR = [
-        ("2024-02-27", "2024-02-27", OccupancyStatus.OCCUPIED),
-        # ("2024-02-28", "2024-02-28", OccupancyStatus.OCCUPIED),
+        ("2024-02-27", "2024-02-27", OccupancyStatus.NOT_OCCUPIED),
         ("2024-02-29", "2024-03-03", OccupancyStatus.OCCUPIED),
         ("2024-03-04", "2024-03-07", OccupancyStatus.NOT_OCCUPIED),
         ("2024-03-08", "2024-03-09", OccupancyStatus.OCCUPIED),
         ("2024-03-10", "2024-03-10", OccupancyStatus.NOT_OCCUPIED),
         ("2024-03-11", "2024-03-11", OccupancyStatus.OCCUPIED),
         ("2024-03-12", "2024-03-12", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-03-13", "2024-03-13", OccupancyStatus.OCCUPIED),
-        ("2024-03-14", "2024-03-17", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-03-18", "2024-03-19", OccupancyStatus.OCCUPIED),
-        ("2024-03-20", "2024-03-21", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-03-22", "2024-03-22", OccupancyStatus.OCCUPIED),
-        ("2024-03-23", "2024-03-23", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-03-13", "2024-03-14", OccupancyStatus.OCCUPIED),
+        ("2024-03-15", "2024-03-17", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-03-18", "2024-03-18", OccupancyStatus.OCCUPIED),
+        ("2024-03-19", "2024-03-23", OccupancyStatus.NOT_OCCUPIED),
         ("2024-03-24", "2024-04-12", OccupancyStatus.OCCUPIED),
-        ("2024-04-13", "2024-04-17", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-04-18", "2024-04-19", OccupancyStatus.OCCUPIED),
-        ("2024-04-20", "2024-04-20", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-04-21", "2024-04-21", OccupancyStatus.OCCUPIED),
-        ("2024-04-22", "2024-04-23", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-04-24", "2024-04-24", OccupancyStatus.OCCUPIED),
-        ("2024-04-25", "2024-04-27", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-04-28", "2024-04-28", OccupancyStatus.OCCUPIED),
-        ("2024-04-29", "2024-05-01", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-04-13", "2024-05-01", OccupancyStatus.NOT_OCCUPIED),
         ("2024-05-02", "2024-05-02", OccupancyStatus.OCCUPIED),
         ("2024-05-03", "2024-05-10", OccupancyStatus.NOT_OCCUPIED),
         ("2024-05-11", "2024-05-22", OccupancyStatus.OCCUPIED),
-        ("2024-05-23", "2024-05-31", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-06-01", "2024-06-01", OccupancyStatus.OCCUPIED),
-        ("2024-06-02", "2024-06-09", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-05-23", "2024-06-09", OccupancyStatus.NOT_OCCUPIED),
         ("2024-06-10", "2024-07-19", OccupancyStatus.OCCUPIED),
-        ("2024-07-20", "2024-08-29", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-07-20", "2024-08-06", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-08-07", "2024-08-12", OccupancyStatus.OCCUPIED),
+        ("2024-08-13", "2024-08-15", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-08-16", "2024-08-16", OccupancyStatus.OCCUPIED),
+        ("2024-08-17", "2024-08-18", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-08-19", "2024-08-19", OccupancyStatus.OCCUPIED),
+        ("2024-08-20", "2024-08-22", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-08-23", "2024-08-24", OccupancyStatus.OCCUPIED),
+        ("2024-08-25", "2024-08-29", OccupancyStatus.NOT_OCCUPIED),
         ("2024-08-30", "2024-09-09", OccupancyStatus.OCCUPIED),
         ("2024-09-10", "2024-09-21", OccupancyStatus.NOT_OCCUPIED),
         ("2024-09-22", "2024-10-05", OccupancyStatus.OCCUPIED),
         ("2024-10-06", "2024-10-08", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-10-09", "2024-10-12", OccupancyStatus.OCCUPIED),
-        ("2024-10-13", "2024-11-01", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-11-02", "2024-11-02", OccupancyStatus.OCCUPIED),
-        ("2024-11-03", "2024-11-15", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-10-09", "2024-10-11", OccupancyStatus.OCCUPIED),
+        ("2024-10-12", "2024-11-15", OccupancyStatus.NOT_OCCUPIED),
         ("2024-11-16", "2024-11-20", OccupancyStatus.OCCUPIED),
-        ("2024-11-21", "2024-12-09", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-12-10", "2024-12-10", OccupancyStatus.OCCUPIED),
-        (
-            "2024-12-11",
-            "2024-12-11",
-            OccupancyStatus.NOT_OCCUPIED,
-        ),  # misclassified date
+        ("2024-11-21", "2024-12-11", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-12-10", "2024-12-10", OccupancyStatus.NOT_OCCUPIED),
         ("2024-12-12", "2024-12-13", OccupancyStatus.OCCUPIED),
         ("2024-12-14", "2024-12-25", OccupancyStatus.NOT_OCCUPIED),
         ("2024-12-26", "2025-01-08", OccupancyStatus.OCCUPIED),
-        ("2025-01-09", "2025-03-05", OccupancyStatus.NOT_OCCUPIED),
-        ("2025-03-06", "2025-03-10", OccupancyStatus.OCCUPIED),
+        ("2025-01-09", "2025-03-06", OccupancyStatus.NOT_OCCUPIED),
+        ("2025-03-07", "2025-03-10", OccupancyStatus.OCCUPIED),
         ("2025-03-11", "2025-03-24", OccupancyStatus.NOT_OCCUPIED),
-        ("2025-03-25", "2025-03-28", OccupancyStatus.OCCUPIED),
+        ("2025-03-25", "2025-03-25", OccupancyStatus.OCCUPIED),
+        ("2025-03-26", "2025-03-26", OccupancyStatus.NOT_OCCUPIED),
+        ("2025-03-27", "2025-03-28", OccupancyStatus.OCCUPIED),
         ("2025-03-29", "2025-03-30", OccupancyStatus.OCCUPIED),  # misclassified dates
         ("2025-03-31", "2025-04-17", OccupancyStatus.OCCUPIED),
         ("2025-04-18", "2025-04-20", OccupancyStatus.NOT_OCCUPIED),
         ("2025-04-21", "2025-04-23", OccupancyStatus.OCCUPIED),
         ("2025-04-24", "2025-06-20", OccupancyStatus.NOT_OCCUPIED),
-        ("2025-06-21", "2025-06-23", OccupancyStatus.OCCUPIED),
+        ("2025-06-21", "2025-07-08", OccupancyStatus.OCCUPIED),
     ]
 
     def __init__(
@@ -300,14 +290,10 @@ class Occupancy:
 
         for _, row in daily_data.iterrows():
             date_str = row["Date"].strftime("%Y-%m-%d")
-            fd = row.get("Front Door", 0)
             by = row.get("Backyard", 0)
-            be = row.get("Back Entrance", 0)
-            gw = row.get("Gateway", 0)
-            ww = row.get("Walkway", 0)
 
             # Set occupancy status using the decision function
-            if (fd > 3.5 and ww > 2.5) or (by > 35 and gw > 0.5) or (be > 3):
+            if by > 20:
                 self.occupancy_cache[date_str] = OccupancyStatus.OCCUPIED
             else:
                 self.occupancy_cache[date_str] = OccupancyStatus.NOT_OCCUPIED
@@ -418,7 +404,7 @@ class Occupancy:
         daily_data: pd.DataFrame,
         method: str = "cross_validation",
         test_size: float = 0.2,
-        random_state: int = 500,
+        random_state: int = 1000,
         cv_folds: int = 5,
         max_depth: Optional[int] = None,
         min_samples_split: int = 2,
@@ -769,6 +755,7 @@ if __name__ == "__main__":
 
     from logging_config import set_logger_level_and_format
     from video_database import VideoDatabase, VideoDatabaseList
+    from video_filter import DateRange, VideoFilter, VideoSelector
 
     def write_csv(all_occupancy_data, output_file):
         # Save to CSV file
@@ -790,8 +777,9 @@ if __name__ == "__main__":
     # Load video database
     root_database = "/Users/jbouguet/Documents/EufySecurityVideos/record/"
     metadata_files = [
-        os.path.join(root_database, "videos_in_batches.csv"),
-        os.path.join(root_database, "videos_in_backup.csv"),
+        os.path.join(root_database, "archive_000.csv"),
+        os.path.join(root_database, "archive_001.csv"),
+        os.path.join(root_database, "backup.csv"),
     ]
     out_dir: str = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
 
@@ -802,6 +790,11 @@ if __name__ == "__main__":
             for file in metadata_files
         ]
     ).load_videos()
+
+    # selector = VideoSelector(
+    #    date_range=DateRange(start="2024-08-25"),
+    # )
+    # video_database = VideoFilter.by_selectors(video_database, selector)
 
     # Check if database is empty
     if not video_database:
@@ -821,7 +814,6 @@ if __name__ == "__main__":
         "Backyard",  # 409/414
         "Gateway",  # 409/414
         "Walkway",  # 409/414
-        "Back Entrance",  # 410/414
     ]  # Best model
     filtered_columns = [col for col in daily_data.columns if col in important_columns]
     daily_data = daily_data[filtered_columns]
@@ -850,7 +842,7 @@ if __name__ == "__main__":
     occupancy_ml_train = Occupancy()
     # Leave-one-out cross-validation
     params = {
-        "random_state": 500,
+        "random_state": 1000,
         "max_depth": 3,
     }
     occupancy_ml_train.train_occupancy_model(

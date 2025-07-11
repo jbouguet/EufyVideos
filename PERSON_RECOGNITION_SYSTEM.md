@@ -82,9 +82,9 @@ Manual Labeling → Mega-Clusters → Refined Model → Auto-Labeling
 - **Models**: CLIP ViT-B/32 + MobileNetV3 ReID
 - **Output**: Normalized 512-dimensional embedding vectors
 
-#### `enhanced_person_clustering.py`
+#### `person_clustering.py`
 **Purpose**: Conservative clustering of person embeddings
-- **Classes**: `EnhancedPersonClusterer`, `EnhancedPersonCluster`
+- **Classes**: `PersonClusterer`, `PersonCluster`
 - **Algorithm**: Hierarchical clustering with quality filtering
 - **Parameters**: 
   - `similarity_threshold=0.88` (conservative)
@@ -92,6 +92,13 @@ Manual Labeling → Mega-Clusters → Refined Model → Auto-Labeling
   - `min_cluster_size=2`
 - **Output**: ~170 high-quality clusters with detailed statistics
 - **Reports**: Comprehensive analysis with quality metrics
+
+#### `conservative_person_clustering.py`
+**Purpose**: Ultra-conservative clustering for near-duplicates only
+- **Classes**: `ConservativePersonClusterer`, `ConservativePersonCluster`
+- **Strategy**: Track-based and temporal proximity clustering
+- **Features**: Groups only near-duplicate detections from same tracks or close temporal windows
+- **Use case**: When visual inspection shows too many mixed people in standard clustering
 
 ### Visual Inspection & Labeling
 
@@ -147,7 +154,15 @@ Manual Labeling → Mega-Clusters → Refined Model → Auto-Labeling
 
 ### System Status
 
-✅ **CLEANUP COMPLETED**: All obsolete and redundant files have been removed from the codebase for a clean, production-ready system. The remaining files represent the core functionality needed for the complete person recognition pipeline.
+✅ **CLEANUP COMPLETED**: All obsolete and redundant files have been removed from the codebase for a clean, production-ready system.
+
+⚠️ **INTEGRATION NOTE**: Person recognition functionality is currently being integrated into the unified `TagProcessor` system. The configuration supports person recognition parameters in `TaggerConfig`, but the actual person recognition processing is handled separately using the individual components listed above.
+
+**Current Integration Status**:
+- ✅ Person recognition components are functional independently
+- ✅ Configuration is integrated into `TaggerConfig` 
+- ⏳ Person recognition processing integration into `TagProcessor` is planned for future updates
+- ✅ Manual workflow (clustering → labeling → training → auto-labeling) is fully operational
 
 ---
 
@@ -167,11 +182,11 @@ python story_creator.py
 ### Phase 2: Conservative Clustering
 ```bash
 # Generate ~170 conservative clusters
-python enhanced_person_clustering.py
+python person_clustering.py
 
 # Expected output:
 # - 170 clusters with quality >0.92
-# - Results in /record/person_recognition/enhanced_clustering/
+# - Results in /record/person_recognition/clustering/
 ```
 
 ### Phase 3: Visual Inspection
@@ -246,7 +261,7 @@ tag_processing_config:
   enable_auto_labeling: true        # Enable auto-labeling
 ```
 
-### Clustering Parameters (`enhanced_person_clustering.py`)
+### Clustering Parameters (`person_clustering.py`)
 ```python
 # Conservative clustering settings
 similarity_threshold = 0.88         # Conservative but allows granular clusters
@@ -260,10 +275,13 @@ min_cluster_size = 2                # Minimum embeddings per cluster
 /record/person_recognition/
 ├── embeddings/                     # Generated embeddings (JSON files)
 ├── crops/                          # Extracted person crops (JPG files)
-├── enhanced_clustering/            # Clustering results
-│   ├── enhanced_clusters.json      # Cluster definitions
+├── clustering/                     # Standard clustering results
+│   ├── clusters.json               # Cluster definitions
 │   ├── cluster_report.txt          # Detailed analysis
 │   └── similarity_analysis.png     # Quality charts
+├── conservative_clustering/        # Ultra-conservative clustering results
+│   ├── conservative_clusters.json  # Conservative cluster definitions
+│   └── conservative_cluster_report.txt # Conservative analysis
 ├── visual_inspection/              # Visual grids and HTML interface
 │   ├── cluster_XXX_grid.png        # Individual cluster grids
 │   ├── cluster_inspection_index.html # Main inspection interface
@@ -351,12 +369,13 @@ The person recognition system provides a complete, production-ready solution:
 **Core Pipeline**:
 - `person_detector.py` - Person detection and crop extraction
 - `person_embedding.py` - CLIP + ReID embedding generation
-- `enhanced_person_clustering.py` - Conservative clustering algorithm
+- `person_clustering.py` - Conservative clustering algorithm
 - `cluster_visual_inspector.py` - Visual inspection interface with HTML grids
 - `cluster_labeling_tool.py` - Interactive labeling and mega-cluster management
 - `refined_person_model.py` - Siamese network training and auto-labeling
 
 **Utility Tools**:
+- `conservative_person_clustering.py` - Ultra-conservative track/temporal clustering
 - `simple_resolution_test.py` - Resolution impact testing (confirms 224x224 optimal)
 - `crop_resolution_comparison.py` - Comprehensive resolution analysis framework
 - `test_higher_resolution.py` - Higher resolution validation testing

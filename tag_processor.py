@@ -84,7 +84,7 @@ class Task(Enum):
 
 @dataclass
 class TaggerConfig:
-    """Configuration for video tagging operations."""
+    """Configuration for video tagging operations with optional person recognition."""
 
     model: str = Model.YOLO11X.value
     task: str = Task.TRACK.value
@@ -92,6 +92,29 @@ class TaggerConfig:
     conf_threshold: float = 0.2
     batch_size: int = 8  # For optimized detectors
     enable_gpu: bool = False  # Enable GPU acceleration for non-optimized YOLO models
+    
+    # Person recognition settings
+    enable_person_recognition: bool = False
+    person_database_file: Optional[str] = None
+    person_embeddings_file: Optional[str] = None
+    person_crops_dir: Optional[str] = None
+    
+    # Person detection parameters
+    person_crop_size: List[int] = field(default_factory=lambda: [224, 224])
+    person_min_confidence: float = 0.6
+    person_min_bbox_area: int = 2000
+    max_crops_per_track: int = 10
+    
+    # Embedding generation parameters
+    embedding_device: str = "mps"
+    embedding_dim: int = 512
+    clip_weight: float = 0.7
+    reid_weight: float = 0.3
+    
+    # Person identification parameters
+    similarity_threshold: float = 0.75
+    auto_label_confidence: float = 0.8
+    enable_auto_labeling: bool = True
 
     def get_identifier(self) -> str:
         """Generate a unique identifier for this configuration."""
@@ -113,14 +136,35 @@ class TaggerConfig:
                 raise ValueError("batch_size must be positive")
 
         return cls(
-            model=config_dict.get("model", cls.model),
-            task=config_dict.get("task", cls.task),
-            num_frames_per_second=config_dict.get(
-                "num_frames_per_second", cls.num_frames_per_second
-            ),
-            conf_threshold=config_dict.get("conf_threshold", cls.conf_threshold),
-            batch_size=config_dict.get("batch_size", cls.batch_size),
-            enable_gpu=config_dict.get("enable_gpu", cls.enable_gpu),
+            model=config_dict.get("model", Model.YOLO11X.value),
+            task=config_dict.get("task", Task.TRACK.value),
+            num_frames_per_second=config_dict.get("num_frames_per_second", 1),
+            conf_threshold=config_dict.get("conf_threshold", 0.2),
+            batch_size=config_dict.get("batch_size", 8),
+            enable_gpu=config_dict.get("enable_gpu", False),
+            
+            # Person recognition settings
+            enable_person_recognition=config_dict.get("enable_person_recognition", False),
+            person_database_file=config_dict.get("person_database_file", None),
+            person_embeddings_file=config_dict.get("person_embeddings_file", None),
+            person_crops_dir=config_dict.get("person_crops_dir", None),
+            
+            # Person detection parameters
+            person_crop_size=config_dict.get("person_crop_size", [224, 224]),
+            person_min_confidence=config_dict.get("person_min_confidence", 0.6),
+            person_min_bbox_area=config_dict.get("person_min_bbox_area", 2000),
+            max_crops_per_track=config_dict.get("max_crops_per_track", 10),
+            
+            # Embedding generation parameters
+            embedding_device=config_dict.get("embedding_device", "mps"),
+            embedding_dim=config_dict.get("embedding_dim", 512),
+            clip_weight=config_dict.get("clip_weight", 0.7),
+            reid_weight=config_dict.get("reid_weight", 0.3),
+            
+            # Person identification parameters
+            similarity_threshold=config_dict.get("similarity_threshold", 0.75),
+            auto_label_confidence=config_dict.get("auto_label_confidence", 0.8),
+            enable_auto_labeling=config_dict.get("enable_auto_labeling", True),
         )
 
 
@@ -453,12 +497,24 @@ class TagProcessor:
     def __init__(self, tag_processing_config: Optional[TaggerConfig] = None):
         """Initialize processor with configuration."""
         self.tag_processing_config = tag_processing_config or TaggerConfig()
+        
+        # Initialize object detector
         self.object_detector = ObjectDetectorFactory.create_detector(
             model=self.tag_processing_config.model,
             conf_threshold=self.tag_processing_config.conf_threshold,
             batch_size=self.tag_processing_config.batch_size,
             enable_gpu=self.tag_processing_config.enable_gpu,
         )
+        
+        # Check for person recognition configuration
+        if self.tag_processing_config.enable_person_recognition:
+            logger.info("Person recognition is enabled in configuration")
+            # TODO: Initialize person recognition components
+            # This would integrate person_detector.py, person_embedding.py, etc.
+            logger.warning("Person recognition functionality not yet integrated into TagProcessor")
+            logger.info("Person recognition features will be processed in future updates")
+        else:
+            logger.info("Person recognition is disabled - standard object detection only")
 
     def run(self, videos: Union[VideoMetadata, List[VideoMetadata]]) -> VideoTags:
         """Process videos to generate tags."""

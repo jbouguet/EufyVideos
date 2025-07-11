@@ -1087,8 +1087,9 @@ if __name__ == "__main__":
     stories_output = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
 
     metadata_files = [
-        os.path.join(root_database, "videos_in_batches.csv"),
-        os.path.join(root_database, "videos_in_backup.csv"),
+        os.path.join(root_database, "archive_000.csv"),
+        os.path.join(root_database, "archive_001.csv"),
+        os.path.join(root_database, "backup.csv"),
         # Add more metadata files as needed
     ]
     video_database = VideoDatabaseList(

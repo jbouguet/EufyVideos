@@ -48,8 +48,9 @@ def load_video_data(metric: str = "activity"):
     # Load video database
     root_database = "/Users/jbouguet/Documents/EufySecurityVideos/record/"
     metadata_files = [
-        os.path.join(root_database, "videos_in_batches.csv"),
-        os.path.join(root_database, "videos_in_backup.csv"),
+        os.path.join(root_database, "archive_000.csv"),
+        os.path.join(root_database, "archive_001.csv"),
+        os.path.join(root_database, "backup.csv"),
     ]
 
     logger.info("Loading video database...")
@@ -74,11 +75,10 @@ def load_video_data(metric: str = "activity"):
 
     important_columns = [
         "Date",
-        "Front Door",  # 404/414
-        "Backyard",  # 409/414
-        "Gateway",  # 409/414
-        "Walkway",  # 409/414
-        "Back Entrance",  # 410/414
+        "Front Door",
+        "Backyard",
+        "Gateway",
+        "Walkway",
     ]  # Best model
 
     filtered_columns = [
@@ -672,7 +672,7 @@ def main():
     heuristic_occupancy = Occupancy(mode=OccupancyMode.HEURISTIC, daily_data=daily_data)
     heuristic_status = heuristic_occupancy.occupancy_cache.copy()
 
-    random_state = 500
+    random_state = 1000
     max_depth = 3
 
     try:

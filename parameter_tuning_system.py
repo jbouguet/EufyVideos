@@ -17,7 +17,7 @@ import json
 import numpy as np
 from typing import List, Tuple, Dict, Any
 from dataclasses import dataclass
-from enhanced_person_clustering import EnhancedPersonClusterer, EnhancedPersonCluster
+from person_clustering import PersonClusterer, PersonCluster
 from logging_config import create_logger
 
 logger = create_logger(__name__)
@@ -48,7 +48,7 @@ class ClusteringResults:
     max_quality: float
     largest_cluster: int
     smallest_cluster: int
-    clusters: List[EnhancedPersonCluster]
+    clusters: List[PersonCluster]
 
 
 class ParameterTuningSystem:
@@ -75,7 +75,7 @@ class ParameterTuningSystem:
             logger.info("Loading embeddings for parameter tuning...")
             
             # Use a basic clusterer just to load embeddings
-            basic_clusterer = EnhancedPersonClusterer(quality_threshold=0.0)  # Load all
+            basic_clusterer = PersonClusterer(quality_threshold=0.0)  # Load all
             self.embeddings = basic_clusterer.load_and_filter_embeddings(self.embeddings_dir)
             
             logger.info(f"Loaded {len(self.embeddings)} embeddings for testing")
@@ -93,7 +93,7 @@ class ParameterTuningSystem:
         logger.info(f"Testing: {param_set.name}")
         
         # Create clusterer with specified parameters
-        clusterer = EnhancedPersonClusterer(
+        clusterer = PersonClusterer(
             similarity_threshold=param_set.similarity_threshold,
             quality_threshold=param_set.quality_threshold,
             use_dbscan=param_set.use_dbscan,
@@ -121,7 +121,7 @@ class ParameterTuningSystem:
             )
         
         # Perform clustering
-        clusters = clusterer.cluster_embeddings_enhanced(filtered_embeddings)
+        clusters = clusterer.cluster_embeddings(filtered_embeddings)
         
         if not clusters:
             logger.warning(f"No clusters found for {param_set.name}")
