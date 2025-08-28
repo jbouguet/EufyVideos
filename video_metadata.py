@@ -521,7 +521,7 @@ class VideoMetadata:
                 file.write("#EXTM3U\n")
                 for video in videos:
                     file.write(
-                        f"#EXTINF:-1,{video.date_str} {video.time_str} {video.device} - {video.filename}\n{video.full_path}\n"
+                        f"#EXTINF:-1,{video.date_str} {video.time_str} {video.device} - {video.filename} - {video.width}x{video.height}\n{video.full_path}\n"
                     )
         except IOError as e:
             raise VideoError(f"Error saving playlist file {playlist_filename}") from e

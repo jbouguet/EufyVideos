@@ -153,25 +153,30 @@ class Occupancy:
         ("2024-05-11", "2024-05-22", OccupancyStatus.OCCUPIED),
         ("2024-05-23", "2024-06-09", OccupancyStatus.NOT_OCCUPIED),
         ("2024-06-10", "2024-07-19", OccupancyStatus.OCCUPIED),
-        ("2024-07-20", "2024-08-06", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-08-07", "2024-08-12", OccupancyStatus.OCCUPIED),
-        ("2024-08-13", "2024-08-15", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-08-16", "2024-08-16", OccupancyStatus.OCCUPIED),
-        ("2024-08-17", "2024-08-18", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-07-20", "2024-07-21", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-07-22", "2024-07-22", OccupancyStatus.OCCUPIED),
+        ("2024-07-23", "2024-08-06", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-08-07", "2024-08-13", OccupancyStatus.OCCUPIED),
+        ("2024-08-14", "2024-08-15", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-08-16", "2024-08-17", OccupancyStatus.OCCUPIED),
+        ("2024-08-18", "2024-08-18", OccupancyStatus.NOT_OCCUPIED),
         ("2024-08-19", "2024-08-19", OccupancyStatus.OCCUPIED),
-        ("2024-08-20", "2024-08-22", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-08-20", "2024-08-20", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-08-21", "2024-08-21", OccupancyStatus.OCCUPIED),
+        ("2024-08-22", "2024-08-22", OccupancyStatus.NOT_OCCUPIED),
         ("2024-08-23", "2024-08-24", OccupancyStatus.OCCUPIED),
-        ("2024-08-25", "2024-08-29", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-08-30", "2024-09-09", OccupancyStatus.OCCUPIED),
-        ("2024-09-10", "2024-09-21", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-08-25", "2024-08-27", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-08-28", "2024-09-09", OccupancyStatus.OCCUPIED),
+        ("2024-09-10", "2024-09-12", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-09-13", "2024-09-13", OccupancyStatus.OCCUPIED),
+        ("2024-09-14", "2024-09-21", OccupancyStatus.NOT_OCCUPIED),
         ("2024-09-22", "2024-10-05", OccupancyStatus.OCCUPIED),
         ("2024-10-06", "2024-10-08", OccupancyStatus.NOT_OCCUPIED),
         ("2024-10-09", "2024-10-11", OccupancyStatus.OCCUPIED),
         ("2024-10-12", "2024-11-15", OccupancyStatus.NOT_OCCUPIED),
         ("2024-11-16", "2024-11-20", OccupancyStatus.OCCUPIED),
-        ("2024-11-21", "2024-12-11", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-12-10", "2024-12-10", OccupancyStatus.NOT_OCCUPIED),
-        ("2024-12-12", "2024-12-13", OccupancyStatus.OCCUPIED),
+        ("2024-11-21", "2024-12-10", OccupancyStatus.NOT_OCCUPIED),
+        ("2024-12-11", "2024-12-13", OccupancyStatus.OCCUPIED),
         ("2024-12-14", "2024-12-25", OccupancyStatus.NOT_OCCUPIED),
         ("2024-12-26", "2025-01-08", OccupancyStatus.OCCUPIED),
         ("2025-01-09", "2025-03-06", OccupancyStatus.NOT_OCCUPIED),
@@ -179,13 +184,11 @@ class Occupancy:
         ("2025-03-11", "2025-03-24", OccupancyStatus.NOT_OCCUPIED),
         ("2025-03-25", "2025-03-25", OccupancyStatus.OCCUPIED),
         ("2025-03-26", "2025-03-26", OccupancyStatus.NOT_OCCUPIED),
-        ("2025-03-27", "2025-03-28", OccupancyStatus.OCCUPIED),
-        ("2025-03-29", "2025-03-30", OccupancyStatus.OCCUPIED),  # misclassified dates
-        ("2025-03-31", "2025-04-17", OccupancyStatus.OCCUPIED),
+        ("2025-03-27", "2025-04-17", OccupancyStatus.OCCUPIED),
         ("2025-04-18", "2025-04-20", OccupancyStatus.NOT_OCCUPIED),
         ("2025-04-21", "2025-04-23", OccupancyStatus.OCCUPIED),
         ("2025-04-24", "2025-06-20", OccupancyStatus.NOT_OCCUPIED),
-        ("2025-06-21", "2025-07-08", OccupancyStatus.OCCUPIED),
+        ("2025-06-21", "2025-07-27", OccupancyStatus.OCCUPIED),
     ]
 
     def __init__(
@@ -293,7 +296,7 @@ class Occupancy:
             by = row.get("Backyard", 0)
 
             # Set occupancy status using the decision function
-            if by > 20:
+            if by > 15.5:  # 20:
                 self.occupancy_cache[date_str] = OccupancyStatus.OCCUPIED
             else:
                 self.occupancy_cache[date_str] = OccupancyStatus.NOT_OCCUPIED

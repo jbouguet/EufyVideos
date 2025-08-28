@@ -49,6 +49,9 @@ directories:
     - !join [*root_database, "/Batch035"]
     - !join [*root_database, "/Batch036"]
     - !join [*root_database, "/Batch037"]
+    - !join [*root_database, "/Batch038"]
+    - !join [*root_database, "/Batch039"]
+    - !join [*root_database, "/Batch040"]
 
 # Video database configuration
 video_database_list:
@@ -95,17 +98,118 @@ output_directory: *stories_output
 process_stories: true
 
 stories:
-
-  - name: '2025-07-10'
+  - name: '2025-07-26 to 2025-07-27'
     skip: false
     selectors:
-      - date_regex: '2025-07-10'
+      - date_range:
+          start: '2025-07-26'
+          end: '2025-07-27'
+
+  - name: '2025-07-23'
+    skip: true
+    selectors:
+      - date_regex: '2025-07-23'
+
+  - name: '2025-07-22'
+    skip: true
+    selectors:
+      - date_regex: '2025-07-22'
+
+  - name: '2025-07-20'
+    skip: true
+    selectors:
+      - date_regex: '2025-07-20'
+
+  - name: '2025-07-19'
+    skip: true
+    selectors:
+      - date_regex: '2025-07-19'
+
+  - name: '2025-07-18'
+    skip: true
+    selectors:
+      - date_regex: '2025-07-18'
+
+
+  - name: 'Wollys Stealing Water'
+    skip: true
+    selectors:
+      - date_regex: '2025-07-14'
+        devices: ['Garage', 'Back Gate']
+        time_range:
+          start: '05:50:00'
+          end: '06:00:00'
+      - date_regex: '2025-06-12'
+        devices: ['Garage', 'Back Gate']
+        time_range:
+          start: '20:45:00'
+          end: '22:00:00'
+      - date_regex: '2025-06-11'
+        devices: ['Garage', 'Back Gate']
+        time_range:
+          start: '02:00:00'
+          end: '03:00:00'
+      - date_regex: '2025-06-14'
+        devices: ['Garage', 'Back Gate']
+        time_range:
+          start: '20:00:00'
+          end: '23:20:00'
+      - date_regex: '2025-06-14'
+        devices: ['Garage', 'Back Gate']
+        time_range:
+          start: '10:00:00'
+          end: '10:30:00'
+      - date_regex: '2025-06-14'
+        devices: ['Garage', 'Back Gate']
+        time_range:
+          start: '00:31:00'
+          end: '00:35:00'
+      - date_regex: '2025-06-16'
+        devices: ['Garage', 'Back Gate']
+        time_range:
+          start: '00:00:00'
+          end: '06:00:00'
+      - date_regex: '2025-06-16'
+        devices: ['Garage', 'Back Gate']
+        time_range:
+          start: '08:45:00'
+          end: '08:47:00'
+
+
+  - name: 'Wollys Investivation'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2025-06-11'
+          end: '2025-06-11'
+        devices: ['Garage']
+
 
   - name: 'Backward confused'
     skip: true
     selectors:
-      - date_regex: "2024-07-20|2024-08-26|2024-07-21|2024-08-18|2024-08-13|2024-12-11|2024-09-13|2024-08-17|2024-07-22|2024-08-21|2024-08-28|2024-08-29|2024-08-11|2024-08-12|2025-04-15|2024-03-24|2024-03-30|2024-08-07|2024-08-08|2024-08-10|2024-09-04|2025-03-30|2024-08-19|2024-08-23"
+      - date_regex: "2024-07-22|2024-08-13|2024-08-17|2024-08-21|2024-08-28|2024-08-29|2024-09-13|2024-12-11"
         devices: ['Backyard', 'Front Door']
+
+  - name: '2025-07-13'
+    skip: true
+    selectors:
+      - date_regex: '2025-07-13'
+
+  - name: '2025-07-12'
+    skip: true
+    selectors:
+      - date_regex: '2025-07-12'
+
+  - name: '2025-07-11'
+    skip: true
+    selectors:
+      - date_regex: '2025-07-11'
+
+  - name: '2025-07-10'
+    skip: true
+    selectors:
+      - date_regex: '2025-07-10'
 
   - name: 'Occupied'
     skip: true

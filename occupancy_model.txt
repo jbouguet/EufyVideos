@@ -11,7 +11,7 @@
     "Gateway": 0.0,
     "Walkway": 0.0
   },
-  "tree_text": "|--- Backyard <= 20.00\n|   |--- class: 0\n|--- Backyard >  20.00\n|   |--- class: 1\n",
+  "tree_text": "|--- Backyard <= 15.50\n|   |--- class: 0\n|--- Backyard >  15.50\n|   |--- class: 1\n",
   "model_params": {
     "ccp_alpha": 0.0,
     "class_weight": null,
