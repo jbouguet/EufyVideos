@@ -242,7 +242,6 @@ class VideoMetadata:
             num_parts = len(serial_and_datetime)
 
             serial: str = serial_and_datetime[0] if num_parts >= 1 else ""
-            device: str = Config.get_device_dict().get(serial, serial)
             datetime_obj: datetime_type = datetime_type.strptime(
                 "19000101000000", "%Y%m%d%H%M%S"
             )
@@ -258,6 +257,9 @@ class VideoMetadata:
                     )
                 except (ValueError, TypeError) as e:
                     logger.debug(f"Failed to parse datetime from filename: {e}")
+
+            # Get device name using date-aware lookup
+            device: str = Config.get_device_for_date(serial, datetime_obj)
 
             result = None
             with capture_stderr() as stderr_capture:

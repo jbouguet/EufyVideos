@@ -99,7 +99,7 @@ process_stories: true
 
 stories:
   - name: '2025-07-26 to 2025-07-27'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2025-07-26'
