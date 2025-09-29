@@ -52,6 +52,8 @@ directories:
     - !join [*root_database, "/Batch038"]
     - !join [*root_database, "/Batch039"]
     - !join [*root_database, "/Batch040"]
+    - !join [*root_database, "/Batch041"]
+    - !join [*root_database, "/Batch042"]
 
 # Video database configuration
 video_database_list:
@@ -98,6 +100,62 @@ output_directory: *stories_output
 process_stories: true
 
 stories:
+
+  - name: 'Garage Device Switch'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2025-09-24'
+          end: '2025-09-26'
+        devices: ['Garage']
+
+  - name: '2025-09-27 - Corner Junction'
+    skip: true
+    selectors:
+      - date_regex: '2025-09-27'
+        devices: ['Corner Junction']
+
+  - name: '2025-09-27 - Garage and Back Gate'
+    skip: true
+    selectors:
+      - date_regex: '2025-09-27'
+        devices: ['Garage', 'Back Gate']
+
+  - name: 'Wolly Brunette Smoking'
+    skip: false
+    selectors:
+      - filenames: ['T8600P1023450AFB_20250923085351.mp4']
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        offset_in_seconds: 8
+        duration_in_seconds: 14
+        enforce_16_9_aspect_ratio: true
+        normalized_crop_roi: [0.08, 0.30, 0.19, 0.57]
+      output_video:
+        width: 280
+
+
+  - name: 'Wolly Brunette Scream'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2025-09-23'
+          end: '2025-09-23'
+        devices: ['Back Alleyway']
+        time_range:
+          start: '08:46:00'
+          end: '09:00:00'
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        offset_in_seconds: 0
+        duration_in_seconds: 45
+        enforce_16_9_aspect_ratio: true
+        normalized_crop_roi: [0.0, 0.0, 0.7352, 0.6017]
+      output_video:
+        width: 2824
+
   - name: '2025-07-26 to 2025-07-27'
     skip: true
     selectors:
@@ -129,7 +187,6 @@ stories:
     skip: true
     selectors:
       - date_regex: '2025-07-18'
-
 
   - name: 'Wollys Stealing Water'
     skip: true
@@ -175,7 +232,6 @@ stories:
           start: '08:45:00'
           end: '08:47:00'
 
-
   - name: 'Wollys Investivation'
     skip: true
     selectors:
@@ -183,7 +239,6 @@ stories:
           start: '2025-06-11'
           end: '2025-06-11'
         devices: ['Garage']
-
 
   - name: 'Backward confused'
     skip: true
@@ -512,7 +567,6 @@ stories:
         weekdays: ['monday', 'wednesday', 'friday', 'sunday']
         date_regex: '[0-9]{4}-[0-9]{2}-0[1-2-3-4-5-6-7-8-9]'
       - filenames: ['T8214510234057A4_20240516124636.mp4', 'T8214510234057A4_20240516124545.mp4', 'T8214510234057A4_20240516122436.mp4']
-
 
   - name: '2T8600P1024260D5E_20241118084819'
     skip: true
