@@ -271,7 +271,7 @@ class VideoGenerator:
 
     def run(
         self, videos: Union[VideoMetadata, List[VideoMetadata]], output_file: str
-    ) -> None:
+    ) -> VideoMetadata:
         """
         Generate a composite video from multiple input videos.
 
@@ -282,17 +282,18 @@ class VideoGenerator:
         temp_dir = os.path.join(
             os.path.dirname(p=output_file), f"video_fragments_{uuid.uuid4().hex[:8]}"
         )
-        self._create_from_video_fragments(
+        video: VideoMetadata = self._create_from_video_fragments(
             videos=videos, output_file=output_file, fragment_directory=temp_dir
         )
         cleanup_fragment_directory(fragment_directory=temp_dir)
+        return video
 
     def _create_from_video_fragments(
         self,
         videos: Union[VideoMetadata, List[VideoMetadata]],
         output_file: str,
         fragment_directory: str,
-    ) -> None:
+    ) -> VideoMetadata:
         """
         Internal method to create video from fragments.
 
@@ -326,7 +327,7 @@ class VideoGenerator:
                 ffmpeg_vcodec=ffmpeg_vcodec,
             )
 
-            self._concatenate_fragments(
+            return self._concatenate_fragments(
                 fragment_files=fragment_files,
                 fragment_directory=fragment_directory,
                 output_file=output_file,
@@ -658,7 +659,7 @@ class VideoGenerator:
         output_file: str,
         ffmpeg_vcodec: str,
         target_fps: int,
-    ) -> None:
+    ) -> VideoMetadata:
         """Concatenate processed fragments into final output video."""
         import ffmpeg
 
@@ -685,6 +686,8 @@ class VideoGenerator:
             )
             ffmpeg.run(stream_spec=output, overwrite_output=True, capture_stderr=True)
             logger.debug(f"Successfully concatenated all fragments into {output_file}")
+
+            return VideoMetadata.from_video_file(output_file)
 
         except ffmpeg.Error as e:
             logger.error("FFmpeg error during concatenation:")
@@ -833,69 +836,79 @@ if __name__ == "__main__":
     # Testing code for the module.
     import sys
 
-    from tag_processor import TaggerConfig, TagProcessor
-    from tag_visualizer import TagVisualizer, TagVisualizerConfig
-
-    video_file: str = (
-        "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch022/T8600P102338033E_20240930085536.mp4"
-    )
+    in_dir: str = "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch041/"
     out_dir: str = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
-    tag_video: str = os.path.join(
-        out_dir, "T8600P102338033E_20240930085536_crops_tags.mp4"
-    )
 
-    # Define crop configurations
-    crop_configs = [
-        {"duration": 10.0, "width": 1600},
-        {"duration": 10.0, "width": 1600},
-        {"duration": 10.0, "width": 1600},
+    video_merged: str = os.path.join(out_dir, "video_merged.mp4")
+
+    # Define video fragments
+    video_fragments_config = [
+        {
+            "video_in": "T8600P1023450AFB_20250923085351.mp4",
+            "video_out": "video1.mp4",
+            "offset": 8.0,
+            "duration": 14.0,
+            "roi": [0.08, 0.30, 0.19, 0.57],
+            "width": 280,
+        },
+        {
+            "video_in": "T8600P1023450AFB_20250923085416.mp4",
+            "video_out": "video2.mp4",
+            "offset": 0.0,
+            "duration": 7.0,
+            "roi": [0.08, 0.30, 0.19, 0.57],
+            "width": 280,
+        },
     ]
 
     # Initialize variables for crop generation
-    videos = []
-    current_offset = 0.0
+    video_fragments = []
+    duration_max = 0.0
+    width_max = 0
 
-    logger.info(f"Cropping source video {video_file}")
-    video_metadata = VideoMetadata.from_video_file(video_file)
-    if video_metadata is None:
-        logger.error(f"Failed to load video metadata from {video_file}")
-        sys.exit(1)
-    video_in = [video_metadata]
+    # Generate individual fragments
+    for config in video_fragments_config:
+        video_file_in = os.path.join(in_dir, config["video_in"])
+        video_file_out = os.path.join(out_dir, config["video_out"])
+        offset = config["offset"]
+        duration = config["duration"]
+        roi = config["roi"]
+        width = config["width"]
+        width_max = max(width_max, width)
+        duration_max = max(duration_max, duration)
+        logger.info(f"Creating fragment video {video_file_out}")
+        video_fragments.append(
+            VideoGenerator(
+                VideoGenerationConfig(
+                    input_fragments=InputFragments(
+                        offset_in_seconds=offset,
+                        duration_in_seconds=duration,
+                        normalized_crop_roi=roi,
+                    ),
+                    output_video=OutputVideo(
+                        width=config["width"],
+                        date_time_label=DateTimeLabel(draw=False),
+                    ),
+                )
+            ).run(VideoMetadata.from_video_file(video_file_in), video_file_out)
+        )
 
-    # Generate crops
-    for i, config in enumerate(crop_configs, 1):
-        crop_config = VideoGenerationConfig(
+    # Merge the individual fragments
+    logger.info(f"Creating merged video {video_merged}")
+    video_out = VideoGenerator(
+        VideoGenerationConfig(
             input_fragments=InputFragments(
-                offset_in_seconds=current_offset, duration_in_seconds=config["duration"]
+                offset_in_seconds=0.0,
+                duration_in_seconds=duration_max,
             ),
             output_video=OutputVideo(
-                width=config["width"], date_time_label=DateTimeLabel(draw=False)
+                width=width_max,
+                date_time_label=DateTimeLabel(draw=False),
             ),
         )
-        crop_output = os.path.join(
-            out_dir, f"T8600P102338033E_20240930085536_crop{i}.mp4"
-        )
-        logger.info(f"Creating cropped video {crop_output}")
-        VideoGenerator(crop_config).run(video_in, crop_output)
+    ).run(video_fragments, video_merged)
 
-        crop_metadata = VideoMetadata.from_video_file(crop_output)
-        if crop_metadata is None:
-            logger.error(f"Failed to load video metadata from {crop_output}")
-            sys.exit(1)
-        videos.append(crop_metadata)
-
-        # Update offset for the next crop
-        current_offset += config["duration"]
-
-    logger.info(
-        f"Generating video {tag_video} showing extracted tags in the cropped videos."
-    )
-    viz = TagVisualizer(TagVisualizerConfig(output_size={"width": 1600, "height": 900}))
-    proc = TagProcessor(
-        TaggerConfig(
-            model="Yolo11x", task="Track", num_frames_per_second=5, conf_threshold=0.2
-        )
-    )
-    viz.run(proc.run(videos).dedupe().to_videos(videos), tag_video)
+    print(video_fragments)
+    print(video_out)
 
     sys.exit()

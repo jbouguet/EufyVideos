@@ -65,7 +65,7 @@ video_database_list:
   video_metadata_file: !join [*root_database, "/archive_001.csv"]
   video_directories: *archive_001
 
-- force_video_directories_scanning: true
+- force_video_directories_scanning: false
   video_metadata_file: !join [*root_database, "/backup.csv"]
   video_directories: !join [*root_database, "/backup"]
 
@@ -121,20 +121,37 @@ stories:
       - date_regex: '2025-09-27'
         devices: ['Garage', 'Back Gate']
 
-  - name: 'Wolly Brunette Smoking'
+  - name: 'Wolly Brunette Smoking 1'
     skip: false
     selectors:
       - filenames: ['T8600P1023450AFB_20250923085351.mp4']
     video_generation: true
     video_generation_config:
       input_fragments:
-        offset_in_seconds: 8
-        duration_in_seconds: 14
+        offset_in_seconds: 9
+        duration_in_seconds: 13
         enforce_16_9_aspect_ratio: true
         normalized_crop_roi: [0.08, 0.30, 0.19, 0.57]
       output_video:
         width: 280
+        date_time_label:
+          draw: false
 
+  - name: 'Wolly Brunette Smoking 2'
+    skip: false
+    selectors:
+      - filenames: ['T8600P1023450AFB_20250923085416.mp4']
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        offset_in_seconds: 0
+        duration_in_seconds: 6
+        enforce_16_9_aspect_ratio: true
+        normalized_crop_roi: [0.08, 0.30, 0.19, 0.57]
+      output_video:
+        width: 280
+        date_time_label:
+          draw: false
 
   - name: 'Wolly Brunette Scream'
     skip: true
