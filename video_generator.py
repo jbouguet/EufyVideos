@@ -908,7 +908,10 @@ if __name__ == "__main__":
         )
     ).run(video_fragments, video_merged)
 
-    print(video_fragments)
-    print(video_out)
+    logger.info("Video segments:")
+    for video in video_fragments:
+        logger.info(video)
+    logger.info("Output video:")
+    logger.info(video_out)
 
     sys.exit()

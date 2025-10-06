@@ -164,6 +164,25 @@ class VideoMetadata:
             return NotImplemented
         return self.datetime < other.datetime
 
+    def __str__(self) -> str:
+        """Return a nicely formatted string representation of the video metadata."""
+        return (
+            f"VideoMetadata(\n"
+            f"  filename      = {self.filename}\n"
+            f"  full_path     = {self.full_path}\n"
+            f"  device        = {self.device}\n"
+            f"  datetime      = {self.datetime_str}\n"
+            f"  serial        = {self.serial}\n"
+            f"  file_size     = {self.file_size:.2f} MB\n"
+            f"  width         = {self.width}\n"
+            f"  height        = {self.height}\n"
+            f"  frame_count   = {self.frame_count}\n"
+            f"  duration      = {self.duration}\n"
+            f"  fps           = {self.fps:.2f}\n"
+            f"  video_codec   = {self.video_codec}\n"
+            f")"
+        )
+
     def merge_new_tags(self, more_tags: Dict[int, Dict[int, Dict[str, Any]]]) -> int:
         """
         Merge an incoming set of new tags into the existing set self.tags.
