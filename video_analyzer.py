@@ -6,13 +6,12 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, NoReturn, Optional, Union
 
 import yaml
-from termcolor import colored
-
 from config import Config
 from dashboard import Dashboard
 from logging_config import create_logger
 from story_creator import Story
 from tag_processor import VideoTags
+from termcolor import colored
 from video_database import VideoDatabase, VideoDatabaseList
 from video_metadata import VideoMetadata
 from video_scatter_plots_creator import PlotCreator
@@ -52,7 +51,7 @@ class JoinPathsLoader(yaml.SafeLoader):
                     resolved_paths.append(path_str)
 
                 result = os.path.join(*resolved_paths)
-                logger.debug(f"Final joined path: {result}")
+                logger.debug(f"Final joined path: {result}
                 return result
 
             # For scalar nodes (single path)
@@ -192,7 +191,7 @@ class VideoAnalyzer:
 
     @staticmethod
     def load_videos_database(
-        video_database_list: Union[VideoDatabase, VideoDatabaseList]
+        video_database_list: Union[VideoDatabase, VideoDatabaseList],
     ) -> NoReturn | List[VideoMetadata]:
         corrupted_files: List[str] = []
         videos_database = video_database_list.load_videos(corrupted_files)

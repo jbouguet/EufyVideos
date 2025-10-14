@@ -31,7 +31,7 @@ The visualization components are specifically designed for Plotly 5.24.1. Using 
 
 3. Create virtual environment: `python -m venv myenv`
 3. Activate virtual environment: `source myenv/bin/activate`
-4. Install required libraries: `pip install -r requirements.txt`
+4. Install required libraries: `python -m pip install -r requirements.txt`
 5. Verify installation:
    ```python
    from version_config import verify_environment
@@ -107,7 +107,7 @@ The visualization components are specifically designed for Plotly 5.24.1. Using 
    ```
 5. Install required packages:
    ```bash
-   pip install -r requirements.txt
+   python -m pip install -r requirements.txt
    ```
 6. Select Python Interpreter:
    - Press Cmd+Shift+P
@@ -164,7 +164,7 @@ The visualization components are specifically designed for Plotly 5.24.1. Using 
 1. Plotly 6.x Compatibility:
    - The visualization code is not compatible with Plotly 6.x
    - If you see horizontal instead of vertical bars, check your Plotly version
-   - Solution: `pip install plotly==5.24.1`
+   - Solution: `python -m pip install plotly==5.24.1`
 
 2. Python Version:
    - Python 3.13+ may have type handling differences
