@@ -886,7 +886,7 @@ if __name__ == "__main__":
                         normalized_crop_roi=roi,
                     ),
                     output_video=OutputVideo(
-                        width=config["width"],
+                        width=width,
                         date_time_label=DateTimeLabel(draw=False),
                     ),
                 )
