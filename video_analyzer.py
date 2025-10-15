@@ -51,7 +51,7 @@ class JoinPathsLoader(yaml.SafeLoader):
                     resolved_paths.append(path_str)
 
                 result = os.path.join(*resolved_paths)
-                logger.debug(f"Final joined path: {result}
+                logger.debug(f"Final joined path: {result}")
                 return result
 
             # For scalar nodes (single path)
