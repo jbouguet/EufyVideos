@@ -58,7 +58,7 @@ class InputFragments:
 
     Attributes:
         offset_in_seconds: Start time offset for video trimming
-        duration_in_seconds: Duration of video segment to extract
+        duration_in_seconds: Duration of video segment to extract. If None, extracts until end of video
         normalized_crop_roi: Region of interest for cropping (left, top, right, bottom)
                            in normalized coordinates [0,1]
         enforce_16_9_aspect_ratio: Whether to force 16:9 aspect ratio
@@ -75,7 +75,7 @@ class InputFragments:
     """
 
     offset_in_seconds: float = 0.0
-    duration_in_seconds: float = 1.0
+    duration_in_seconds: Optional[float] = None
     normalized_crop_roi: Optional[Tuple[float, float, float, float]] = None
     enforce_16_9_aspect_ratio: bool = False
 
@@ -95,7 +95,7 @@ class InputFragments:
                 normalized_crop_roi = None
         return cls(
             offset_in_seconds=input_fragments_dict.get("offset_in_seconds", 0.0),
-            duration_in_seconds=input_fragments_dict.get("duration_in_seconds", 1.0),
+            duration_in_seconds=input_fragments_dict.get("duration_in_seconds", None),
             enforce_16_9_aspect_ratio=input_fragments_dict.get(
                 "enforce_16_9_aspect_ratio",
                 False,
@@ -424,7 +424,7 @@ class VideoGenerator:
         return fragment_file
 
     def _get_video_audio_streams(
-        self, video: VideoMetadata, start_time: float, duration: float
+        self, video: VideoMetadata, start_time: float, duration: Optional[float]
     ) -> Optional[Tuple[Any, Optional[Any]]]:
         """Get video and audio streams from input file."""
         import ffmpeg
@@ -465,9 +465,14 @@ class VideoGenerator:
 
             # Create input stream
             try:
-                input_stream = ffmpeg.input(
-                    filename=video.full_path, ss=start_time, t=duration
-                )
+                if duration is None:
+                    # Extract from start_time to end of video
+                    input_stream = ffmpeg.input(filename=video.full_path, ss=start_time)
+                else:
+                    # Extract specific duration
+                    input_stream = ffmpeg.input(
+                        filename=video.full_path, ss=start_time, t=duration
+                    )
             except ffmpeg.Error as e:
                 logger.error(f"Error creating input stream: {str(e)}")
                 return None
@@ -870,23 +875,18 @@ if __name__ == "__main__":
     for config in video_fragments_config:
         video_file_in = os.path.join(in_dir, config["video_in"])
         video_file_out = os.path.join(out_dir, config["video_out"])
-        offset = config["offset"]
-        duration = config["duration"]
-        roi = config["roi"]
-        width = config["width"]
-        width_max = max(width_max, width)
-        duration_max = max(duration_max, duration)
+        width_max = max(width_max, config["width"])
         logger.info(f"Creating fragment video {video_file_out}")
         video_fragments.append(
             VideoGenerator(
                 VideoGenerationConfig(
                     input_fragments=InputFragments(
-                        offset_in_seconds=offset,
-                        duration_in_seconds=duration,
-                        normalized_crop_roi=roi,
+                        offset_in_seconds=config["offset"],
+                        duration_in_seconds=config["duration"],
+                        normalized_crop_roi=config["roi"],
                     ),
                     output_video=OutputVideo(
-                        width=width,
+                        width=config["width"],
                         date_time_label=DateTimeLabel(draw=False),
                     ),
                 )
@@ -897,10 +897,6 @@ if __name__ == "__main__":
     logger.info(f"Creating merged video {video_merged}")
     video_out = VideoGenerator(
         VideoGenerationConfig(
-            input_fragments=InputFragments(
-                offset_in_seconds=0.0,
-                duration_in_seconds=duration_max,
-            ),
             output_video=OutputVideo(
                 width=width_max,
                 date_time_label=DateTimeLabel(draw=False),

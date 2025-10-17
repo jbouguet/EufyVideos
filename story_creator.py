@@ -520,11 +520,17 @@ class Story:
             fragment_duration = (
                 self.video_generation_config.input_fragments.duration_in_seconds
             )
-            total_video_duration = fragment_duration * len(videos)
-            logger.info(
-                f"Generating a composite video combining {fragment_duration} seconds long snippets "
-                f"of all of the videos. Approximate total video duration: {total_video_duration} seconds."
-            )
+            if fragment_duration is not None:
+                total_video_duration = fragment_duration * len(videos)
+                logger.info(
+                    f"Generating a composite video combining {fragment_duration} seconds long snippets "
+                    f"of all of the videos. Approximate total video duration: {total_video_duration} seconds."
+                )
+            else:
+                logger.info(
+                    f"Generating a composite video combining {len(videos)} videos "
+                    f"(each cropped from offset to end of original video)."
+                )
             video_generator = VideoGenerator(self.video_generation_config)
             video_generator.run(videos, video_file)
             logger.info(f"Video saved to {video_file}")
