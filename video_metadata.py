@@ -40,11 +40,10 @@ import av
 import av.container
 import av.error
 import dateutil.parser
-from dateutil.tz import tzlocal, tzutc
-from tqdm import tqdm
-
 from config import Config
+from dateutil.tz import tzlocal, tzutc
 from logging_config import create_logger
+from tqdm import tqdm
 
 logger = create_logger(__name__)
 
@@ -242,7 +241,7 @@ class VideoMetadata:
         return None
 
     @classmethod
-    def from_video_file(cls, file_path: str) -> Optional["VideoMetadata"]:
+    def from_video_file(cls, full_path: str) -> Optional["VideoMetadata"]:
         """
         Create a VideoMetadata instance from a video file.
 
@@ -256,7 +255,7 @@ class VideoMetadata:
             VideoError: If there's an error processing the video file
         """
         try:
-            filename = os.path.basename(file_path)
+            filename = os.path.basename(full_path)
             serial_and_datetime = filename.split("_")
             num_parts = len(serial_and_datetime)
 
@@ -283,7 +282,7 @@ class VideoMetadata:
             result = None
             with capture_stderr() as stderr_capture:
                 try:
-                    with av.open(file_path) as container:
+                    with av.open(full_path) as container:
                         stream = container.streams.video[0]
                         duration = (
                             container.duration / 1000000 if container.duration else 0
@@ -298,16 +297,16 @@ class VideoMetadata:
                                 )
 
                         if datetime_obj is None:
-                            datetime_obj = cls._get_creation_time(file_path)
+                            datetime_obj = cls._get_creation_time(full_path)
                             logger.debug(f"Using file creation time: {datetime_obj}")
 
                         result = cls(
                             filename=filename,
-                            full_path=file_path,
+                            full_path=full_path,
                             device=device,
                             datetime_obj=datetime_obj,
                             serial=serial,
-                            file_size=os.path.getsize(file_path) / (1024 * 1024),
+                            file_size=os.path.getsize(full_path) / (1024 * 1024),
                             width=stream.width,
                             height=stream.height,
                             frame_count=stream.frames,
@@ -317,19 +316,19 @@ class VideoMetadata:
                         )
 
                 except (av.error.FFmpegError, OSError, Exception) as e:
-                    raise VideoError(f"Error processing {file_path}") from e
+                    raise VideoError(f"Error processing {full_path}") from e
 
             # Check for any stderr output after restoring stderr
             error_output = stderr_capture.getvalue()
             if error_output:
                 logger.warning(
-                    f"LibAV warnings/errors for file {file_path}:\n{error_output}"
+                    f"LibAV warnings/errors for file {full_path}:\n{error_output}"
                 )
 
             return result
 
         except Exception as e:
-            raise VideoError(f"Error processing {file_path}") from e
+            raise VideoError(f"Error processing {full_path}") from e
 
     @staticmethod
     def clean_and_sort(videos: List["VideoMetadata"]) -> List["VideoMetadata"]:
