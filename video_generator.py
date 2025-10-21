@@ -889,3 +889,25 @@ if __name__ == "__main__":
         logger.info(video)
     logger.info("Merged video:")
     logger.info(video_out)
+
+    # Use one config for all videos
+    video_input: List[VideoMetadata] = [
+        video
+        for config in video_fragments_config
+        if (video := VideoMetadata.from_video_file(full_path=config["video_in"]))
+        is not None
+    ]
+    video_merged2: str = (
+        "/Users/jbouguet/Documents/EufySecurityVideos/stories/video_merged2.mp4"
+    )
+    video_out2 = VideoGenerator(
+        VideoGenerationConfig(
+            input_fragments=InputFragments(
+                duration_in_seconds=22,
+                normalized_crop_roi=[0.08, 0.30, 0.19, 0.57],
+            ),
+            output_video=OutputVideo(width=280),
+        )
+    ).run(video_input, video_merged2)
+    logger.info("Merged video2:")
+    logger.info(video_out2)
