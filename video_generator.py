@@ -847,7 +847,7 @@ def compute_default_fps_and_width(
 if __name__ == "__main__":
     # Testing code for the module.
 
-    # EXAMPLE 1/2: Generate a merged videos from fragments picked from videos using identical offsets and durations.
+    # EXAMPLE 1: Generate a merged videos from fragments picked from videos using identical offsets and durations.
     # If offsets and durations are identical for all fragments, VideoGenerator can be used in a single step to generate
     # the final concatenated video. Fragments are generated and concatenated internally.
 
@@ -876,7 +876,7 @@ if __name__ == "__main__":
     logger.info("Merged video with single config:")
     logger.info(video_single_config)
 
-    # EXAMPLE 2/2: Generate a merged videos from fragments picked from videos using different offsets and durations.
+    # EXAMPLE 2: Generate a merged videos from fragments picked from videos using different offsets and durations.
     # This example shows how VideoGenerator can be used in steps to create custom fragments prior to concatenation.
 
     # Define video fragments with specific offsets, durations and rois.
@@ -926,3 +926,17 @@ if __name__ == "__main__":
     )
     logger.info("Merged video with multiple configs:")
     logger.info(video_multiple_config)
+
+    # Example 3: Re-encoding an entire video
+    video_hevc: str = (
+        "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch043/T8162T1024354A8B_20251003021642.mp4"
+    )
+    video_h264: str = (
+        "/Users/jbouguet/Documents/EufySecurityVideos/stories/T8162T1024354A8B_20251003021642_h264.mp4"
+    )
+    video_hevc_meta = VideoMetadata.from_video_file(full_path=video_hevc)
+    video_h264_meta = VideoGenerator().run(video_hevc_meta, video_h264)
+    logger.info("Video original:")
+    logger.info(video_hevc_meta)
+    logger.info("Video re-encoded:")
+    logger.info(video_h264_meta)

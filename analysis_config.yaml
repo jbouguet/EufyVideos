@@ -54,6 +54,7 @@ directories:
     - !join [*root_database, "/Batch040"]
     - !join [*root_database, "/Batch041"]
     - !join [*root_database, "/Batch042"]
+    - !join [*root_database, "/Batch043"]
 
 # Video database configuration
 video_database_list:
@@ -65,7 +66,7 @@ video_database_list:
   video_metadata_file: !join [*root_database, "/archive_001.csv"]
   video_directories: *archive_001
 
-- force_video_directories_scanning: false
+- force_video_directories_scanning: true
   video_metadata_file: !join [*root_database, "/backup.csv"]
   video_directories: !join [*root_database, "/backup"]
 
@@ -100,6 +101,14 @@ output_directory: *stories_output
 process_stories: true
 
 stories:
+
+  - name: 'Garage Device Glitch'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2025-10-03'
+          end: '2025-10-03'
+        devices: ['Garage']
 
   - name: 'Garage Device Switch'
     skip: true
