@@ -261,7 +261,9 @@ class VideoGenerator:
         self.config = VideoGenerationConfig() if config is None else config
 
     def run(
-        self, videos: Union[VideoMetadata, List[VideoMetadata]] | None, output_file: str
+        self,
+        videos: Union[VideoMetadata, List[VideoMetadata | None]] | None,
+        output_file: str,
     ) -> VideoMetadata | None:
         """
         Generate a composite video from multiple input videos.
@@ -284,7 +286,7 @@ class VideoGenerator:
 
     def _create_from_video_fragments(
         self,
-        videos: Union[VideoMetadata, List[VideoMetadata]] | None,
+        videos: Union[VideoMetadata, List[VideoMetadata | None]] | None,
         output_file: str,
         fragment_directory: str,
     ) -> VideoMetadata | None:
@@ -315,32 +317,31 @@ class VideoGenerator:
         ffmpeg_vcodec = "libx265" if output_codec == "h265" else "libx264"
         logger.debug(f"Using video codec: {ffmpeg_vcodec}")
 
-        try:
-            fragment_files = self._process_video_fragments(
-                videos=videos,
-                fragment_directory=fragment_directory,
-                output_width=output_width,
-                ffmpeg_vcodec=ffmpeg_vcodec,
-            )
+        fragment_files = self._process_video_fragments(
+            videos=videos,
+            input_fragments=self.config.input_fragments,
+            fragment_directory=fragment_directory,
+            output_width=output_width,
+            ffmpeg_vcodec=ffmpeg_vcodec,
+            date_time_label=self.config.output_video.date_time_label,
+        )
 
-            return self._concatenate_fragments(
-                fragment_files=fragment_files,
-                fragment_directory=fragment_directory,
-                output_file=output_file,
-                ffmpeg_vcodec=ffmpeg_vcodec,
-                target_fps=target_fps,
-            )
-
-        except Exception as e:
-            logger.error(f"Error in create_video_from_fragments: {str(e)}")
-            raise
+        return self._concatenate_fragments(
+            fragment_files=fragment_files,
+            fragment_directory=fragment_directory,
+            output_file=output_file,
+            ffmpeg_vcodec=ffmpeg_vcodec,
+            target_fps=target_fps,
+        )
 
     def _process_video_fragments(
         self,
-        videos: List[VideoMetadata],
+        videos: List[VideoMetadata | None],
+        input_fragments: InputFragments,
         fragment_directory: str,
         output_width: int,
-        ffmpeg_vcodec: str,
+        date_time_label: DateTimeLabel,
+        ffmpeg_vcodec: str = "libx264",
     ) -> List[str]:
         """Process individual video fragments with transformations."""
         import ffmpeg
@@ -355,12 +356,16 @@ class VideoGenerator:
             position=0,
             leave=False,
         ):
+            if video is None:
+                continue
             try:
                 fragment_file = self._process_single_fragment(
                     video=video,
+                    input_fragments=input_fragments,
                     fragment_directory=fragment_directory,
                     output_width=output_width,
                     ffmpeg_vcodec=ffmpeg_vcodec,
+                    date_time_label=date_time_label,
                 )
                 if fragment_file is not None:
                     fragment_files.append(fragment_file)
@@ -378,22 +383,19 @@ class VideoGenerator:
     def _process_single_fragment(
         self,
         video: VideoMetadata,
+        input_fragments: InputFragments,
         fragment_directory: str,
         output_width: int,
-        ffmpeg_vcodec: str,
+        date_time_label: DateTimeLabel,
+        ffmpeg_vcodec: str = "libx264",
     ) -> Optional[str]:
         """Process a single video fragment with all transformations."""
-
-        fragment_file = os.path.join(
-            fragment_directory,
-            f"{video.date_str} {video.time_str} {video.device}.mp4",
-        )
 
         # Get video/audio streams
         streams = self._get_video_audio_streams(
             video=video,
-            start_time=self.config.input_fragments.offset_in_seconds,
-            duration=self.config.input_fragments.duration_in_seconds,
+            start_time=input_fragments.offset_in_seconds,
+            duration=input_fragments.duration_in_seconds,
         )
 
         if not streams:
@@ -403,13 +405,25 @@ class VideoGenerator:
 
         # Apply transformations
         video_stream = self._apply_video_transformations(
-            video_stream=video_stream, video=video, output_width=output_width
+            video_stream=video_stream,
+            video=video,
+            output_width=output_width,
+            normalized_crop_roi=input_fragments.normalized_crop_roi,
+            enforce_16_9_aspect_ratio=input_fragments.enforce_16_9_aspect_ratio,
         )
 
         # Add datetime label
-        video_stream = self._add_datetime_label(video_stream=video_stream, video=video)
+        if date_time_label.draw:
+            label: str = f"{video.date_str}    {video.time_str}"
+            video_stream = self._add_label(
+                video_stream=video_stream, label=label, date_time_label=date_time_label
+            )
 
         # Output processed fragment
+        fragment_file = os.path.join(
+            fragment_directory,
+            f"{video.date_str} {video.time_str} {video.device}.mp4",
+        )
         self._output_processed_fragment(
             video_stream=video_stream,
             audio_stream=audio_stream,
@@ -499,14 +513,19 @@ class VideoGenerator:
             return None
 
     def _apply_video_transformations(
-        self, video_stream, video: VideoMetadata, output_width: int
+        self,
+        video_stream,
+        video: VideoMetadata,
+        output_width: int,
+        normalized_crop_roi: Optional[Tuple[float, float, float, float]] = None,
+        enforce_16_9_aspect_ratio: bool = False,
     ):
         """Apply various video transformations (aspect ratio, cropping, scaling)."""
         video_stream_width = video.width
         video_stream_height = video.height
 
         # Apply 16:9 aspect ratio if needed
-        if self.config.input_fragments.enforce_16_9_aspect_ratio:
+        if enforce_16_9_aspect_ratio:
             video_stream, video_stream_width, video_stream_height = (
                 self._enforce_aspect_ratio(
                     video_stream=video_stream,
@@ -516,12 +535,12 @@ class VideoGenerator:
             )
 
         # Apply ROI cropping if specified
-        if self.config.input_fragments.normalized_crop_roi:
+        if normalized_crop_roi:
             video_stream, video_stream_width, video_stream_height = (
                 self._apply_roi_crop(
                     video_stream=video_stream,
                     video=video,
-                    normalized_crop_roi=self.config.input_fragments.normalized_crop_roi,
+                    normalized_crop_roi=normalized_crop_roi,
                 )
             )
 
@@ -577,35 +596,34 @@ class VideoGenerator:
         )
         return video_stream, crop_w, crop_h
 
-    def _add_datetime_label(self, video_stream, video: VideoMetadata):
+    def _add_label(self, video_stream, label: str, date_time_label: DateTimeLabel):
         """Add datetime label to video stream."""
-        date_time_label = self.config.output_video.date_time_label
-
-        if date_time_label.draw:
-            text = f"{video.date_str}    {video.time_str}"
-
-            # Add black outline
-            video_stream = video_stream.drawtext(
-                text=text,
-                fontsize=date_time_label.fontsize,
-                fontcolor="black",
-                x=f"{date_time_label.left_margin}",
-                y=f"{date_time_label.top_margin}",
-                borderw=date_time_label.border_width,
-            )
-            # Add white text
-            video_stream = video_stream.drawtext(
-                text=text,
-                fontsize=date_time_label.fontsize,
-                fontcolor="white",
-                x=f"{date_time_label.left_margin}",
-                y=f"{date_time_label.top_margin}",
-                borderw=0,
-            )
+        # Add black outline
+        video_stream = video_stream.drawtext(
+            text=label,
+            fontsize=date_time_label.fontsize,
+            fontcolor="black",
+            x=f"{date_time_label.left_margin}",
+            y=f"{date_time_label.top_margin}",
+            borderw=date_time_label.border_width,
+        )
+        # Add white text
+        video_stream = video_stream.drawtext(
+            text=label,
+            fontsize=date_time_label.fontsize,
+            fontcolor="white",
+            x=f"{date_time_label.left_margin}",
+            y=f"{date_time_label.top_margin}",
+            borderw=0,
+        )
         return video_stream
 
     def _output_processed_fragment(
-        self, video_stream, audio_stream, fragment_file: str, ffmpeg_vcodec: str
+        self,
+        video_stream,
+        audio_stream,
+        fragment_file: str,
+        ffmpeg_vcodec: str = "libx264",
     ):
         """Output processed fragment with video and optional audio."""
         import ffmpeg
@@ -665,8 +683,8 @@ class VideoGenerator:
         import ffmpeg
 
         if not fragment_files:
-            logger.error("No valid video fragments to concatenate")
-            raise ValueError("No valid video fragments to concatenate")
+            logger.warning("No valid video fragments to concatenate")
+            return None
 
         logger.debug(f"Concatenating {len(fragment_files)} video fragments")
         concat_file = os.path.join(fragment_directory, "concat_list.txt")
@@ -718,7 +736,7 @@ def cleanup_fragment_directory(fragment_directory: str) -> None:
         )
 
 
-def fps_robust_average(videos: List[VideoMetadata]) -> Optional[float]:
+def fps_robust_average(videos: List[VideoMetadata | None]) -> Optional[float]:
     """
     Calculate robust average FPS from video list using IQR method.
 
@@ -728,7 +746,7 @@ def fps_robust_average(videos: List[VideoMetadata]) -> Optional[float]:
         return None
 
     # Filter out invalid FPS values and handle empty list
-    fps_values = [video.fps for video in videos if video.fps > 0]
+    fps_values = [video.fps for video in videos if video is not None and video.fps > 0]
     if not fps_values:
         return None
 
@@ -767,13 +785,15 @@ def fps_robust_average(videos: List[VideoMetadata]) -> Optional[float]:
         return None
 
 
-def width_maximum(videos: List[VideoMetadata]) -> Optional[int]:
+def width_maximum(videos: List[VideoMetadata | None]) -> Optional[int]:
     """Get maximum width from video list. Returns None if no valid widths found."""
     if not videos:
         return None
 
     # Filter out invalid width values and handle empty list
-    width_values = [video.width for video in videos if video.width > 0]
+    width_values = [
+        video.width for video in videos if video is not None and video.width > 0
+    ]
     if not width_values:
         return None
 
@@ -781,7 +801,7 @@ def width_maximum(videos: List[VideoMetadata]) -> Optional[int]:
 
 
 def compute_default_fps_and_width(
-    videos: List[VideoMetadata],
+    videos: List[VideoMetadata | None],
     normalized_crop_roi: Optional[Tuple[float, float, float, float]] = None,
 ) -> Tuple[int, int]:
     """
@@ -836,7 +856,39 @@ def compute_default_fps_and_width(
 if __name__ == "__main__":
     # Testing code for the module.
 
-    # Define video fragments with specific offsets, durations and rois
+    # EXAMPLE 1/2: Generate a merged videos from fragments picked from videos using identical offsets and durations.
+    # If offsets and durations are identical for all fragments, VideoGenerator can be used in a single step to generate
+    # the final concatenated video. Fragments are generated and concatenated internally.
+
+    # Using one config for all videos does not allow to specify fragment specific offsets, durations and rois
+    video_list: List[VideoMetadata | None] = [
+        VideoMetadata.from_video_file(
+            "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch041/T8600P1023450AFB_20250923085351.mp4"
+        ),
+        VideoMetadata.from_video_file(
+            "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch041/T8600P1023450AFB_20250923085416.mp4"
+        ),
+    ]
+    video_merged_single_config: str = (
+        "/Users/jbouguet/Documents/EufySecurityVideos/stories/video_merged_single_config.mp4"
+    )
+    # Single call of VideoGenerator.run() does fragment creation and concatenation.
+    video_single_config = VideoGenerator(
+        VideoGenerationConfig(
+            input_fragments=InputFragments(
+                duration_in_seconds=22,
+                normalized_crop_roi=[0.08, 0.30, 0.19, 0.57],
+            ),
+            output_video=OutputVideo(width=280),
+        )
+    ).run(video_list, video_merged_single_config)
+    logger.info("Merged video with single config:")
+    logger.info(video_single_config)
+
+    # EXAMPLE 2/2: Generate a merged videos from fragments picked from videos using different offsets and durations.
+    # This example shows how VideoGenerator can be used in steps to create custom fragments prior to concatenation.
+
+    # Define video fragments with specific offsets, durations and rois.
     video_fragments_config = [
         {
             "video_in": "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch041/T8600P1023450AFB_20250923085351.mp4",
@@ -856,58 +908,30 @@ if __name__ == "__main__":
         },
     ]
 
-    # Generate the individual video fragments
-    video_fragments = [
-        fragment
-        for config in video_fragments_config
-        if (
-            fragment := VideoGenerator(
-                VideoGenerationConfig(
-                    input_fragments=InputFragments(
-                        offset_in_seconds=config["offset"],
-                        duration_in_seconds=config["duration"],
-                        normalized_crop_roi=config["roi"],
-                    ),
-                    output_video=OutputVideo(width=config["width"]),
-                )
-            ).run(
-                VideoMetadata.from_video_file(full_path=config["video_in"]),
-                config["video_out"],
+    # Individual video fragments are first created with different configurations.
+    video_fragments: List[VideoMetadata | None] = [
+        VideoGenerator(
+            VideoGenerationConfig(
+                input_fragments=InputFragments(
+                    offset_in_seconds=config["offset"],
+                    duration_in_seconds=config["duration"],
+                    normalized_crop_roi=config["roi"],
+                ),
+                output_video=OutputVideo(width=config["width"]),
             )
+        ).run(
+            VideoMetadata.from_video_file(full_path=config["video_in"]),
+            config["video_out"],
         )
-        is not None
-    ]
-
-    # Concatenate the video fragments
-    video_merged: str = (
-        "/Users/jbouguet/Documents/EufySecurityVideos/stories/video_merged.mp4"
-    )
-    video_out = VideoGenerator().run(video_fragments, video_merged)
-
-    logger.info("Video fragments:")
-    for video in video_fragments:
-        logger.info(video)
-    logger.info("Merged video:")
-    logger.info(video_out)
-
-    # Use one config for all videos
-    video_input: List[VideoMetadata] = [
-        video
         for config in video_fragments_config
-        if (video := VideoMetadata.from_video_file(full_path=config["video_in"]))
-        is not None
     ]
-    video_merged2: str = (
-        "/Users/jbouguet/Documents/EufySecurityVideos/stories/video_merged2.mp4"
+
+    # The final concatenated videos is then created from the list of video fragments.
+    video_merged_multiple_config: str = (
+        "/Users/jbouguet/Documents/EufySecurityVideos/stories/video_merged_multiple_config.mp4"
     )
-    video_out2 = VideoGenerator(
-        VideoGenerationConfig(
-            input_fragments=InputFragments(
-                duration_in_seconds=22,
-                normalized_crop_roi=[0.08, 0.30, 0.19, 0.57],
-            ),
-            output_video=OutputVideo(width=280),
-        )
-    ).run(video_input, video_merged2)
-    logger.info("Merged video2:")
-    logger.info(video_out2)
+    video_multiple_config = VideoGenerator().run(
+        video_fragments, video_merged_multiple_config
+    )
+    logger.info("Merged video with multiple configs:")
+    logger.info(video_multiple_config)
