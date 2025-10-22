@@ -236,6 +236,376 @@ class VideoGenerationConfig:
         )
 
 
+def _get_video_audio_streams(
+    video: VideoMetadata, start_time: float, duration: Optional[float]
+) -> Optional[Tuple[Any, Optional[Any]]]:
+    """Get video and audio streams from input file."""
+    import ffmpeg
+
+    if not video or not video.full_path:
+        logger.error("Invalid video metadata")
+        return None
+
+    try:
+        # Probe video file
+        try:
+            probe = ffmpeg.probe(filename=video.full_path)
+        except ffmpeg.Error as e:
+            logger.error(f"Error probing video {video.filename}: {str(e)}")
+            return None
+
+        # Get streams from probe
+        streams = probe.get("streams")
+        if not streams:
+            logger.error("No streams found in probe data")
+            return None
+
+        # Find stream indices
+        video_index = None
+        audio_index = None
+        for i, stream in enumerate(streams):
+            if not isinstance(stream, dict):
+                continue
+            stream_type = stream.get("codec_type", "")
+            if stream_type == "video":
+                video_index = i
+            elif stream_type == "audio":
+                audio_index = i
+
+        if video_index is None:
+            logger.warning(f"No video stream found in {video.full_path}")
+            return None
+
+        # Create input stream
+        try:
+            if duration is None:
+                # Extract from start_time to end of video
+                input_stream = ffmpeg.input(filename=video.full_path, ss=start_time)
+            else:
+                # Extract specific duration
+                input_stream = ffmpeg.input(
+                    filename=video.full_path, ss=start_time, t=duration
+                )
+        except ffmpeg.Error as e:
+            logger.error(f"Error creating input stream: {str(e)}")
+            return None
+
+        # Process video stream
+        try:
+            video_stream = input_stream.video.filter("setpts", "PTS-STARTPTS")
+        except (AttributeError, TypeError) as e:
+            logger.error(f"Error processing video stream: {str(e)}")
+            return None
+
+        # Process audio stream if available
+        audio_stream = None
+        if audio_index is not None:
+            try:
+                audio_stream = (
+                    input_stream["a"]
+                    .filter("asetpts", "PTS-STARTPTS")
+                    .filter("aresample", 48000)
+                )
+            except (AttributeError, TypeError) as e:
+                logger.warning(f"Error processing audio stream: {str(e)}")
+
+        return (video_stream, audio_stream)
+
+    except (AttributeError, TypeError) as e:
+        logger.error(f"Unexpected error processing streams: {str(e)}")
+        return None
+
+
+def _enforce_aspect_ratio(video_stream, width: int, height: int):
+    """Enforce 16:9 aspect ratio through cropping."""
+    if 9 * width != 16 * height:
+        if 9 * width < 16 * height:
+            new_height = (width * 9) // 16
+            video_stream = video_stream.filter("crop", w="iw", h=new_height, x=0, y=0)
+            height = new_height
+        else:
+            new_width = (height * 16) // 9
+            video_stream = video_stream.filter("crop", w=new_width, h="ih", x=0, y=0)
+            width = new_width
+    return video_stream, width, height
+
+
+def _apply_roi_crop(
+    video_stream,
+    video: VideoMetadata,
+    normalized_crop_roi: Tuple[float, float, float, float],
+):
+    """Apply region of interest cropping."""
+    left, top, right, bottom = normalized_crop_roi
+    if not (0 <= left < right <= 1) or not (0 <= top < bottom <= 1):
+        raise ValueError(
+            "normalized_crop_roi values must be between 0 and 1, and left < right, top < bottom"
+        )
+
+    crop_w = max(1, min(int((right - left) * video.width), video.width))
+    crop_h = max(1, min(int((bottom - top) * video.height), video.height))
+    crop_x = max(0, min(int(left * video.width), video.width - crop_w))
+    crop_y = max(0, min(int(top * video.height), video.height - crop_h))
+
+    if crop_w <= 0 or crop_h <= 0:
+        raise ValueError("Crop dimensions must be positive")
+
+    video_stream = video_stream.filter("crop", w=crop_w, h=crop_h, x=crop_x, y=crop_y)
+    return video_stream, crop_w, crop_h
+
+
+def _add_label(video_stream, label: str, date_time_label: DateTimeLabel):
+    """Add datetime label to video stream."""
+    # Add black outline
+    video_stream = video_stream.drawtext(
+        text=label,
+        fontsize=date_time_label.fontsize,
+        fontcolor="black",
+        x=f"{date_time_label.left_margin}",
+        y=f"{date_time_label.top_margin}",
+        borderw=date_time_label.border_width,
+    )
+    # Add white text
+    video_stream = video_stream.drawtext(
+        text=label,
+        fontsize=date_time_label.fontsize,
+        fontcolor="white",
+        x=f"{date_time_label.left_margin}",
+        y=f"{date_time_label.top_margin}",
+        borderw=0,
+    )
+    return video_stream
+
+
+def _output_processed_fragment(
+    video_stream,
+    audio_stream,
+    fragment_file: str,
+    ffmpeg_vcodec: str = "libx264",
+):
+    """Output processed fragment with video and optional audio."""
+    import ffmpeg
+
+    try:
+        if audio_stream is not None:
+            output = ffmpeg.output(
+                video_stream,
+                audio_stream,
+                fragment_file,
+                vcodec=ffmpeg_vcodec,
+                acodec="aac",
+                strict="experimental",
+                ac=1,  # mono
+                ar=48000,  # sample rate
+                ab="128k",  # audio bitrate
+                map_metadata=-1,  # clear metadata
+            )
+        else:
+            output = ffmpeg.output(
+                video_stream,
+                fragment_file,
+                vcodec=ffmpeg_vcodec,
+                strict="experimental",
+                map_metadata=-1,  # clear metadata
+            )
+
+        ffmpeg.run(
+            stream_spec=output,
+            overwrite_output=True,
+            capture_stderr=True,
+        )
+
+    except ffmpeg.Error:
+        if audio_stream is not None:
+            logger.warning(
+                f"Audio processing failed. Falling back to video-only output for fragment {fragment_file}"
+            )
+            _output_processed_fragment(
+                video_stream=video_stream,
+                audio_stream=None,
+                fragment_file=fragment_file,
+                ffmpeg_vcodec=ffmpeg_vcodec,
+            )
+        else:
+            raise
+
+
+def _apply_video_transformations(
+    video_stream,
+    video: VideoMetadata,
+    output_width: int,
+    normalized_crop_roi: Optional[Tuple[float, float, float, float]] = None,
+    enforce_16_9_aspect_ratio: bool = False,
+):
+    """Apply various video transformations (aspect ratio, cropping, scaling)."""
+    video_stream_width = video.width
+    video_stream_height = video.height
+
+    # Apply 16:9 aspect ratio if needed
+    if enforce_16_9_aspect_ratio:
+        video_stream, video_stream_width, video_stream_height = _enforce_aspect_ratio(
+            video_stream=video_stream,
+            width=video_stream_width,
+            height=video_stream_height,
+        )
+
+    # Apply ROI cropping if specified
+    if normalized_crop_roi:
+        video_stream, video_stream_width, video_stream_height = _apply_roi_crop(
+            video_stream=video_stream,
+            video=video,
+            normalized_crop_roi=normalized_crop_roi,
+        )
+
+    # Scale to target dimensions
+    target_height = int(output_width * video_stream_height / video_stream_width)
+    target_height = (target_height // 2) * 2  # Ensure even height
+    video_stream = video_stream.filter(
+        "scale", width=output_width, height=target_height
+    )
+
+    return video_stream
+
+
+def _process_single_fragment(
+    video: VideoMetadata,
+    input_fragments: InputFragments,
+    fragment_directory: str,
+    output_width: int,
+    date_time_label: DateTimeLabel,
+    ffmpeg_vcodec: str = "libx264",
+) -> Optional[str]:
+    """Process a single video fragment with all transformations."""
+
+    # Get video/audio streams
+    streams = _get_video_audio_streams(
+        video=video,
+        start_time=input_fragments.offset_in_seconds,
+        duration=input_fragments.duration_in_seconds,
+    )
+
+    if not streams:
+        return None
+
+    video_stream, audio_stream = streams
+
+    # Apply transformations
+    video_stream = _apply_video_transformations(
+        video_stream=video_stream,
+        video=video,
+        output_width=output_width,
+        normalized_crop_roi=input_fragments.normalized_crop_roi,
+        enforce_16_9_aspect_ratio=input_fragments.enforce_16_9_aspect_ratio,
+    )
+
+    # Add datetime label
+    if date_time_label.draw:
+        label: str = f"{video.date_str}    {video.time_str}"
+        video_stream = _add_label(
+            video_stream=video_stream, label=label, date_time_label=date_time_label
+        )
+
+    # Output processed fragment
+    fragment_file = os.path.join(
+        fragment_directory,
+        f"{video.date_str} {video.time_str} {video.device}.mp4",
+    )
+    _output_processed_fragment(
+        video_stream=video_stream,
+        audio_stream=audio_stream,
+        fragment_file=fragment_file,
+        ffmpeg_vcodec=ffmpeg_vcodec,
+    )
+
+    return fragment_file
+
+
+def _process_video_fragments(
+    videos: List[VideoMetadata | None],
+    input_fragments: InputFragments,
+    fragment_directory: str,
+    output_width: int,
+    date_time_label: DateTimeLabel,
+    ffmpeg_vcodec: str = "libx264",
+) -> List[str]:
+    """Process individual video fragments with transformations."""
+    import ffmpeg
+    from tqdm import tqdm
+
+    fragment_files = []
+    for video in tqdm(
+        iterable=videos,
+        desc=f"Generating composite video from {len(videos)} videos",
+        unit="video",
+        colour="green",
+        position=0,
+        leave=False,
+    ):
+        if video is None:
+            continue
+        try:
+            fragment_file = _process_single_fragment(
+                video=video,
+                input_fragments=input_fragments,
+                fragment_directory=fragment_directory,
+                output_width=output_width,
+                ffmpeg_vcodec=ffmpeg_vcodec,
+                date_time_label=date_time_label,
+            )
+            if fragment_file is not None:
+                fragment_files.append(fragment_file)
+            else:
+                logger.warning(f"Failed to process video fragment for {video.filename}")
+        except ffmpeg.Error as e:
+            logger.error(f"FFmpeg error processing video {video.filename}:")
+            logger.error(e.stderr.decode())
+            raise
+
+    return fragment_files
+
+
+def _concatenate_fragments(
+    fragment_files: List[str],
+    fragment_directory: str,
+    output_file: str,
+    ffmpeg_vcodec: str,
+    target_fps: int,
+) -> VideoMetadata | None:
+    """Concatenate processed fragments into final output video."""
+    import ffmpeg
+
+    if not fragment_files:
+        logger.warning("No valid video fragments to concatenate")
+        return None
+
+    logger.debug(f"Concatenating {len(fragment_files)} video fragments")
+    concat_file = os.path.join(fragment_directory, "concat_list.txt")
+
+    with open(concat_file, "w") as f:
+        for fragment in fragment_files:
+            if fragment is not None:
+                f.write(f"file '{fragment}'\n")
+
+    try:
+        concat_output = ffmpeg.input(filename=concat_file, format="concat", safe=0)
+        output = ffmpeg.output(
+            concat_output,
+            output_file,
+            vcodec=ffmpeg_vcodec,
+            acodec="aac",
+            r=target_fps,
+        )
+        ffmpeg.run(stream_spec=output, overwrite_output=True, capture_stderr=True)
+        logger.debug(f"Successfully concatenated all fragments into {output_file}")
+
+        return VideoMetadata.from_video_file(output_file)
+
+    except ffmpeg.Error as e:
+        logger.error("FFmpeg error during concatenation:")
+        logger.error(e.stderr.decode())
+        raise
+
+
 class VideoGenerator:
     """
     Main class for generating composite videos from multiple input videos.
@@ -317,7 +687,7 @@ class VideoGenerator:
         ffmpeg_vcodec = "libx265" if output_codec == "h265" else "libx264"
         logger.debug(f"Using video codec: {ffmpeg_vcodec}")
 
-        fragment_files = self._process_video_fragments(
+        fragment_files = _process_video_fragments(
             videos=videos,
             input_fragments=self.config.input_fragments,
             fragment_directory=fragment_directory,
@@ -326,392 +696,13 @@ class VideoGenerator:
             date_time_label=self.config.output_video.date_time_label,
         )
 
-        return self._concatenate_fragments(
+        return _concatenate_fragments(
             fragment_files=fragment_files,
             fragment_directory=fragment_directory,
             output_file=output_file,
             ffmpeg_vcodec=ffmpeg_vcodec,
             target_fps=target_fps,
         )
-
-    def _process_video_fragments(
-        self,
-        videos: List[VideoMetadata | None],
-        input_fragments: InputFragments,
-        fragment_directory: str,
-        output_width: int,
-        date_time_label: DateTimeLabel,
-        ffmpeg_vcodec: str = "libx264",
-    ) -> List[str]:
-        """Process individual video fragments with transformations."""
-        import ffmpeg
-        from tqdm import tqdm
-
-        fragment_files = []
-        for video in tqdm(
-            iterable=videos,
-            desc=f"Generating composite video from {len(videos)} videos",
-            unit="video",
-            colour="green",
-            position=0,
-            leave=False,
-        ):
-            if video is None:
-                continue
-            try:
-                fragment_file = self._process_single_fragment(
-                    video=video,
-                    input_fragments=input_fragments,
-                    fragment_directory=fragment_directory,
-                    output_width=output_width,
-                    ffmpeg_vcodec=ffmpeg_vcodec,
-                    date_time_label=date_time_label,
-                )
-                if fragment_file is not None:
-                    fragment_files.append(fragment_file)
-                else:
-                    logger.warning(
-                        f"Failed to process video fragment for {video.filename}"
-                    )
-            except ffmpeg.Error as e:
-                logger.error(f"FFmpeg error processing video {video.filename}:")
-                logger.error(e.stderr.decode())
-                raise
-
-        return fragment_files
-
-    def _process_single_fragment(
-        self,
-        video: VideoMetadata,
-        input_fragments: InputFragments,
-        fragment_directory: str,
-        output_width: int,
-        date_time_label: DateTimeLabel,
-        ffmpeg_vcodec: str = "libx264",
-    ) -> Optional[str]:
-        """Process a single video fragment with all transformations."""
-
-        # Get video/audio streams
-        streams = self._get_video_audio_streams(
-            video=video,
-            start_time=input_fragments.offset_in_seconds,
-            duration=input_fragments.duration_in_seconds,
-        )
-
-        if not streams:
-            return None
-
-        video_stream, audio_stream = streams
-
-        # Apply transformations
-        video_stream = self._apply_video_transformations(
-            video_stream=video_stream,
-            video=video,
-            output_width=output_width,
-            normalized_crop_roi=input_fragments.normalized_crop_roi,
-            enforce_16_9_aspect_ratio=input_fragments.enforce_16_9_aspect_ratio,
-        )
-
-        # Add datetime label
-        if date_time_label.draw:
-            label: str = f"{video.date_str}    {video.time_str}"
-            video_stream = self._add_label(
-                video_stream=video_stream, label=label, date_time_label=date_time_label
-            )
-
-        # Output processed fragment
-        fragment_file = os.path.join(
-            fragment_directory,
-            f"{video.date_str} {video.time_str} {video.device}.mp4",
-        )
-        self._output_processed_fragment(
-            video_stream=video_stream,
-            audio_stream=audio_stream,
-            fragment_file=fragment_file,
-            ffmpeg_vcodec=ffmpeg_vcodec,
-        )
-
-        return fragment_file
-
-    def _get_video_audio_streams(
-        self, video: VideoMetadata, start_time: float, duration: Optional[float]
-    ) -> Optional[Tuple[Any, Optional[Any]]]:
-        """Get video and audio streams from input file."""
-        import ffmpeg
-
-        if not video or not video.full_path:
-            logger.error("Invalid video metadata")
-            return None
-
-        try:
-            # Probe video file
-            try:
-                probe = ffmpeg.probe(filename=video.full_path)
-            except ffmpeg.Error as e:
-                logger.error(f"Error probing video {video.filename}: {str(e)}")
-                return None
-
-            # Get streams from probe
-            streams = probe.get("streams")
-            if not streams:
-                logger.error("No streams found in probe data")
-                return None
-
-            # Find stream indices
-            video_index = None
-            audio_index = None
-            for i, stream in enumerate(streams):
-                if not isinstance(stream, dict):
-                    continue
-                stream_type = stream.get("codec_type", "")
-                if stream_type == "video":
-                    video_index = i
-                elif stream_type == "audio":
-                    audio_index = i
-
-            if video_index is None:
-                logger.warning(f"No video stream found in {video.full_path}")
-                return None
-
-            # Create input stream
-            try:
-                if duration is None:
-                    # Extract from start_time to end of video
-                    input_stream = ffmpeg.input(filename=video.full_path, ss=start_time)
-                else:
-                    # Extract specific duration
-                    input_stream = ffmpeg.input(
-                        filename=video.full_path, ss=start_time, t=duration
-                    )
-            except ffmpeg.Error as e:
-                logger.error(f"Error creating input stream: {str(e)}")
-                return None
-
-            # Process video stream
-            try:
-                video_stream = input_stream.video.filter("setpts", "PTS-STARTPTS")
-            except Exception as e:
-                logger.error(f"Error processing video stream: {str(e)}")
-                return None
-
-            # Process audio stream if available
-            audio_stream = None
-            if audio_index is not None:
-                try:
-                    audio_stream = (
-                        input_stream["a"]
-                        .filter("asetpts", "PTS-STARTPTS")
-                        .filter("aresample", 48000)
-                    )
-                except Exception as e:
-                    logger.warning(f"Error processing audio stream: {str(e)}")
-
-            return (video_stream, audio_stream)
-
-        except Exception as e:
-            logger.error(f"Unexpected error processing streams: {str(e)}")
-            return None
-
-    def _apply_video_transformations(
-        self,
-        video_stream,
-        video: VideoMetadata,
-        output_width: int,
-        normalized_crop_roi: Optional[Tuple[float, float, float, float]] = None,
-        enforce_16_9_aspect_ratio: bool = False,
-    ):
-        """Apply various video transformations (aspect ratio, cropping, scaling)."""
-        video_stream_width = video.width
-        video_stream_height = video.height
-
-        # Apply 16:9 aspect ratio if needed
-        if enforce_16_9_aspect_ratio:
-            video_stream, video_stream_width, video_stream_height = (
-                self._enforce_aspect_ratio(
-                    video_stream=video_stream,
-                    width=video_stream_width,
-                    height=video_stream_height,
-                )
-            )
-
-        # Apply ROI cropping if specified
-        if normalized_crop_roi:
-            video_stream, video_stream_width, video_stream_height = (
-                self._apply_roi_crop(
-                    video_stream=video_stream,
-                    video=video,
-                    normalized_crop_roi=normalized_crop_roi,
-                )
-            )
-
-        # Scale to target dimensions
-        target_height = int(output_width * video_stream_height / video_stream_width)
-        target_height = (target_height // 2) * 2  # Ensure even height
-        video_stream = video_stream.filter(
-            "scale", width=output_width, height=target_height
-        )
-
-        return video_stream
-
-    def _enforce_aspect_ratio(self, video_stream, width: int, height: int):
-        """Enforce 16:9 aspect ratio through cropping."""
-        if 9 * width != 16 * height:
-            if 9 * width < 16 * height:
-                new_height = (width * 9) // 16
-                video_stream = video_stream.filter(
-                    "crop", w="iw", h=new_height, x=0, y=0
-                )
-                height = new_height
-            else:
-                new_width = (height * 16) // 9
-                video_stream = video_stream.filter(
-                    "crop", w=new_width, h="ih", x=0, y=0
-                )
-                width = new_width
-        return video_stream, width, height
-
-    def _apply_roi_crop(
-        self,
-        video_stream,
-        video: VideoMetadata,
-        normalized_crop_roi: Tuple[float, float, float, float],
-    ):
-        """Apply region of interest cropping."""
-        left, top, right, bottom = normalized_crop_roi
-        if not (0 <= left < right <= 1) or not (0 <= top < bottom <= 1):
-            raise ValueError(
-                "normalized_crop_roi values must be between 0 and 1, and left < right, top < bottom"
-            )
-
-        crop_w = max(1, min(int((right - left) * video.width), video.width))
-        crop_h = max(1, min(int((bottom - top) * video.height), video.height))
-        crop_x = max(0, min(int(left * video.width), video.width - crop_w))
-        crop_y = max(0, min(int(top * video.height), video.height - crop_h))
-
-        if crop_w <= 0 or crop_h <= 0:
-            raise ValueError("Crop dimensions must be positive")
-
-        video_stream = video_stream.filter(
-            "crop", w=crop_w, h=crop_h, x=crop_x, y=crop_y
-        )
-        return video_stream, crop_w, crop_h
-
-    def _add_label(self, video_stream, label: str, date_time_label: DateTimeLabel):
-        """Add datetime label to video stream."""
-        # Add black outline
-        video_stream = video_stream.drawtext(
-            text=label,
-            fontsize=date_time_label.fontsize,
-            fontcolor="black",
-            x=f"{date_time_label.left_margin}",
-            y=f"{date_time_label.top_margin}",
-            borderw=date_time_label.border_width,
-        )
-        # Add white text
-        video_stream = video_stream.drawtext(
-            text=label,
-            fontsize=date_time_label.fontsize,
-            fontcolor="white",
-            x=f"{date_time_label.left_margin}",
-            y=f"{date_time_label.top_margin}",
-            borderw=0,
-        )
-        return video_stream
-
-    def _output_processed_fragment(
-        self,
-        video_stream,
-        audio_stream,
-        fragment_file: str,
-        ffmpeg_vcodec: str = "libx264",
-    ):
-        """Output processed fragment with video and optional audio."""
-        import ffmpeg
-
-        try:
-            if audio_stream is not None:
-                output = ffmpeg.output(
-                    video_stream,
-                    audio_stream,
-                    fragment_file,
-                    vcodec=ffmpeg_vcodec,
-                    acodec="aac",
-                    strict="experimental",
-                    ac=1,  # mono
-                    ar=48000,  # sample rate
-                    ab="128k",  # audio bitrate
-                    map_metadata=-1,  # clear metadata
-                )
-            else:
-                output = ffmpeg.output(
-                    video_stream,
-                    fragment_file,
-                    vcodec=ffmpeg_vcodec,
-                    strict="experimental",
-                    map_metadata=-1,  # clear metadata
-                )
-
-            ffmpeg.run(
-                stream_spec=output,
-                overwrite_output=True,
-                capture_stderr=True,
-            )
-
-        except ffmpeg.Error:
-            if audio_stream is not None:
-                logger.warning(
-                    f"Audio processing failed. Falling back to video-only output for fragment {fragment_file}"
-                )
-                self._output_processed_fragment(
-                    video_stream=video_stream,
-                    audio_stream=None,
-                    fragment_file=fragment_file,
-                    ffmpeg_vcodec=ffmpeg_vcodec,
-                )
-            else:
-                raise
-
-    def _concatenate_fragments(
-        self,
-        fragment_files: List[str],
-        fragment_directory: str,
-        output_file: str,
-        ffmpeg_vcodec: str,
-        target_fps: int,
-    ) -> VideoMetadata | None:
-        """Concatenate processed fragments into final output video."""
-        import ffmpeg
-
-        if not fragment_files:
-            logger.warning("No valid video fragments to concatenate")
-            return None
-
-        logger.debug(f"Concatenating {len(fragment_files)} video fragments")
-        concat_file = os.path.join(fragment_directory, "concat_list.txt")
-
-        with open(concat_file, "w") as f:
-            for fragment in fragment_files:
-                if fragment is not None:
-                    f.write(f"file '{fragment}'\n")
-
-        try:
-            concat_output = ffmpeg.input(filename=concat_file, format="concat", safe=0)
-            output = ffmpeg.output(
-                concat_output,
-                output_file,
-                vcodec=ffmpeg_vcodec,
-                acodec="aac",
-                r=target_fps,
-            )
-            ffmpeg.run(stream_spec=output, overwrite_output=True, capture_stderr=True)
-            logger.debug(f"Successfully concatenated all fragments into {output_file}")
-
-            return VideoMetadata.from_video_file(output_file)
-
-        except ffmpeg.Error as e:
-            logger.error("FFmpeg error during concatenation:")
-            logger.error(e.stderr.decode())
-            raise
 
 
 def cleanup_fragment_directory(fragment_directory: str) -> None:
@@ -721,16 +712,16 @@ def cleanup_fragment_directory(fragment_directory: str) -> None:
             for name in files:
                 try:
                     os.remove(path=os.path.join(root, name))
-                except Exception as e:
+                except (OSError, PermissionError) as e:
                     logger.error(f"Error removing file {name}: {str(e)}")
             for name in dirs:
                 try:
                     os.rmdir(path=os.path.join(root, name))
-                except Exception as e:
+                except (OSError, PermissionError) as e:
                     logger.error(f"Error removing directory {name}: {str(e)}")
         os.rmdir(path=fragment_directory)
         logger.debug(f"Fragment directory {fragment_directory} removed")
-    except Exception as e:
+    except (OSError, PermissionError) as e:
         logger.error(
             f"Error during cleanup of fragment directory {fragment_directory}: {str(e)}"
         )
