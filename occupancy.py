@@ -57,6 +57,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from logging_config import create_logger
 from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import (
     GridSearchCV,
@@ -66,8 +67,6 @@ from sklearn.model_selection import (
     train_test_split,
 )
 from sklearn.tree import DecisionTreeClassifier, export_text, plot_tree
-
-from logging_config import create_logger
 from video_data_aggregator import VideoDataAggregator
 
 logger = create_logger(__name__)
@@ -191,6 +190,8 @@ class Occupancy:
         ("2025-06-21", "2025-07-27", OccupancyStatus.OCCUPIED),
         ("2025-07-28", "2025-09-24", OccupancyStatus.NOT_OCCUPIED),
         ("2025-09-25", "2025-09-29", OccupancyStatus.OCCUPIED),
+        ("2025-09-30", "2025-10-20", OccupancyStatus.NOT_OCCUPIED),
+        ("2025-10-21", "2025-10-21", OccupancyStatus.OCCUPIED),
     ]
 
     def __init__(

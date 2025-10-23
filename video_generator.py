@@ -45,6 +45,8 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from logging_config import create_logger
+
+# from streamlit import video
 from video_metadata import VideoMetadata
 
 logger = create_logger(__name__)
@@ -674,7 +676,8 @@ class VideoGenerator:
         videos = [videos] if isinstance(videos, VideoMetadata) else videos
         os.makedirs(name=fragment_directory, exist_ok=True)
 
-        default_width, target_fps = compute_default_fps_and_width(
+        target_fps = compute_default_fps(videos=videos)
+        default_width = compute_default_width(
             videos=videos,
             normalized_crop_roi=self.config.input_fragments.normalized_crop_roi,
         )
@@ -687,7 +690,7 @@ class VideoGenerator:
         ffmpeg_vcodec = "libx265" if output_codec == "h265" else "libx264"
         logger.debug(f"Using video codec: {ffmpeg_vcodec}")
 
-        fragment_files = _process_video_fragments(
+        fragment_files: List[str] = _process_video_fragments(
             videos=videos,
             input_fragments=self.config.input_fragments,
             fragment_directory=fragment_directory,
@@ -727,106 +730,71 @@ def cleanup_fragment_directory(fragment_directory: str) -> None:
         )
 
 
-def fps_robust_average(videos: List[VideoMetadata | None]) -> Optional[float]:
+def robust_average(values: List[float]) -> Optional[float]:
     """
-    Calculate robust average FPS from video list using IQR method.
+    Calculate robust average of a list of floats using IQR method.
 
     Returns None if no valid FPS values found.
     """
-    if not videos:
-        return None
-
-    # Filter out invalid FPS values and handle empty list
-    fps_values = [video.fps for video in videos if video is not None and video.fps > 0]
-    if not fps_values:
-        return None
 
     # For small lists, return simple average
-    n = len(fps_values)
+    n = len(values)
     if n < 4:  # Need at least 4 values for quartile calculation
-        return sum(fps_values) / n
+        return sum(values) / n
 
     # Sort for quartile calculation
-    fps_values.sort()
+    values.sort()
     q1_idx = n // 4
     q3_idx = (3 * n) // 4
 
     # Calculate quartiles and IQR
-    q1 = fps_values[q1_idx]
-    q3 = fps_values[q3_idx]
+    q1 = values[q1_idx]
+    q3 = values[q3_idx]
     iqr = q3 - q1
 
     # If all values are the same or very close
     if iqr < 0.001:  # Use small epsilon for float comparison
-        return fps_values[0]
+        return values[0]
 
-    try:
-        # Calculate bounds and filter outliers
-        lower_bound = q1 - 1.5 * iqr
-        upper_bound = q3 + 1.5 * iqr
-        filtered_fps = [fps for fps in fps_values if lower_bound <= fps <= upper_bound]
+    # Calculate bounds and filter outliers
+    lower_bound = q1 - 1.5 * iqr
+    upper_bound = q3 + 1.5 * iqr
+    filtered_values = [v for v in values if lower_bound <= v <= upper_bound]
 
-        if not filtered_fps:
-            # If all values were filtered out, return average of original values
-            return sum(fps_values) / n
+    if not filtered_values:
+        # If all values were filtered out, return average of original values
+        return sum(values) / n
 
-        return sum(filtered_fps) / len(filtered_fps)
-    except (TypeError, ZeroDivisionError) as e:
-        logger.error(f"Error calculating FPS average: {str(e)}")
-        return None
+    return sum(filtered_values) / len(filtered_values)
 
 
-def width_maximum(videos: List[VideoMetadata | None]) -> Optional[int]:
-    """Get maximum width from video list. Returns None if no valid widths found."""
-    if not videos:
-        return None
+def compute_default_fps(videos: List[VideoMetadata | None]) -> int:
+    """
+    Compute default FPS based on input videos.
+    """
+    # Compute target FPS
+    fps_robust_ave = robust_average(
+        [video.fps for video in videos if video is not None and video.fps > 0]
+    )
+    if fps_robust_ave is None:
+        return 15
 
-    # Filter out invalid width values and handle empty list
+    return max(1, round(fps_robust_ave))
+
+
+def compute_default_width(
+    videos: List[VideoMetadata | None],
+    normalized_crop_roi: Optional[Tuple[float, float, float, float]] = None,
+) -> int:
+    """
+    Compute default width values based on input videos.
+    """
+    default_width = 854  # Default width
     width_values = [
         video.width for video in videos if video is not None and video.width > 0
     ]
-    if not width_values:
-        return None
-
-    return max(width_values)
-
-
-def compute_default_fps_and_width(
-    videos: List[VideoMetadata | None],
-    normalized_crop_roi: Optional[Tuple[float, float, float, float]] = None,
-) -> Tuple[int, int]:
-    """
-    Compute default FPS and width values based on input videos.
-
-    Args:
-        videos: List of input videos
-        normalized_crop_roi: Optional ROI for width adjustment
-
-    Returns:
-        Tuple of (default_width, target_fps)
-    """
-    target_fps = 15  # Default FPS
-    default_width = 854  # Default width
-
-    # Compute target FPS
-    fps_robust_ave = fps_robust_average(videos=videos)
-    if fps_robust_ave is None:
-        logger.warning(
-            f"No valid FPS data available. Using default FPS of {target_fps}."
-        )
-    else:
-        target_fps = round(number=fps_robust_ave)
-        logger.debug(
-            f"Using target FPS of {target_fps} based on input video statistics."
-        )
-
-    # Compute default width
-    width_max = width_maximum(videos=videos)
-    if width_max is None:
-        logger.warning("No valid video width data available.")
-        logger.debug(f"Default video width is {default_width}")
-    else:
-        default_width = width_max
+    if width_values:
+        default_width = max(width_values)
 
     # Adjust width for ROI if specified
     if normalized_crop_roi is not None:
@@ -837,11 +805,7 @@ def compute_default_fps_and_width(
             )
         default_width = max(1, min(int((right - left) * default_width), default_width))
 
-    logger.debug(
-        f"Default video width is {default_width} based on input video statistics"
-    )
-
-    return default_width, target_fps
+    return default_width
 
 
 if __name__ == "__main__":
