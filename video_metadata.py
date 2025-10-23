@@ -85,24 +85,35 @@ class VideoMetadata:
     - Managing collections of videos
     - Comparing and sorting video entries
 
-    Example:
+    Examples:
+        # Simple constructor - auto-populates from video file
+        video = VideoMetadata(full_path='path/to/video.mp4')
+
+        # Explicit constructor - all fields specified
+        video = VideoMetadata(
+            filename='video.mp4',
+            full_path='path/to/video.mp4',
+            device='Camera1',
+            ...
+        )
+
+        # Classmethod (still available for clarity)
         video = VideoMetadata.from_video_file('path/to/video.mp4')
-        print(f"Video duration: {video.duration}")
-        print(f"Recorded on: {video.datetime_str}")
     """
 
-    filename: str
+    # Only full_path is required; all others have defaults
     full_path: str
-    device: str
-    datetime_obj: datetime_type
-    serial: str
-    file_size: float
-    width: int
-    height: int
-    frame_count: int
-    duration: timedelta_type
-    fps: float
-    video_codec: str
+    filename: str = ""
+    device: str = ""
+    datetime_obj: datetime_type = field(default_factory=lambda: datetime_type.min)
+    serial: str = ""
+    file_size: float = 0.0
+    width: int = 0
+    height: int = 0
+    frame_count: int = 0
+    duration: timedelta_type = field(default_factory=lambda: timedelta_type(0))
+    fps: float = 0.0
+    video_codec: str = ""
 
     # tags[frame_number][hash_key] is a tag in frame frame_number in the video with the hash key hash_key.
     # The choice of a nested dictionary data structuire, combined with a suitable construction of the
@@ -111,6 +122,47 @@ class VideoMetadata:
     # method TagVisualizer.generate_video().
     # The tags are populated via the method merge_new_tags() that is called by VideoTags.to_videos().
     tags: Dict[int, Dict[int, Dict[str, Any]]] = field(default_factory=dict)
+
+    # Internal flag to track if we should auto-populate
+    _auto_populate: bool = field(default=False, init=False, repr=False)
+
+    def __post_init__(self):
+        """Auto-populate fields from video file if only full_path was provided."""
+        # Skip auto-population if this is already a populated instance
+        # (prevents infinite recursion when from_video_file creates an instance)
+        if self._auto_populate:
+            return
+
+        # Detect if only full_path was provided (all other fields at defaults)
+        if (
+            self.filename == ""
+            and self.device == ""
+            and self.serial == ""
+            and self.file_size == 0.0
+            and self.width == 0
+            and self.height == 0
+            and self.frame_count == 0
+            and self.fps == 0.0
+            and self.video_codec == ""
+        ):
+            # Auto-populate from video file
+            populated = VideoMetadata.from_video_file(full_path=self.full_path)
+            if populated:
+                # Copy all fields from populated instance
+                self.filename = populated.filename
+                self.device = populated.device
+                self.datetime_obj = populated.datetime_obj
+                self.serial = populated.serial
+                self.file_size = populated.file_size
+                self.width = populated.width
+                self.height = populated.height
+                self.frame_count = populated.frame_count
+                self.duration = populated.duration
+                self.fps = populated.fps
+                self.video_codec = populated.video_codec
+                self.tags = populated.tags
+                # Mark as populated to avoid re-population
+                self._auto_populate = True
 
     @property
     def datetime(self) -> datetime_type:

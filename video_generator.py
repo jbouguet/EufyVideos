@@ -598,7 +598,7 @@ def _concatenate_fragments(
         ffmpeg.run(stream_spec=output, overwrite_output=True, capture_stderr=True)
         logger.debug(f"Successfully concatenated all fragments into {output_file}")
 
-        return VideoMetadata.from_video_file(output_file)
+        return VideoMetadata(full_path=output_file)
 
     except ffmpeg.Error as e:
         logger.error("FFmpeg error during concatenation:")
@@ -853,11 +853,11 @@ if __name__ == "__main__":
 
     # Using one config for all videos does not allow to specify fragment specific offsets, durations and rois
     video_list: List[VideoMetadata | None] = [
-        VideoMetadata.from_video_file(
-            "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch041/T8600P1023450AFB_20250923085351.mp4"
+        VideoMetadata(
+            full_path="/Users/jbouguet/Documents/EufySecurityVideos/record/Batch041/T8600P1023450AFB_20250923085351.mp4"
         ),
-        VideoMetadata.from_video_file(
-            "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch041/T8600P1023450AFB_20250923085416.mp4"
+        VideoMetadata(
+            full_path="/Users/jbouguet/Documents/EufySecurityVideos/record/Batch041/T8600P1023450AFB_20250923085416.mp4"
         ),
     ]
     video_merged_single_config: str = (
@@ -911,7 +911,7 @@ if __name__ == "__main__":
                 output_video=OutputVideo(width=config["width"]),
             )
         ).run(
-            VideoMetadata.from_video_file(full_path=config["video_in"]),
+            VideoMetadata(full_path=config["video_in"]),
             config["video_out"],
         )
         for config in video_fragments_config
@@ -934,7 +934,7 @@ if __name__ == "__main__":
     video_h264: str = (
         "/Users/jbouguet/Documents/EufySecurityVideos/stories/T8162T1024354A8B_20251003021642_h264.mp4"
     )
-    video_hevc_meta = VideoMetadata.from_video_file(full_path=video_hevc)
+    video_hevc_meta = VideoMetadata(full_path=video_hevc)
     video_h264_meta = VideoGenerator().run(video_hevc_meta, video_h264)
     logger.info("Video original:")
     logger.info(video_hevc_meta)
