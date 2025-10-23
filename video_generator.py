@@ -860,11 +860,11 @@ if __name__ == "__main__":
             full_path="/Users/jbouguet/Documents/EufySecurityVideos/record/Batch041/T8600P1023450AFB_20250923085416.mp4"
         ),
     ]
-    video_merged_single_config: str = (
-        "/Users/jbouguet/Documents/EufySecurityVideos/stories/video_merged_single_config.mp4"
+    video_merged_sc: str = (
+        "/Users/jbouguet/Documents/EufySecurityVideos/stories/video_merged_sc.mp4"
     )
     # Single call of VideoGenerator.run() does fragment creation and concatenation.
-    video_single_config = VideoGenerator(
+    video_sc = VideoGenerator(
         VideoGenerationConfig(
             input_fragments=InputFragments(
                 duration_in_seconds=22,
@@ -872,9 +872,9 @@ if __name__ == "__main__":
             ),
             output_video=OutputVideo(width=280),
         )
-    ).run(video_list, video_merged_single_config)
+    ).run(video_list, video_merged_sc)
     logger.info("Merged video with single config:")
-    logger.info(video_single_config)
+    logger.info(video_sc)
 
     # EXAMPLE 2: Generate a merged videos from fragments picked from videos using different offsets and durations.
     # This example shows how VideoGenerator can be used in steps to create custom fragments prior to concatenation.
@@ -918,14 +918,12 @@ if __name__ == "__main__":
     ]
 
     # The final concatenated videos is then created from the list of video fragments.
-    video_merged_multiple_config: str = (
-        "/Users/jbouguet/Documents/EufySecurityVideos/stories/video_merged_multiple_config.mp4"
+    video_merged_mc: str = (
+        "/Users/jbouguet/Documents/EufySecurityVideos/stories/video_merged_mc.mp4"
     )
-    video_multiple_config = VideoGenerator().run(
-        video_fragments, video_merged_multiple_config
-    )
+    video_mc = VideoGenerator().run(video_fragments, video_merged_mc)
     logger.info("Merged video with multiple configs:")
-    logger.info(video_multiple_config)
+    logger.info(video_mc)
 
     # Example 3: Re-encoding an entire video
     video_hevc: str = (
