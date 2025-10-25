@@ -102,6 +102,44 @@ process_stories: true
 
 stories:
 
+  - name: 'Nail Falling By Garage'
+    skip: true
+    selectors:
+      - date_regex: '2025-10-18'
+        devices: ['Garage']
+        time_range:
+          start: '08:50:00'
+          end: '08:51:00'
+      - date_regex: '2025-10-22'
+        devices: ['Garage']
+        time_range:
+          start: '13:07:00'
+          end: '13:08:00'
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        offset_in_seconds: 14
+        duration_in_seconds: 8.3
+        normalized_crop_roi: [0.65,0.25,0.8,0.9]
+      output_video:
+        vcodec: 'hevc'
+        date_time_label:
+          draw: true
+
+  - name: 'T8162T1024354A8B_20251003021936'
+    skip: true
+    selectors:
+      - filenames: ['T8162T1024354A8B_20251003021936.mp4']
+    video_generation: true
+
+  - name: 'Missing Corner Junction Videos'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2025-10-22'
+          end: '2025-10-22'
+        devices: ['Corner Junction']
+
   - name: 'Garage Device Glitch'
     skip: true
     selectors:
@@ -144,7 +182,7 @@ stories:
       output_video:
         width: 280
         date_time_label:
-          draw: false
+          draw: true
 
   - name: 'Wolly Brunette Smoking 2'
     skip: true
@@ -160,7 +198,7 @@ stories:
       output_video:
         width: 280
         date_time_label:
-          draw: false
+          draw: true
 
   - name: 'Wolly Brunette Scream'
     skip: true
@@ -181,6 +219,8 @@ stories:
         normalized_crop_roi: [0.0, 0.0, 0.7352, 0.6017]
       output_video:
         width: 2824
+        date_time_label:
+          draw: true
 
   - name: '2025-07-26 to 2025-07-27'
     skip: true
@@ -365,6 +405,8 @@ stories:
         duration_in_seconds: 1
       output_video:
         width: 854
+        date_time_label:
+          draw: true
 
   - name: 'person detector'
     skip: true
@@ -422,6 +464,8 @@ stories:
         enforce_16_9_aspect_ratio: true
       output_video:
         width: 1600
+        date_time_label:
+          draw: true
 
 
   - name: 'Front Yard FPs - 2025-04-19'
@@ -435,6 +479,8 @@ stories:
         duration_in_seconds: 1
       output_video:
         width: 854
+        date_time_label:
+          draw: true
 
   - name: '2025-04-23'
     skip: true
@@ -617,6 +663,8 @@ stories:
         enforce_16_9_aspect_ratio: true
       output_video:
         width: 1600
+        date_time_label:
+          draw: true
 
   - name: 'Test Time Range 1'
     skip: true
@@ -781,6 +829,8 @@ stories:
         enforce_16_9_aspect_ratio: true
       output_video:
         width: 1600
+        date_time_label:
+          draw: true
 
   - name: '2024-11-27'
     skip: true
@@ -815,6 +865,8 @@ stories:
         enforce_16_9_aspect_ratio: true
       output_video:
         width: 800
+        date_time_label:
+          draw: true
 
   # TAGS DATABASE - START
 
@@ -841,6 +893,8 @@ stories:
         enforce_16_9_aspect_ratio: true
       output_video:
         width: 800
+        date_time_label:
+          draw: true
 
   - name: '2024-11-18 - Backyard Planning'
     skip: true
@@ -911,6 +965,8 @@ stories:
         normalized_crop_roi: [0.5, 0.1, 1, 1]
       output_video:
         width: 600
+        date_time_label:
+          draw: true
 
   - name: 'Audio Failures'
     skip: true
@@ -935,6 +991,8 @@ stories:
         enforce_16_9_aspect_ratio: true
       output_video:
         width: 1600
+        date_time_label:
+          draw: true
 
   - name: 'test_selector'
     skip: true
@@ -1067,6 +1125,8 @@ stories:
         enforce_16_9_aspect_ratio: true
       output_video:
         width: 800
+        date_time_label:
+          draw: true
 
   - name: 'Tracking Tests'
     skip: true
@@ -1090,6 +1150,9 @@ stories:
       input_fragments:
         duration_in_seconds: 6
         enforce_16_9_aspect_ratio: true
+      output_video:
+        date_time_label:
+          draw: true
 
   - name: 'New Patio Cover Installation - Small'
     skip: true
@@ -1113,6 +1176,9 @@ stories:
       input_fragments:
         duration_in_seconds: 6
         enforce_16_9_aspect_ratio: true
+      output_video:
+        date_time_label:
+          draw: true
 
   - name: 'New Patio Cover Installation'
     skip: true
@@ -1170,6 +1236,8 @@ stories:
         enforce_16_9_aspect_ratio: true
       output_video:
         width: 800
+        date_time_label:
+          draw: true
 
   - name: '2024-10-12 - Grandparents'
     skip: true
@@ -1192,6 +1260,9 @@ stories:
       input_fragments:
         duration_in_seconds: 6
         enforce_16_9_aspect_ratio: true
+      output_video:
+        date_time_label:
+          draw: true
 
   - name: 'corrupted_files'
     skip: true
@@ -1231,6 +1302,8 @@ stories:
         enforce_16_9_aspect_ratio: true
       output_video:
         width: 800
+        date_time_label:
+          draw: true
 
   - name: 'Rat'
     skip: true
@@ -1249,6 +1322,9 @@ stories:
       input_fragments:
         duration_in_seconds: 10
         normalized_crop_roi: [0.75, 0.4, 1, 0.75]
+      output_video:
+        date_time_label:
+          draw: true
 
   - name: 'Suspicious Trash Guy - 2024-09-26'
     skip: true
@@ -1268,6 +1344,9 @@ stories:
         duration_in_seconds: 16
         enforce_16_9_aspect_ratio: false
         normalized_crop_roi: [0.0, 0.2, 0.9, 1.0]
+      output_video:
+        date_time_label:
+          draw: true
 
   - name: 'Neighbor Umbrella'
     skip: true
@@ -1310,6 +1389,8 @@ stories:
         enforce_16_9_aspect_ratio: true
       output_video:
         width: 1600
+        date_time_label:
+          draw: true
 
   - name: 'Plant Flowering Timelapse'
     skip: true
@@ -1327,6 +1408,9 @@ stories:
     video_generation_config:
       input_fragments:
         normalized_crop_roi: [0.0458, 0.4856, 0.3841, 0.9764]
+      output_video:
+        date_time_label:
+          draw: true
 
   - name: 'Plant Growth Timelapse'
     skip: true
@@ -1346,6 +1430,9 @@ stories:
         duration_in_seconds: 1
         enforce_16_9_aspect_ratio: false
         normalized_crop_roi: [0.23802, 0.3037, 0.8589, 1.0]
+      output_video:
+        date_time_label:
+          draw: true
 
   - name: 'Suspicious Trash Dump From Neighbor on 2024-05-26'
     skip: true
@@ -1364,6 +1451,9 @@ stories:
       input_fragments:
         duration_in_seconds: 13.33
         enforce_16_9_aspect_ratio: false
+      output_video:
+        date_time_label:
+          draw: true
 
   - name: 'Test'
     skip: true
@@ -1382,4 +1472,6 @@ stories:
         normalized_crop_roi: [0, 0.11, 0.282, 0.61]
       output_video:
         width: 1082
-        output_video_codec: h264
+        vcodec: 'h264'
+        date_time_label:
+          draw: true

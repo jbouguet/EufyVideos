@@ -6,12 +6,12 @@
     "Walkway"
   ],
   "feature_importances": {
-    "Backyard": 1.0,
-    "Front Door": 0.0,
+    "Backyard": 0.9972279521718315,
+    "Front Door": 0.002772047828168497,
     "Gateway": 0.0,
     "Walkway": 0.0
   },
-  "tree_text": "|--- Backyard <= 15.50\n|   |--- class: 0\n|--- Backyard >  15.50\n|   |--- class: 1\n",
+  "tree_text": "|--- Backyard <= 15.50\n|   |--- Backyard <= 12.50\n|   |   |--- class: 0\n|   |--- Backyard >  12.50\n|   |   |--- Front Door <= 2.50\n|   |   |   |--- class: 0\n|   |   |--- Front Door >  2.50\n|   |   |   |--- class: 0\n|--- Backyard >  15.50\n|   |--- class: 1\n",
   "model_params": {
     "ccp_alpha": 0.0,
     "class_weight": null,
