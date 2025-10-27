@@ -328,7 +328,7 @@ def _crop_to_enforce_16_9_aspect_ratio(video_stream, width: int, height: int):
     return video_stream, width, height
 
 
-def _crop_region_of_interest(
+def _crop_to_region_of_interest(
     video_stream,
     video: VideoMetadata,
     normalized_crop_roi: Tuple[float, float, float, float],
@@ -375,7 +375,7 @@ def _add_text_label(video_stream, label: str, date_time_label: DateTimeLabel):
     return video_stream
 
 
-def _output_fragment(
+def _save_fragment_to_file(
     video_stream,
     audio_stream,
     fragment_file: str,
@@ -418,7 +418,7 @@ def _output_fragment(
             logger.warning(
                 f"Audio processing failed. Falling back to video-only output for fragment {fragment_file}"
             )
-            _output_fragment(
+            _save_fragment_to_file(
                 video_stream=video_stream,
                 audio_stream=None,
                 fragment_file=fragment_file,
@@ -426,47 +426,6 @@ def _output_fragment(
             )
         else:
             raise
-
-
-def _apply_video_transformations(
-    video_stream,
-    video: VideoMetadata,
-    output_width: int,
-    normalized_crop_roi: Optional[Tuple[float, float, float, float]] = None,
-    enforce_16_9_aspect_ratio: bool = False,
-):
-    """Apply various video transformations (aspect ratio, cropping, scaling)."""
-    video_stream_width = video.width
-    video_stream_height = video.height
-
-    # Apply 16:9 aspect ratio if needed
-    if enforce_16_9_aspect_ratio:
-        video_stream, video_stream_width, video_stream_height = (
-            _crop_to_enforce_16_9_aspect_ratio(
-                video_stream=video_stream,
-                width=video_stream_width,
-                height=video_stream_height,
-            )
-        )
-
-    # Apply ROI cropping if specified
-    if normalized_crop_roi:
-        video_stream, video_stream_width, video_stream_height = (
-            _crop_region_of_interest(
-                video_stream=video_stream,
-                video=video,
-                normalized_crop_roi=normalized_crop_roi,
-            )
-        )
-
-    # Scale to target dimensions
-    target_height = int(output_width * video_stream_height / video_stream_width)
-    target_height = (target_height // 2) * 2  # Ensure even height
-    video_stream = video_stream.filter(
-        "scale", width=output_width, height=target_height
-    )
-
-    return video_stream
 
 
 def _create_one_fragment(
@@ -490,14 +449,34 @@ def _create_one_fragment(
         return None
 
     video_stream, audio_stream = streams
+    video_stream_width = video.width
+    video_stream_height = video.height
 
-    # Apply transformations
-    video_stream = _apply_video_transformations(
-        video_stream=video_stream,
-        video=video,
-        output_width=output_width,
-        normalized_crop_roi=input_fragments.normalized_crop_roi,
-        enforce_16_9_aspect_ratio=input_fragments.enforce_16_9_aspect_ratio,
+    # Apply 16:9 aspect ratio if needed
+    if input_fragments.enforce_16_9_aspect_ratio:
+        video_stream, video_stream_width, video_stream_height = (
+            _crop_to_enforce_16_9_aspect_ratio(
+                video_stream=video_stream,
+                width=video_stream_width,
+                height=video_stream_height,
+            )
+        )
+
+    # Apply ROI cropping if specified
+    if input_fragments.normalized_crop_roi:
+        video_stream, video_stream_width, video_stream_height = (
+            _crop_to_region_of_interest(
+                video_stream=video_stream,
+                video=video,
+                normalized_crop_roi=input_fragments.normalized_crop_roi,
+            )
+        )
+
+    # Scale to target dimensions
+    target_height = int(output_width * video_stream_height / video_stream_width)
+    target_height = (target_height // 2) * 2  # Ensure even height
+    video_stream = video_stream.filter(
+        "scale", width=output_width, height=target_height
     )
 
     # Add datetime label
@@ -512,7 +491,7 @@ def _create_one_fragment(
         fragment_directory,
         f"{video.date_str} {video.time_str} {video.device}.mp4",
     )
-    _output_fragment(
+    _save_fragment_to_file(
         video_stream=video_stream,
         audio_stream=audio_stream,
         fragment_file=fragment_file,
