@@ -259,17 +259,45 @@ class VideoMetadata:
         return num_tags_added
 
     @staticmethod
-    def _get_creation_time(file_path: str) -> datetime_type:
+    def _is_finite(value: float) -> bool:
+        """Check if a value is finite (not NaN or Inf)."""
+        import math
+
+        return not (math.isnan(value) or math.isinf(value))
+
+    @staticmethod
+    def _parse_full_path(full_path: str) -> Tuple[str, str, Optional[datetime_type]]:
+        """Extract filename, serial and time from full_path."""
+        filename = os.path.basename(full_path)
+        serial_and_datetime = filename.split("_")
+        num_parts = len(serial_and_datetime)
+        serial: str = serial_and_datetime[0] if num_parts >= 1 else ""
+        datetime_obj: Optional[datetime_type] = None
+        if num_parts >= 2:
+            try:
+                datetime_part = serial_and_datetime[1]
+                datetime_obj = datetime_type.strptime(
+                    datetime_part[:14], "%Y%m%d%H%M%S"
+                )
+                logger.debug(
+                    f"Successfully parsed datetime from filename: {datetime_obj}"
+                )
+            except (ValueError, TypeError) as e:
+                logger.debug(f"Failed to parse datetime from filename: {e}")
+        return (filename, serial, datetime_obj)
+
+    @staticmethod
+    def _get_file_creation_time(full_path: str) -> Optional[datetime_type]:
         """Extract creation time from file system metadata."""
         try:
-            stat = os.stat(file_path)
+            stat = os.stat(full_path)
             ctime = (
                 stat.st_birthtime if hasattr(stat, "st_birthtime") else stat.st_mtime
             )
             return datetime_type.fromtimestamp(ctime)
         except OSError as e:
             logger.warning(f"Failed to get file creation time: {e}")
-            return datetime_type.strptime("19000101000000", "%Y%m%d%H%M%S")
+            return None
 
     @staticmethod
     def _get_video_metadata_time(
@@ -307,38 +335,92 @@ class VideoMetadata:
             VideoError: If there's an error processing the video file
         """
         try:
-            filename = os.path.basename(full_path)
-            serial_and_datetime = filename.split("_")
-            num_parts = len(serial_and_datetime)
-
-            serial: str = serial_and_datetime[0] if num_parts >= 1 else ""
-            datetime_obj: datetime_type = datetime_type.strptime(
+            datetime_obj_default: datetime_type = datetime_type.strptime(
                 "19000101000000", "%Y%m%d%H%M%S"
             )
-
-            if num_parts >= 2:
-                try:
-                    datetime_part = serial_and_datetime[1]
-                    datetime_obj = datetime_type.strptime(
-                        datetime_part[:14], "%Y%m%d%H%M%S"
-                    )
-                    logger.debug(
-                        f"Successfully parsed datetime from filename: {datetime_obj}"
-                    )
-                except (ValueError, TypeError) as e:
-                    logger.debug(f"Failed to parse datetime from filename: {e}")
+            filename, serial, datetime_obj = cls._parse_full_path(full_path=full_path)
 
             # Get device name using date-aware lookup
-            device: str = Config.get_device_for_date(serial, datetime_obj)
+            device: str = serial
+            if datetime_obj is None:
+                device = Config.get_device_for_date(serial, datetime_obj_default)
+            else:
+                device = Config.get_device_for_date(serial, datetime_obj)
 
             result = None
             with capture_stderr() as stderr_capture:
                 try:
                     with av.open(full_path) as container:
                         stream = container.streams.video[0]
-                        duration = (
+
+                        # Get container duration (in seconds)
+                        container_duration = (
                             container.duration / 1000000 if container.duration else 0
                         )
+
+                        # Get fps
+                        fps_value = float(stream.average_rate or 0)
+
+                        # Get number of frames
+                        frame_count = stream.frames or 0
+
+                        # Calculate expected duration from frame count and FPS
+                        # Use frames-1 because duration is time between first and last frame
+                        calculated_duration = None
+                        if frame_count > 0 and fps_value > 0:
+                            calculated_duration = float(frame_count - 1) / fps_value
+
+                        logger.debug(f"Container duration: {container_duration}s")
+                        logger.debug(f"Frame count: {frame_count}")
+                        logger.debug(f"Average FPS: {fps_value}")
+                        logger.debug(
+                            f"Calculated duration from frames: {calculated_duration}s"
+                            if calculated_duration
+                            else "Cannot calculate duration from frames"
+                        )
+
+                        # Determine which duration to use based on validity checks
+                        duration = container_duration
+                        duration_source = "container"
+
+                        # Check for various corruption patterns
+                        is_corrupted = False
+                        corruption_reason = None
+
+                        if container_duration <= 0:
+                            is_corrupted = True
+                            corruption_reason = "zero or negative"
+                        elif not cls._is_finite(container_duration):
+                            is_corrupted = True
+                            corruption_reason = "not finite (NaN or Inf)"
+                        elif calculated_duration is not None:
+                            # Check that the container duration is within acceptable bounds.
+                            max_reasonable_container_duration = 86400
+                            if container_duration > max_reasonable_container_duration:
+                                is_corrupted = True
+                                corruption_reason = f"container duration {container_duration:.2f}s > {max_reasonable_container_duration:.2f}s"
+
+                        # Use calculated duration if container duration is corrupted
+                        if is_corrupted:
+                            if calculated_duration is not None:
+                                logger.warning(
+                                    f"Container duration appears corrupted ({corruption_reason}). "
+                                    f"Using calculated duration from frame count: {calculated_duration:.2f}s. "
+                                    f"Video: {full_path}"
+                                )
+                                duration = calculated_duration
+                                duration_source = "calculated from frames"
+                            else:
+                                logger.error(
+                                    f"Container duration appears corrupted ({corruption_reason}) "
+                                    f"and cannot calculate from frames. Using corrupted value: {container_duration:.2f}s. "
+                                    f"Video: {full_path}"
+                                )
+
+                        logger.debug(
+                            f"Final duration: {duration}s (source: {duration_source})"
+                        )
+
                         codec_name = stream.codec_context.name
 
                         if datetime_obj is None:
@@ -349,8 +431,14 @@ class VideoMetadata:
                                 )
 
                         if datetime_obj is None:
-                            datetime_obj = cls._get_creation_time(full_path)
-                            logger.debug(f"Using file creation time: {datetime_obj}")
+                            datetime_obj = cls._get_file_creation_time(full_path)
+                            if datetime_obj:
+                                logger.debug(
+                                    f"Using file creation time: {datetime_obj}"
+                                )
+
+                        if datetime_obj is None:
+                            datetime_obj = datetime_obj_default
 
                         result = cls(
                             filename=filename,
@@ -361,9 +449,9 @@ class VideoMetadata:
                             file_size=os.path.getsize(full_path) / (1024 * 1024),
                             width=stream.width,
                             height=stream.height,
-                            frame_count=stream.frames,
+                            frame_count=frame_count,
                             duration=timedelta_type(seconds=float(duration)),
-                            fps=float(stream.average_rate or 0.0),
+                            fps=fps_value,
                             video_codec=codec_name,
                         )
 
@@ -598,24 +686,23 @@ class VideoMetadata:
         except IOError as e:
             raise VideoError(f"Error saving playlist file {playlist_filename}") from e
 
-    @staticmethod
-    def differences(
-        list1: List["VideoMetadata"], list2: List["VideoMetadata"]
-    ) -> Tuple[List["VideoMetadata"], List["VideoMetadata"]]:
-        """
-        Find videos present in one list but not the other.
 
-        Returns:
-            Tuple of (videos in list1 not in list2, videos in list2 not in list1)
-        """
-        set1: Set["VideoMetadata"] = set(list1)
-        set2: Set["VideoMetadata"] = set(list2)
-        return sorted(set1 - set2), sorted(set2 - set1)
+if __name__ == "__main__":
+    # Testing code for the module.
+    import logging
 
-    @staticmethod
-    def repeats(
-        source: List["VideoMetadata"], other: List["VideoMetadata"]
-    ) -> List["VideoMetadata"]:
-        """Find videos from 'other' that already exist in 'source'."""
-        source_set: Set["VideoMetadata"] = set(source)
-        return sorted(video for video in other if video in source_set)
+    from logging_config import set_logger_level_and_format
+
+    # Set extended logging for this module only.
+    set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
+
+    def run_example_1():
+        logger.info("*** EXAMPLE 1:")
+        video_hevc: str = (
+            "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch044/T8160T1224250195_20251022121824.mp4"
+        )
+        video_hevc_meta = VideoMetadata(full_path=video_hevc)
+        logger.info("Video original:")
+        logger.info(video_hevc_meta)
+
+    run_example_1()

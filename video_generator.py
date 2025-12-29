@@ -235,83 +235,52 @@ class VideoGenerationConfig:
 
 
 def _extract_video_and_audio_streams(
-    video: VideoMetadata, start_time: float, duration: Optional[float]
-) -> Optional[Tuple[Any, Optional[Any]]]:
-    """Get video and audio streams from input file."""
+    filename: str, start_time: float = 0, duration: Optional[float] = None
+) -> Tuple[Optional[Any], Optional[Any]]:
+    """Get video and audio streams from input filename."""
     import ffmpeg
 
-    if not video or not video.full_path:
+    if not filename:
         logger.error("Invalid video metadata")
-        return None
+        return (None, None)
 
+    # Create input stream given the start_time and duration
     try:
-        # Probe video file
-        try:
-            probe = ffmpeg.probe(filename=video.full_path)
-        except ffmpeg.Error as e:
-            logger.error(f"Error probing video {video.filename}: {str(e)}")
-            return None
+        if duration is None:
+            # Extract from start_time to end of video
+            input_stream = ffmpeg.input(filename=filename, ss=start_time)
+        else:
+            # Extract specific duration
+            input_stream = ffmpeg.input(filename=filename, ss=start_time, t=duration)
+    except ffmpeg.Error as e:
+        logger.error(
+            f"Error creating input stream for video {filename} with message: {str(e)}"
+        )
+        return (None, None)
 
-        # Get streams from probe
-        streams = probe.get("streams")
-        if not streams:
-            logger.error("No streams found in probe data")
-            return None
-
-        # Find stream indices
-        video_index = None
-        audio_index = None
-        for i, stream in enumerate(streams):
-            if not isinstance(stream, dict):
-                continue
-            stream_type = stream.get("codec_type", "")
-            if stream_type == "video":
-                video_index = i
-            elif stream_type == "audio":
-                audio_index = i
-
-        if video_index is None:
-            logger.warning(f"No video stream found in {video.full_path}")
-            return None
-
-        # Create input stream
-        try:
-            if duration is None:
-                # Extract from start_time to end of video
-                input_stream = ffmpeg.input(filename=video.full_path, ss=start_time)
-            else:
-                # Extract specific duration
-                input_stream = ffmpeg.input(
-                    filename=video.full_path, ss=start_time, t=duration
-                )
-        except ffmpeg.Error as e:
-            logger.error(f"Error creating input stream: {str(e)}")
-            return None
-
-        # Process video stream
-        try:
-            video_stream = input_stream.video.filter("setpts", "PTS-STARTPTS")
-        except (AttributeError, TypeError) as e:
-            logger.error(f"Error processing video stream: {str(e)}")
-            return None
-
-        # Process audio stream if available
-        audio_stream = None
-        if audio_index is not None:
-            try:
-                audio_stream = (
-                    input_stream["a"]
-                    .filter("asetpts", "PTS-STARTPTS")
-                    .filter("aresample", 48000)
-                )
-            except (AttributeError, TypeError) as e:
-                logger.warning(f"Error processing audio stream: {str(e)}")
-
-        return (video_stream, audio_stream)
-
+    # Process video stream
+    video_stream = None
+    try:
+        video_stream = input_stream.video.filter("setpts", "PTS-STARTPTS")
     except (AttributeError, TypeError) as e:
-        logger.error(f"Unexpected error processing streams: {str(e)}")
-        return None
+        logger.warning(
+            f"Error processing video stream for video {filename} with message: {str(e)}"
+        )
+
+    # Process audio stream if available
+    audio_stream = None
+    try:
+        audio_stream = (
+            input_stream["a"]
+            .filter("asetpts", "PTS-STARTPTS")
+            .filter("aresample", 48000)
+        )
+    except (AttributeError, TypeError) as e:
+        logger.warning(
+            f"Error processing audio stream for video {filename} with message: {str(e)}"
+        )
+
+    return (video_stream, audio_stream)
 
 
 def _crop_to_enforce_16_9_aspect_ratio(video_stream, width: int, height: int):
@@ -438,17 +407,16 @@ def _create_one_fragment(
 ) -> Optional[str]:
     """Process a single video fragment with all transformations."""
 
-    # Get video/audio streams
-    streams = _extract_video_and_audio_streams(
-        video=video,
+    # Extract video and audio streams of the temporal crop given the start time and duration of the crop
+    video_stream, audio_stream = _extract_video_and_audio_streams(
+        filename=video.full_path,
         start_time=input_fragments.offset_in_seconds,
         duration=input_fragments.duration_in_seconds,
     )
 
-    if not streams:
+    if not video_stream:
         return None
 
-    video_stream, audio_stream = streams
     video_stream_width = video.width
     video_stream_height = video.height
 
@@ -462,7 +430,7 @@ def _create_one_fragment(
             )
         )
 
-    # Apply ROI cropping if specified
+    # Apply a Region of Interest cropping if specified
     if input_fragments.normalized_crop_roi:
         video_stream, video_stream_width, video_stream_height = (
             _crop_to_region_of_interest(
@@ -683,11 +651,11 @@ class VideoGenerator:
             target_fps=target_fps,
             vcodec=vcodec,
         )
-        delete_directory(directory=fragment_directory)
+        delete_fragment_directory(directory=fragment_directory)
         return video
 
 
-def delete_directory(directory: str) -> None:
+def delete_fragment_directory(directory: str) -> None:
     """Clean up temporary fragment directory and its contents."""
     try:
         for root, dirs, files in os.walk(top=directory, topdown=False):
@@ -806,8 +774,7 @@ if __name__ == "__main__":
                 full_path="/Users/jbouguet/Documents/EufySecurityVideos/record/Batch043/T8162T1024354A8B_20251018085049.mp4"
             ),
             VideoMetadata(
-                full_path="/Users/jbouguet/Documents/EufySecurityVideos/record/backup/T8162T1024354A8B_20251022130727.mp4"
-                # full_path="/Users/jbouguet/Documents/EufySecurityVideos/record/Batch044/T8162T1024354A8B_20251022130727.mp4"
+                full_path="/Users/jbouguet/Documents/EufySecurityVideos/record/Batch044/T8162T1024354A8B_20251022130727.mp4"
             ),
         ]
         video_merged_sc: str = (
@@ -851,6 +818,10 @@ if __name__ == "__main__":
                 "roi": [0.08, 0.30, 0.19, 0.57],
             },
         ]
+        # The final concatenated videos is then created from the list of video fragments.
+        video_merged_mc: str = (
+            "/Users/jbouguet/Documents/EufySecurityVideos/stories/video_merged_mc.mp4"
+        )
 
         # Individual video fragments are first created with different configurations.
         video_fragments: List[VideoMetadata | None] = [
@@ -868,13 +839,8 @@ if __name__ == "__main__":
             )
             for config in video_fragments_config
         ]
-
-        # The final concatenated videos is then created from the list of video fragments.
-        video_merged_mc: str = (
-            "/Users/jbouguet/Documents/EufySecurityVideos/stories/video_merged_mc.mp4"
-        )
         video_mc = VideoGenerator().run(video_fragments, video_merged_mc)
-        logger.info("Merged video with multiple configs:")
+        logger.info("Merged video:")
         logger.info(video_mc)
 
     def run_example_3():
@@ -905,7 +871,91 @@ if __name__ == "__main__":
         logger.info("Video h265 encoded:")
         logger.info(video_h265_meta)
 
+    def run_example_4():
+        logger.info(
+            "*** EXAMPLE 4: Re-encoding a video using h264 and h265 video codecs."
+        )
+        video_hevc: str = (
+            "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch044/T8160T1224250195_20251022121824.mp4"
+        )
+        video_h264: str = (
+            "/Users/jbouguet/Documents/EufySecurityVideos/stories/T8160T1224250195_20251022121824_h264.mp4"
+        )
+        video_h265: str = (
+            "/Users/jbouguet/Documents/EufySecurityVideos/stories/T8160T1224250195_20251022121824_h265.mp4"
+        )
+        video_hevc_meta = VideoMetadata(full_path=video_hevc)
+        h264_encoder = VideoGenerator()
+        h265_encoder = VideoGenerator(
+            VideoGenerationConfig(output_video=OutputVideo(vcodec="hevc"))
+        )
+        video_h264_meta = h264_encoder.run(video_hevc_meta, video_h264)
+        video_h265_meta = h265_encoder.run(video_hevc_meta, video_h265)
+
+        logger.info("Video original:")
+        logger.info(video_hevc_meta)
+        logger.info("Video h264 encoded:")
+        logger.info(video_h264_meta)
+        logger.info("Video h265 encoded:")
+        logger.info(video_h265_meta)
+
+    def run_example_5():
+        logger.info("*** EXAMPLE 5: Generate drug deal video composite.")
+
+        # Define video fragments with specific offsets, durations and rois.
+        video_fragments_config = [
+            {
+                "video_in": "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_1.mp4",
+                "video_out": "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/fragments/f1.mp4",
+                "offset": 0.0,
+                "duration": 120.0,
+            },
+            {
+                "video_in": "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_2.mp4",
+                "video_out": "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/fragments/f2.mp4",
+                "offset": 0.0,
+                "duration": 5.0,
+            },
+            {
+                "video_in": "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_3.mp4",
+                "video_out": "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/fragments/f3.mp4",
+                "offset": 0.0,
+                "duration": 120.0,
+            },
+            {
+                "video_in": "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_4.mp4",
+                "video_out": "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/fragments/f4.mp4",
+                "offset": 0.0,
+                "duration": 65.0,
+            },
+        ]
+        # The final concatenated videos is then created from the list of video fragments.
+        video_merged_mc: str = (
+            "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_merged.mp4"
+        )
+
+        # Individual video fragments are first created with different configurations.
+        video_fragments: List[VideoMetadata | None] = [
+            VideoGenerator(
+                VideoGenerationConfig(
+                    input_fragments=InputFragments(
+                        offset_in_seconds=config["offset"],
+                        duration_in_seconds=config["duration"],
+                    )
+                )
+            ).run(
+                VideoMetadata(full_path=config["video_in"]),
+                config["video_out"],
+            )
+            for config in video_fragments_config
+        ]
+        video_mc = VideoGenerator().run(video_fragments, video_merged_mc)
+        logger.info("Merged video:")
+        logger.info(video_mc)
+
     # Execute test examples
     run_example_1()
     run_example_2()
     run_example_3()
+    run_example_4()
+    run_example_5()

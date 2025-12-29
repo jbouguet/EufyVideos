@@ -55,6 +55,8 @@ directories:
     - !join [*root_database, "/Batch041"]
     - !join [*root_database, "/Batch042"]
     - !join [*root_database, "/Batch043"]
+    - !join [*root_database, "/Batch044"]
+    - !join [*root_database, "/Batch045"]
 
 # Video database configuration
 video_database_list:
@@ -101,6 +103,37 @@ output_directory: *stories_output
 process_stories: true
 
 stories:
+
+  - name: '2025-12-28'
+    skip: true
+    selectors:
+      - date_regex: '2025-12-28'
+
+  - name: 'Front Yard Debug'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2025-11-14'
+          end: '2025-11-15'
+        devices: ['Front Yard', 'Walkway', 'Front Door']
+
+  - name: 'Gateway debug'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2025-10-22'
+          end: '2025-10-22'
+        time_range:
+          start: '12:18:00'
+          end: '12:19:00'
+        devices: ['Gateway']
+
+  - name: 'October Stay'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2025-10-21'
+          end: '2025-10-27'
 
   - name: 'Nail Falling By Garage'
     skip: true
