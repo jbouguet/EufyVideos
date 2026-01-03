@@ -699,7 +699,7 @@ if __name__ == "__main__":
     def run_example_1():
         logger.info("*** EXAMPLE 1:")
         video_hevc: str = (
-            "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch044/T8160T1224250195_20251022121824.mp4"
+            "/Volumes/SSK Drive/record/Batch044/T8160T1224250195_20251022121824.mp4"
         )
         video_hevc_meta = VideoMetadata(full_path=video_hevc)
         logger.info("Video original:")

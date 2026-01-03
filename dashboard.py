@@ -31,7 +31,6 @@ from typing import Dict, List, Optional, cast
 
 import pandas as pd
 import plotly.graph_objects as go
-
 from dashboard_config import DashboardConfig
 from logging_config import create_logger
 from video_data_aggregator import VideoDataAggregator
@@ -224,6 +223,7 @@ if __name__ == "__main__":
     metadata_files = [
         os.path.join(root_database, "archive_000.csv"),
         os.path.join(root_database, "archive_001.csv"),
+        os.path.join(root_database, "archive_002.csv"),
         os.path.join(root_database, "backup.csv"),
         # Add more metadata files as needed
     ]

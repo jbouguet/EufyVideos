@@ -22,7 +22,6 @@ import sys
 
 import pandas as pd
 import plotly.graph_objects as go
-
 from logging_config import (
     create_logger,
     set_all_loggers_level_and_format,
@@ -50,6 +49,7 @@ def load_video_data(metric: str = "activity"):
     metadata_files = [
         os.path.join(root_database, "archive_000.csv"),
         os.path.join(root_database, "archive_001.csv"),
+        os.path.join(root_database, "archive_002.csv"),
         os.path.join(root_database, "backup.csv"),
     ]
 

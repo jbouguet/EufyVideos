@@ -76,7 +76,7 @@
     }
   ],
   "metadata": {
-    "test_video": "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch010/T8600P1024260D5E_20241118084615.mp4",
+    "test_video": "/Volumes/SSK Drive/record/Batch010/T8600P1024260D5E_20241118084615.mp4",
     "video_duration": 120.465,
     "num_frames": 20,
     "gpu_available": true,

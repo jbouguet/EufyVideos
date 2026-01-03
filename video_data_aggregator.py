@@ -34,9 +34,8 @@ from datetime import date
 from typing import Dict, List, Literal, Optional, Tuple, Union
 
 import pandas as pd
-from typing_extensions import TypeAlias
-
 from logging_config import create_logger
+from typing_extensions import TypeAlias
 from video_metadata import VideoMetadata
 
 MetricType: TypeAlias = Literal["activity", "duration", "filesize"]
@@ -205,6 +204,7 @@ if __name__ == "__main__":
     metadata_files = [
         os.path.join(root_database, "archive_000.csv"),
         os.path.join(root_database, "archive_001.csv"),
+        os.path.join(root_database, "archive_002.csv"),
         os.path.join(root_database, "backup.csv"),
         # Add more metadata files as needed
     ]

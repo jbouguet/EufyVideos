@@ -30,7 +30,6 @@ from typing import List, cast
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-
 from dashboard_config import DashboardConfig
 from logging_config import create_logger
 from video_metadata import VideoMetadata
@@ -555,6 +554,7 @@ if __name__ == "__main__":
     metadata_files = [
         os.path.join(root_database, "archive_000.csv"),
         os.path.join(root_database, "archive_001.csv"),
+        os.path.join(root_database, "archive_002.csv"),
         os.path.join(root_database, "backup.csv"),
     ]
     out_dir: str = "/Users/jbouguet/Documents/EufySecurityVideos/stories"

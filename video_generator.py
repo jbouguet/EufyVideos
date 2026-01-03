@@ -771,10 +771,10 @@ if __name__ == "__main__":
         # Using one config for all videos does not allow to specify fragment specific offsets, durations and rois
         video_list: List[VideoMetadata | None] = [
             VideoMetadata(
-                full_path="/Users/jbouguet/Documents/EufySecurityVideos/record/Batch043/T8162T1024354A8B_20251018085049.mp4"
+                full_path="/Volumes/SSK Drive/record/Batch043/T8162T1024354A8B_20251018085049.mp4"
             ),
             VideoMetadata(
-                full_path="/Users/jbouguet/Documents/EufySecurityVideos/record/Batch044/T8162T1024354A8B_20251022130727.mp4"
+                full_path="/Volumes/SSK Drive/record/Batch044/T8162T1024354A8B_20251022130727.mp4"
             ),
         ]
         video_merged_sc: str = (
@@ -804,14 +804,14 @@ if __name__ == "__main__":
         # Define video fragments with specific offsets, durations and rois.
         video_fragments_config = [
             {
-                "video_in": "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch041/T8600P1023450AFB_20250923085351.mp4",
+                "video_in": "/Volumes/SSK Drive/record041/T8600P1023450AFB_20250923085351.mp4",
                 "video_out": "/Users/jbouguet/Documents/EufySecurityVideos/stories/video1.mp4",
                 "offset": 8.0,
                 "duration": 14.0,
                 "roi": [0.08, 0.30, 0.19, 0.57],
             },
             {
-                "video_in": "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch041/T8600P1023450AFB_20250923085416.mp4",
+                "video_in": "/Volumes/SSK Drive/record/Batch041/T8600P1023450AFB_20250923085416.mp4",
                 "video_out": "/Users/jbouguet/Documents/EufySecurityVideos/stories/video2.mp4",
                 "offset": 0.0,
                 "duration": 7.0,
@@ -848,7 +848,7 @@ if __name__ == "__main__":
             "*** EXAMPLE 3: Re-encoding a video using h264 and h265 video codecs."
         )
         video_hevc: str = (
-            "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch043/T8162T1024354A8B_20251003021936.mp4"
+            "/Volumes/SSK Drive/record/Batch043/T8162T1024354A8B_20251003021936.mp4"
         )
         video_h264: str = (
             "/Users/jbouguet/Documents/EufySecurityVideos/stories/T8162T1024354A8B_20251003021936_h264.mp4"
@@ -876,7 +876,7 @@ if __name__ == "__main__":
             "*** EXAMPLE 4: Re-encoding a video using h264 and h265 video codecs."
         )
         video_hevc: str = (
-            "/Users/jbouguet/Documents/EufySecurityVideos/record/Batch044/T8160T1224250195_20251022121824.mp4"
+            "/Volumes/SSK Drive/record/Batch044/T8160T1224250195_20251022121824.mp4"
         )
         video_h264: str = (
             "/Users/jbouguet/Documents/EufySecurityVideos/stories/T8160T1224250195_20251022121824_h264.mp4"

@@ -38,25 +38,29 @@ directories:
     - !join [*root_database_archive, "/Batch026"]
 
   archive_001: &archive_001
-    - !join [*root_database, "/Batch027"]
-    - !join [*root_database, "/Batch028"]
-    - !join [*root_database, "/Batch029"]
-    - !join [*root_database, "/Batch030"]
-    - !join [*root_database, "/Batch031"]
-    - !join [*root_database, "/Batch032"]
-    - !join [*root_database, "/Batch033"]
-    - !join [*root_database, "/Batch034"]
-    - !join [*root_database, "/Batch035"]
-    - !join [*root_database, "/Batch036"]
-    - !join [*root_database, "/Batch037"]
-    - !join [*root_database, "/Batch038"]
-    - !join [*root_database, "/Batch039"]
-    - !join [*root_database, "/Batch040"]
-    - !join [*root_database, "/Batch041"]
-    - !join [*root_database, "/Batch042"]
-    - !join [*root_database, "/Batch043"]
-    - !join [*root_database, "/Batch044"]
-    - !join [*root_database, "/Batch045"]
+    - !join [*root_database_archive, "/Batch027"]
+    - !join [*root_database_archive, "/Batch028"]
+    - !join [*root_database_archive, "/Batch029"]
+    - !join [*root_database_archive, "/Batch030"]
+    - !join [*root_database_archive, "/Batch031"]
+    - !join [*root_database_archive, "/Batch032"]
+    - !join [*root_database_archive, "/Batch033"]
+    - !join [*root_database_archive, "/Batch034"]
+    - !join [*root_database_archive, "/Batch035"]
+    - !join [*root_database_archive, "/Batch036"]
+    - !join [*root_database_archive, "/Batch037"]
+    - !join [*root_database_archive, "/Batch038"]
+    - !join [*root_database_archive, "/Batch039"]
+    - !join [*root_database_archive, "/Batch040"]
+    - !join [*root_database_archive, "/Batch041"]
+    - !join [*root_database_archive, "/Batch042"]
+    - !join [*root_database_archive, "/Batch043"]
+    - !join [*root_database_archive, "/Batch044"]
+    - !join [*root_database_archive, "/Batch045"]
+    - !join [*root_database_archive, "/Batch046"]
+
+  archive_002: &archive_002
+    - !join [*root_database, "/Batch047"]
 
 # Video database configuration
 video_database_list:
@@ -67,6 +71,10 @@ video_database_list:
 - force_video_directories_scanning: false
   video_metadata_file: !join [*root_database, "/archive_001.csv"]
   video_directories: *archive_001
+
+- force_video_directories_scanning: false
+  video_metadata_file: !join [*root_database, "/archive_002.csv"]
+  video_directories: *archive_002
 
 - force_video_directories_scanning: true
   video_metadata_file: !join [*root_database, "/backup.csv"]
@@ -103,6 +111,29 @@ output_directory: *stories_output
 process_stories: true
 
 stories:
+
+  - name: 'Font Yard Camera Positioning'
+    skip: true
+    selectors:
+      - filenames: ['T8600P1023452B26_20251114150110.mp4', 'T8162T1025022684_20251230131048.mp4', 'T8162T1025022684_20251231141023.mp4', 'T8162T1025022684_20251231162820.mp4','T8162T1025022684_20260101181949.mp4']
+
+  - name: 'Font Yard Camera Adjusting'
+    skip: true
+    selectors:
+      - filenames: ['T8600P1023452B26_20251114150110.mp4', 'T8162T1025022684_20260101181949.mp4']
+    video_generation: true
+
+  - name: 'New Font Yard Camera'
+    skip: false
+    selectors:
+      - date_range:
+          start: '2025-12-29'
+          end: '2026-01-02'
+        devices: ['Front Yard']
+      - date_range:
+          start: '2025-11-14'
+          end: '2025-11-15'
+        devices: ['Front Yard']
 
   - name: '2025-12-28'
     skip: true
