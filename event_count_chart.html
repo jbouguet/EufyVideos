@@ -37,8 +37,9 @@
     }
     .chart-container {
       position: relative;
-      height: 800px;
+      height: 500px;
       width: 100%;
+      margin-bottom: 40px;
     }
     .details {
       margin-top: 30px;
@@ -47,9 +48,13 @@
 </head>
 <body>
   <div class="container">
-    <h2>Event Count Visualization with Extrapolation</h2>
+    <h2>Daily Event Count with Extrapolation</h2>
     <div class="chart-container">
-      <canvas id="eventChart"></canvas>
+      <canvas id="dailyChart"></canvas>
+    </div>
+    <h2>Cumulative Event Count with Extrapolation</h2>
+    <div class="chart-container">
+      <canvas id="cumulativeChart"></canvas>
     </div>
     <div class="details">
       <h3>Extrapolation Details:</h3>
@@ -82,10 +87,13 @@
     // ---- CONFIGURATION - EDIT THESE VALUES ----
 
     // Input your raw daily counts here (just the counts, dates will be generated)
-    const rawDailyCounts = [247,120,111,89,124,115,149,104,116,112,141,186,102,171,116,166,165,223,72,115,161,83,174,99,60,131,161,133,115,140,220,131,170,99,130,139,166,171,145,147,143,78,260,117,114,128,169,156,128,116,93,106,122,113,83,131,108,297,196,300,524,526,680,351,425,194,559,333,440,265,277];
+    //const rawDailyCounts = [247,120,111,89,124,115,149,104,116,112,141,186,102,171,116,166,165,223,72,115,161,83,174,99,60,131,161,133,115,140,220,131,170,99,130,139,166,171,145,147,143,78,260,117,114,128,169,156,128,116,93,106,122,113,83,131,108,297,196,300,524,526,680,351,425,194,559,333,440,265,277];
+    //const startDate = { day: 27, month: 7, year: 2025, dayOfWeek: 'Sun' };
+
+    const rawDailyCounts = [430, 233, 377, 240, 281, 251, 123, 221, 216, 174, 168, 283, 395, 256, 158, 272, 405, 578, 223, 203, 266, 214, 226, 198, 208, 196, 233, 430, 253, 232, 226, 284, 353, 425, 274, 230, 230, 416, 348, 288, 208, 350, 297, 228, 210, 175, 213, 119, 202, 169, 372, 193, 166, 246];
 
     // Specify the start date of your data
-    const startDate = { day: 27, month: 7, year: 2025, dayOfWeek: 'Sun' };
+    const startDate = { day: 3, month: 1, year: 2026, dayOfWeek: 'Sat' };
 
     // Maximmum number of days to average
     const maxDaysToAverage = rawDailyCounts.length;
@@ -297,9 +305,123 @@
       return null;
     });
 
-    // Create the chart
-    const ctx = document.getElementById('eventChart').getContext('2d');
-    const eventChart = new Chart(ctx, {
+    // Common chart options
+    const commonOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          ticks: {
+            maxRotation: 45,
+            minRotation: 45
+          }
+        },
+        y: {
+          beginAtZero: true,
+          grid: {
+            color: 'rgba(0, 0, 0, 0.1)'
+          }
+        }
+      },
+      plugins: {
+        annotation: {
+          annotations: {
+            line1: {
+              type: 'line',
+              xMin: actualData.length - 1,
+              xMax: actualData.length - 1,
+              borderColor: 'red',
+              borderWidth: 2,
+              borderDash: [5, 5],
+              label: {
+                content: 'Actual | Projected',
+                position: 'start',
+                backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                font: {
+                  size: 12
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+
+    // Create the daily chart
+    const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+    const dailyChart = new Chart(dailyCtx, {
+      type: 'line',
+      data: {
+        labels: chartLabels,
+        datasets: [
+          {
+            label: 'Actual Daily Count',
+            data: actualDailyData,
+            backgroundColor: 'rgba(130, 202, 157, 0.2)',
+            borderColor: 'rgba(130, 202, 157, 1)',
+            borderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            tension: 0.1
+          },
+          {
+            label: 'Projected Daily Count',
+            data: projectedDailyData,
+            backgroundColor: 'rgba(255, 153, 204, 0.2)',
+            borderColor: 'rgba(255, 153, 204, 1)',
+            borderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            tension: 0.1
+          },
+          {
+            label: 'Projected Daily Uncertainty Interval',
+            data: projectedDailyLower,
+            backgroundColor: 'rgba(255, 153, 204, 0)',
+            borderColor: 'rgba(255, 153, 204, 0.5)',
+            borderWidth: 1,
+            borderDash: [3, 3],
+            pointRadius: 0,
+            fill: false,
+            tension: 0.1
+          },
+          {
+            label: 'Projected Daily Uncertainty Interval',
+            data: projectedDailyUpper,
+            backgroundColor: 'rgba(255, 153, 204, 0.2)',
+            borderColor: 'rgba(255, 153, 204, 0.5)',
+            borderWidth: 1,
+            borderDash: [3, 3],
+            pointRadius: 0,
+            fill: '-1',
+            tension: 0.1
+          }
+        ]
+      },
+      options: {
+        ...commonOptions,
+        plugins: {
+          ...commonOptions.plugins,
+          legend: {
+            labels: {
+              filter: function(legendItem, chartData) {
+                if (legendItem.text === 'Projected Daily Uncertainty Interval') {
+                  const items = chartData.datasets
+                    .map((dataset, index) => ({ text: dataset.label, index }))
+                    .filter(item => item.text === legendItem.text);
+                  return items[0].index === legendItem.datasetIndex;
+                }
+                return true;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Create the cumulative chart
+    const cumulativeCtx = document.getElementById('cumulativeChart').getContext('2d');
+    const cumulativeChart = new Chart(cumulativeCtx, {
       type: 'line',
       data: {
         labels: chartLabels,
@@ -343,111 +465,25 @@
             borderWidth: 1,
             borderDash: [5, 5],
             pointRadius: 0,
-            fill: '-1', // Fill to the previous dataset
-            tension: 0.1
-          },
-          {
-            label: 'Actual Daily Count',
-            data: actualDailyData,
-            backgroundColor: 'rgba(130, 202, 157, 0.2)',
-            borderColor: 'rgba(130, 202, 157, 1)',
-            borderWidth: 1,
-            borderDash: [5, 5],
-            pointRadius: 2,
-            pointHoverRadius: 4,
-            tension: 0.1
-          },
-          {
-            label: 'Projected Daily Count',
-            data: projectedDailyData,
-            backgroundColor: 'rgba(255, 153, 204, 0.2)',
-            borderColor: 'rgba(255, 153, 204, 1)',
-            borderWidth: 1,
-            borderDash: [5, 5],
-            pointRadius: 2,
-            pointHoverRadius: 4,
-            tension: 0.1
-          },
-          {
-            label: 'Projected Daily Uncertainty Interval',
-            data: projectedDailyLower,
-            backgroundColor: 'rgba(255, 153, 204, 0)',
-            borderColor: 'rgba(255, 153, 204, 0.5)',
-            borderWidth: 1,
-            borderDash: [3, 3],
-            pointRadius: 0,
-            fill: false,
-            tension: 0.1
-          },
-          {
-            label: 'Projected Daily Uncertainty Interval',
-            data: projectedDailyUpper,
-            backgroundColor: 'rgba(255, 153, 204, 0.2)',
-            borderColor: 'rgba(255, 153, 204, 0.5)',
-            borderWidth: 1,
-            borderDash: [3, 3],
-            pointRadius: 0,
-            fill: '-1', // Fill to the previous dataset
+            fill: '-1',
             tension: 0.1
           }
         ]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: {
-            ticks: {
-              maxRotation: 45,
-              minRotation: 45
-            }
-          },
-          y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 100  // Controls the interval between ticks
-            },
-            grid: {
-              color: 'rgba(0, 0, 0, 0.1)'  // Optional: makes grid lines more visible
-            }
-          }
-        },
+        ...commonOptions,
         plugins: {
+          ...commonOptions.plugins,
           legend: {
             labels: {
               filter: function(legendItem, chartData) {
-                // Filter out duplicate uncertainty interval labels
-                if (legendItem.text === 'Projected Cumulative Uncertainty Interval' ||
-                    legendItem.text === 'Projected Daily Uncertainty Interval') {
-                  // Get all items with this text
+                if (legendItem.text === 'Projected Cumulative Uncertainty Interval') {
                   const items = chartData.datasets
                     .map((dataset, index) => ({ text: dataset.label, index }))
                     .filter(item => item.text === legendItem.text);
-
-                  // Only show the first occurrence of each label
                   return items[0].index === legendItem.datasetIndex;
                 }
                 return true;
-              }
-            }
-          },
-          annotation: {
-            annotations: {
-              line1: {
-                type: 'line',
-                xMin: actualData.length - 1,
-                xMax: actualData.length - 1,
-                borderColor: 'red',
-                borderWidth: 2,
-                borderDash: [5, 5],
-                label: {
-                  content: 'Actual | Projected',
-                  position: 'start',
-                  backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                  font: {
-                    size: 12
-                  }
-                }
               }
             }
           }
@@ -460,8 +496,8 @@
     detailsList.innerHTML = `
       <li>Projected daily count: ${Math.round(avgDailyCount * 100) / 100} events per day (±${Math.round(stdDevDailyCount * 100) / 100})</li>
       <li>Projected cumulative total by ${projectedData[projectedData.length - 1].date}: ${Math.round(projectedData[projectedData.length - 1].cumulativeSum)} (${Math.round(projectedData[projectedData.length - 1].cumulativeSumLower)} - ${Math.round(projectedData[projectedData.length - 1].cumulativeSumUpper)})</li>
-      <li>Purple line: Actual cumulative sum | Orange line: Projected cumulative sum with shaded uncertainty</li>
-      <li>Green dashed line: Actual daily count | Pink dashed line: Projected daily count with shaded uncertainty</li>
+      <li>Daily chart — Green line: Actual daily count | Pink line: Projected daily count with shaded uncertainty</li>
+      <li>Cumulative chart — Purple line: Actual cumulative sum | Orange line: Projected cumulative sum with shaded uncertainty</li>
     `;
 
     // Fill in the table
