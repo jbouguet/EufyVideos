@@ -75,10 +75,10 @@ def load_video_data(metric: str = "activity"):
 
     important_columns = [
         "Date",
-        "Front Door",
+        # "Front Door",
         "Backyard",
-        "Gateway",
-        "Walkway",
+        # "Gateway",
+        # "Walkway",
     ]  # Best model
 
     filtered_columns = [

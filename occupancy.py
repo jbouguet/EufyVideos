@@ -190,8 +190,12 @@ class Occupancy:
         ("2025-06-21", "2025-07-27", OccupancyStatus.OCCUPIED),
         ("2025-07-28", "2025-09-24", OccupancyStatus.NOT_OCCUPIED),
         ("2025-09-25", "2025-09-29", OccupancyStatus.OCCUPIED),
-        ("2025-09-30", "2025-10-20", OccupancyStatus.NOT_OCCUPIED),
-        ("2025-10-21", "2025-10-22", OccupancyStatus.OCCUPIED),
+        ("2025-09-30", "2025-10-21", OccupancyStatus.NOT_OCCUPIED),
+        ("2025-10-22", "2025-10-27", OccupancyStatus.OCCUPIED),
+        ("2025-10-28", "2025-12-01", OccupancyStatus.NOT_OCCUPIED),
+        ("2025-12-02", "2025-12-02", OccupancyStatus.OCCUPIED),
+        ("2025-12-03", "2025-12-27", OccupancyStatus.NOT_OCCUPIED),
+        ("2025-12-28", "2026-01-02", OccupancyStatus.OCCUPIED),
     ]
 
     def __init__(
@@ -297,9 +301,11 @@ class Occupancy:
         for _, row in daily_data.iterrows():
             date_str = row["Date"].strftime("%Y-%m-%d")
             by = row.get("Backyard", 0)
+            # fd = row.get("Front Door", 0)
+            # ww = row.get("Walkway", 0)
 
             # Set occupancy status using the decision function
-            if by > 15.5:  # 20:
+            if by > 15.5:  # or (ww > 41):  # 20:
                 self.occupancy_cache[date_str] = OccupancyStatus.OCCUPIED
             else:
                 self.occupancy_cache[date_str] = OccupancyStatus.NOT_OCCUPIED
@@ -817,10 +823,10 @@ if __name__ == "__main__":
     daily_data = daily_data[metric]
     important_columns = [
         "Date",
-        "Front Door",  # 404/414
+        # "Front Door",  # 404/414
         "Backyard",  # 409/414
-        "Gateway",  # 409/414
-        "Walkway",  # 409/414
+        # "Gateway",  # 409/414
+        # "Walkway",  # 409/414
     ]  # Best model
     filtered_columns = [col for col in daily_data.columns if col in important_columns]
     daily_data = daily_data[filtered_columns]
