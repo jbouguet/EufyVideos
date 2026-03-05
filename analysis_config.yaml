@@ -61,16 +61,18 @@ directories:
 
   archive_002: &archive_002
     - !join [*root_database, "/Batch047"]
+    - !join [*root_database, "/Batch048"]
+    - !join [*root_database, "/Batch049"]
 
 # Video database configuration
 video_database_list:
-- force_video_directories_scanning: false
-  video_metadata_file: !join [*root_database, "/archive_000.csv"]
-  video_directories: *archive_000
+#- force_video_directories_scanning: false
+#  video_metadata_file: !join [*root_database, "/archive_000.csv"]
+#  video_directories: *archive_000
 
-- force_video_directories_scanning: false
-  video_metadata_file: !join [*root_database, "/archive_001.csv"]
-  video_directories: *archive_001
+#- force_video_directories_scanning: false
+#  video_metadata_file: !join [*root_database, "/archive_001.csv"]
+#  video_directories: *archive_001
 
 - force_video_directories_scanning: false
   video_metadata_file: !join [*root_database, "/archive_002.csv"]
@@ -112,6 +114,25 @@ process_stories: true
 
 stories:
 
+  - name: '2026-03-01'
+    skip: true
+    selectors:
+      - date_regex: '2026-03-01'
+
+  - name: '2026-02-03 to 2026-02-10 - Backyard'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2026-02-03'
+          end: '2026-02-10'
+        devices: ['Backyard']
+
+  - name: '2026-02-25 - Front Yard - Back Alleyway'
+    skip: true
+    selectors:
+      - date_regex: '2026-02-25'
+        devices: ['Front Yard', 'Back Alleyway']
+
   - name: 'Font Yard Camera Positioning'
     skip: true
     selectors:
@@ -124,7 +145,7 @@ stories:
     video_generation: true
 
   - name: 'New Font Yard Camera'
-    skip: false
+    skip: true
     selectors:
       - date_range:
           start: '2025-12-29'
