@@ -49,8 +49,7 @@ class VideoParser:
             filename = os.path.basename(file_path)
             serial, datetime_part = filename.split("_")
             device = Config.get_device_dict().get(serial, serial)
-            date = datetime.strptime(datetime_part[:8], "%Y%m%d")
-            time_obj = datetime.strptime(datetime_part[8:14], "%H%M%S")
+            datetime_obj = datetime.strptime(datetime_part[:14], "%Y%m%d%H%M%S")
 
             # Redirect stderr to capture Cv2 error messages
             old_stderr = sys.stderr
@@ -81,8 +80,7 @@ class VideoParser:
                 filename=filename,
                 full_path=file_path,
                 device=device,
-                date=date,
-                time=time_obj,
+                datetime_obj=datetime_obj,
                 serial=serial,
                 file_size=os.path.getsize(file_path) / (1024 * 1024),  # Size in MB,
                 width=width,
@@ -114,8 +112,7 @@ class VideoParser:
             filename = os.path.basename(file_path)
             serial, datetime_part = filename.split("_")
             device = Config.get_device_dict().get(serial, serial)
-            date = datetime.strptime(datetime_part[:8], "%Y%m%d")
-            time_obj = datetime.strptime(datetime_part[8:14], "%H%M%S")
+            datetime_obj = datetime.strptime(datetime_part[:14], "%Y%m%d%H%M%S")
 
             # Redirect stderr to capture ffmpeg error messages
             old_stderr = sys.stderr
@@ -152,8 +149,7 @@ class VideoParser:
                 filename=filename,
                 full_path=file_path,
                 device=device,
-                date=date,
-                time=time_obj,
+                datetime_obj=datetime_obj,
                 serial=serial,
                 file_size=os.path.getsize(file_path) / (1024 * 1024),  # Size in MB,
                 width=int(video_stream["width"]),
