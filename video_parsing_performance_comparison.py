@@ -184,7 +184,7 @@ class VideoParser:
             ("LibAV", VideoParser.get_video_properties_libav),
             ("FFmpeg", VideoParser.get_video_properties_ffmpeg),
         ]
-        results = {name: {"time": 0, "count": 0} for name, _ in methods}
+        results = {name: {"time": 0.0, "count": 0} for name, _ in methods}
 
         # Get the list of MP4 files
         mp4_files = [f for f in os.listdir(video_directory) if f.endswith(".mp4")]
@@ -244,8 +244,15 @@ if __name__ == "__main__":
     try:
         config = AnalysisConfig.from_file(args.config)
         max_num_files: int = int(args.num_files)
-        for video_directory in config.video_directories:
-            VideoParser.compare_performance(video_directory, max_num_files)
+        for db in config.video_database_list.video_database_list:
+            if db.video_directories:
+                dirs = (
+                    [db.video_directories]
+                    if isinstance(db.video_directories, str)
+                    else db.video_directories
+                )
+                for video_directory in dirs:
+                    VideoParser.compare_performance(video_directory, max_num_files)
 
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
