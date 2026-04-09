@@ -63,16 +63,17 @@ directories:
     - !join [*root_database, "/Batch047"]
     - !join [*root_database, "/Batch048"]
     - !join [*root_database, "/Batch049"]
+    - !join [*root_database, "/Batch050"]
 
 # Video database configuration
 video_database_list:
-#- force_video_directories_scanning: false
-#  video_metadata_file: !join [*root_database, "/archive_000.csv"]
-#  video_directories: *archive_000
+- force_video_directories_scanning: false
+  video_metadata_file: !join [*root_database, "/archive_000.csv"]
+  video_directories: *archive_000
 
-#- force_video_directories_scanning: false
-#  video_metadata_file: !join [*root_database, "/archive_001.csv"]
-#  video_directories: *archive_001
+- force_video_directories_scanning: false
+  video_metadata_file: !join [*root_database, "/archive_001.csv"]
+  video_directories: *archive_001
 
 - force_video_directories_scanning: false
   video_metadata_file: !join [*root_database, "/archive_002.csv"]
@@ -113,6 +114,21 @@ output_directory: *stories_output
 process_stories: true
 
 stories:
+
+  - name: '2026-04-08 - Back Alleyway - New Person'
+    skip: true
+    selectors:
+      - date_regex: '2026-04-08'
+        devices: ['Back Alleyway']
+
+  - name: '2026-03-28 - drug overdose'
+    skip: true
+    selectors:
+      - date_regex: '2026-03-28'
+        devices: ['Backyard','Back Alleyway','Corner Junction','Front Yard','Front Door','Walkway','Garage','Back Gate','Gateway']
+        time_range:
+          start: '20:00:00'
+          end: '23:59:59'
 
   - name: '2026-03-01'
     skip: true
