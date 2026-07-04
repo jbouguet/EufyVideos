@@ -99,8 +99,8 @@ class TrackLevelCluster:
 ## File Locations
 
 ### Generated Files
-- **Track Analysis**: `/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/track_analysis/`
-- **Track-Level Clusters**: `/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/track_level_clustering/`
+- **Track Analysis**: `/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/track_analysis/`
+- **Track-Level Clusters**: `/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/track_level_clustering/`
 
 ### Source Files
 - **Track Data Analyzer**: `track_data_analyzer.py`
@@ -108,8 +108,8 @@ class TrackLevelCluster:
 - **Conservative Clusterer**: `conservative_person_clustering.py`
 
 ### Data Sources
-- **Person Embeddings**: `/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/embeddings/`
-- **Tag Files**: `/Users/jbouguet/Documents/EufySecurityVideos/record/tags_database/`
+- **Person Embeddings**: `/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/embeddings/`
+- **Tag Files**: `/Users/GZ5MCM/Documents/EufySecurityVideos/record/tags_database/`
 
 ## Key Insights
 

@@ -470,8 +470,8 @@ def main():
     """Run comprehensive parameter tuning."""
     
     # Paths
-    embeddings_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/embeddings"
-    output_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/parameter_tuning"
+    embeddings_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/embeddings"
+    output_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/parameter_tuning"
     
     logger.info("🔧 PARAMETER TUNING SYSTEM")
     logger.info("=" * 60)

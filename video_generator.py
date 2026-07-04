@@ -778,7 +778,7 @@ if __name__ == "__main__":
             ),
         ]
         video_merged_sc: str = (
-            "/Users/jbouguet/Documents/EufySecurityVideos/stories/video_merged_sc.mp4"
+            "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/video_merged_sc.mp4"
         )
         # Single call of VideoGenerator.run() does fragment creation and concatenation.
         video_sc = VideoGenerator(
@@ -805,14 +805,14 @@ if __name__ == "__main__":
         video_fragments_config = [
             {
                 "video_in": "/Volumes/SSK Drive/record041/T8600P1023450AFB_20250923085351.mp4",
-                "video_out": "/Users/jbouguet/Documents/EufySecurityVideos/stories/video1.mp4",
+                "video_out": "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/video1.mp4",
                 "offset": 8.0,
                 "duration": 14.0,
                 "roi": [0.08, 0.30, 0.19, 0.57],
             },
             {
                 "video_in": "/Volumes/SSK Drive/record/Batch041/T8600P1023450AFB_20250923085416.mp4",
-                "video_out": "/Users/jbouguet/Documents/EufySecurityVideos/stories/video2.mp4",
+                "video_out": "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/video2.mp4",
                 "offset": 0.0,
                 "duration": 7.0,
                 "roi": [0.08, 0.30, 0.19, 0.57],
@@ -820,7 +820,7 @@ if __name__ == "__main__":
         ]
         # The final concatenated videos is then created from the list of video fragments.
         video_merged_mc: str = (
-            "/Users/jbouguet/Documents/EufySecurityVideos/stories/video_merged_mc.mp4"
+            "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/video_merged_mc.mp4"
         )
 
         # Individual video fragments are first created with different configurations.
@@ -851,10 +851,10 @@ if __name__ == "__main__":
             "/Volumes/SSK Drive/record/Batch043/T8162T1024354A8B_20251003021936.mp4"
         )
         video_h264: str = (
-            "/Users/jbouguet/Documents/EufySecurityVideos/stories/T8162T1024354A8B_20251003021936_h264.mp4"
+            "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/T8162T1024354A8B_20251003021936_h264.mp4"
         )
         video_h265: str = (
-            "/Users/jbouguet/Documents/EufySecurityVideos/stories/T8162T1024354A8B_20251003021936_h265.mp4"
+            "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/T8162T1024354A8B_20251003021936_h265.mp4"
         )
         video_hevc_meta = VideoMetadata(full_path=video_hevc)
         h264_encoder = VideoGenerator()
@@ -879,10 +879,10 @@ if __name__ == "__main__":
             "/Volumes/SSK Drive/record/Batch044/T8160T1224250195_20251022121824.mp4"
         )
         video_h264: str = (
-            "/Users/jbouguet/Documents/EufySecurityVideos/stories/T8160T1224250195_20251022121824_h264.mp4"
+            "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/T8160T1224250195_20251022121824_h264.mp4"
         )
         video_h265: str = (
-            "/Users/jbouguet/Documents/EufySecurityVideos/stories/T8160T1224250195_20251022121824_h265.mp4"
+            "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/T8160T1224250195_20251022121824_h265.mp4"
         )
         video_hevc_meta = VideoMetadata(full_path=video_hevc)
         h264_encoder = VideoGenerator()
@@ -905,33 +905,33 @@ if __name__ == "__main__":
         # Define video fragments with specific offsets, durations and rois.
         video_fragments_config = [
             {
-                "video_in": "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_1.mp4",
-                "video_out": "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/fragments/f1.mp4",
+                "video_in": "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_1.mp4",
+                "video_out": "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/fragments/f1.mp4",
                 "offset": 0.0,
                 "duration": 120.0,
             },
             {
-                "video_in": "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_2.mp4",
-                "video_out": "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/fragments/f2.mp4",
+                "video_in": "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_2.mp4",
+                "video_out": "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/fragments/f2.mp4",
                 "offset": 0.0,
                 "duration": 5.0,
             },
             {
-                "video_in": "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_3.mp4",
-                "video_out": "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/fragments/f3.mp4",
+                "video_in": "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_3.mp4",
+                "video_out": "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/fragments/f3.mp4",
                 "offset": 0.0,
                 "duration": 120.0,
             },
             {
-                "video_in": "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_4.mp4",
-                "video_out": "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/fragments/f4.mp4",
+                "video_in": "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_4.mp4",
+                "video_out": "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/fragments/f4.mp4",
                 "offset": 0.0,
                 "duration": 65.0,
             },
         ]
         # The final concatenated videos is then created from the list of video fragments.
         video_merged_mc: str = (
-            "/Users/jbouguet/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_merged.mp4"
+            "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_merged.mp4"
         )
 
         # Individual video fragments are first created with different configurations.

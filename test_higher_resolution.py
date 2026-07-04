@@ -24,7 +24,7 @@ logger = create_logger(__name__)
 
 def backup_current_config():
     """Backup the current config file."""
-    config_path = "/Users/jbouguet/Documents/EufySecurityVideos/python/EufyVideos/analysis_config.yaml"
+    config_path = "/Users/GZ5MCM/Documents/EufySecurityVideos/python/EufyVideos/analysis_config.yaml"
     backup_path = config_path + ".backup"
     shutil.copy2(config_path, backup_path)
     logger.info(f"Config backed up to: {backup_path}")
@@ -33,14 +33,14 @@ def backup_current_config():
 
 def restore_config(backup_path):
     """Restore config from backup."""
-    config_path = "/Users/jbouguet/Documents/EufySecurityVideos/python/EufyVideos/analysis_config.yaml"
+    config_path = "/Users/GZ5MCM/Documents/EufySecurityVideos/python/EufyVideos/analysis_config.yaml"
     shutil.copy2(backup_path, config_path)
     logger.info("Config restored from backup")
 
 
 def modify_config_for_higher_resolution():
     """Modify config to use 384x384 resolution and clean output paths."""
-    config_path = "/Users/jbouguet/Documents/EufySecurityVideos/python/EufyVideos/analysis_config.yaml"
+    config_path = "/Users/GZ5MCM/Documents/EufySecurityVideos/python/EufyVideos/analysis_config.yaml"
     
     with open(config_path, 'r') as f:
         content = f.read()
@@ -70,7 +70,7 @@ def modify_config_for_higher_resolution():
 
 def clean_high_res_outputs():
     """Clean previous high-res test outputs."""
-    high_res_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition_384"
+    high_res_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition_384"
     if os.path.exists(high_res_dir):
         shutil.rmtree(high_res_dir)
         logger.info("Cleaned previous high-res outputs")
@@ -80,7 +80,7 @@ def run_person_recognition():
     """Run person recognition with current config."""
     from story_creator import StoryCreator
     
-    config_path = "/Users/jbouguet/Documents/EufySecurityVideos/python/EufyVideos/analysis_config.yaml"
+    config_path = "/Users/GZ5MCM/Documents/EufySecurityVideos/python/EufyVideos/analysis_config.yaml"
     
     try:
         creator = StoryCreator(config_path)
@@ -154,7 +154,7 @@ def compare_resolutions():
     logger.info("=" * 60)
     
     # Test baseline 224x224 (existing embeddings)
-    baseline_embeddings = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/embeddings"
+    baseline_embeddings = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/embeddings"
     baseline_results = cluster_and_analyze(baseline_embeddings, "224x224 (baseline)")
     
     if not baseline_results:
@@ -175,7 +175,7 @@ def compare_resolutions():
         logger.info("Running person recognition at 384x384...")
         if run_person_recognition():
             # Test high-res results
-            high_res_embeddings = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition_384/embeddings"
+            high_res_embeddings = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition_384/embeddings"
             high_res_results = cluster_and_analyze(high_res_embeddings, "384x384 (high-res)")
             
             if high_res_results:
@@ -272,7 +272,7 @@ def analyze_comparison(baseline, high_res):
 
 def save_comparison_results(baseline, high_res):
     """Save comparison results to file."""
-    output_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/resolution_test"
+    output_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/resolution_test"
     os.makedirs(output_dir, exist_ok=True)
     
     results_file = os.path.join(output_dir, "resolution_comparison_results.txt")

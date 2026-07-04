@@ -200,7 +200,7 @@ if __name__ == "__main__":
     set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
 
     # Load video database
-    root_database = "/Users/jbouguet/Documents/EufySecurityVideos/record/"
+    root_database = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/"
     metadata_files = [
         os.path.join(root_database, "archive_000.csv"),
         os.path.join(root_database, "archive_001.csv"),
@@ -208,7 +208,7 @@ if __name__ == "__main__":
         os.path.join(root_database, "backup.csv"),
         # Add more metadata files as needed
     ]
-    out_dir: str = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
+    out_dir: str = "/Users/GZ5MCM/Documents/EufySecurityVideos/stories"
 
     video_database = VideoDatabaseList(
         [

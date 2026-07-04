@@ -349,8 +349,8 @@ def main():
     """Run track-level clustering."""
     
     # Paths
-    embeddings_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/embeddings"
-    output_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/track_level_clustering"
+    embeddings_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/embeddings"
+    output_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/track_level_clustering"
     
     logger.info("=" * 80)
     logger.info("TRACK-LEVEL CLUSTERING FOR MANUAL LABELING")

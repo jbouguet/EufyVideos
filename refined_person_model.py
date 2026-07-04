@@ -580,10 +580,10 @@ def main():
     parser.add_argument('--mode', choices=['train', 'predict'], default='train',
                        help='Mode to run: train or predict')
     parser.add_argument('--training-data', 
-                       default='/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/cluster_labeling/training_data.json',
+                       default='/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/cluster_labeling/training_data.json',
                        help='Path to training data file')
     parser.add_argument('--model-dir',
-                       default='/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/refined_model',
+                       default='/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/refined_model',
                        help='Directory for model files')
     parser.add_argument('--epochs', type=int, default=50,
                        help='Number of training epochs')

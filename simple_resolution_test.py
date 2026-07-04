@@ -216,7 +216,7 @@ def compare_resolutions():
     logger.info("SIMPLE RESOLUTION COMPARISON TEST")
     logger.info("=" * 60)
     
-    crops_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/crops"
+    crops_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/crops"
     
     if not os.path.exists(crops_dir):
         logger.error(f"Crops directory not found: {crops_dir}")

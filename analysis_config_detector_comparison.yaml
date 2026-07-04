@@ -4,8 +4,8 @@
 
 # Base directory definitions
 directories:
-  root_database: &root_database "/Users/jbouguet/Documents/EufySecurityVideos/record"
-  stories_output: &stories_output "/Users/jbouguet/Documents/EufySecurityVideos/stories"
+  root_database: &root_database "/Users/GZ5MCM/Documents/EufySecurityVideos/record"
+  stories_output: &stories_output "/Users/GZ5MCM/Documents/EufySecurityVideos/stories"
   tags_database: &tags_dir !join [*root_database, "/tags_database"]
   batch_dirs: &batch_dirs
     - !join [*root_database, "/Batch022"]

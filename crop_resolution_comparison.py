@@ -522,8 +522,8 @@ def main():
         'T8600P1024260D5E_20241119181809.mp4'
     ]
     
-    config_template_path = "/Users/jbouguet/Documents/EufySecurityVideos/python/EufyVideos/analysis_config.yaml"
-    output_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/resolution_comparison"
+    config_template_path = "/Users/GZ5MCM/Documents/EufySecurityVideos/python/EufyVideos/analysis_config.yaml"
+    output_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/resolution_comparison"
     
     logger.info("🔍 CROP RESOLUTION COMPARISON")
     logger.info("=" * 60)

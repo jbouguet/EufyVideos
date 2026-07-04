@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define the root directory
-root_directory="/Users/jbouguet/Documents/EufySecurityVideos/record/extra"
+root_directory="/Users/GZ5MCM/Documents/EufySecurityVideos/record/extra"
 
 # Flag for executing file renaming
 execute_renaming=false

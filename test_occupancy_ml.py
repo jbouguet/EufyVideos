@@ -45,7 +45,7 @@ def load_video_data(metric: str = "activity"):
         Dictionary containing daily activity data
     """
     # Load video database
-    root_database = "/Users/jbouguet/Documents/EufySecurityVideos/record/"
+    root_database = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/"
     metadata_files = [
         os.path.join(root_database, "archive_000.csv"),
         os.path.join(root_database, "archive_001.csv"),
@@ -656,7 +656,7 @@ def train_and_evaluate_model(daily_data, out_dir="", method="simple", params=Non
 def main():
 
     # Path to the output directory for model files, comparison, graphs, etc...
-    out_dir: str = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
+    out_dir: str = "/Users/GZ5MCM/Documents/EufySecurityVideos/stories"
 
     # Load video data
     metric: str = "activity"  # "duration"

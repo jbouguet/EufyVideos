@@ -473,9 +473,9 @@ def main():
     """Run cluster visual inspection."""
     
     # Configuration - use conservative clustering results
-    clusters_file = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/conservative_clustering/conservative_clusters.json"
-    crops_base_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/crops"
-    output_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/conservative_visual_inspection"
+    clusters_file = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/conservative_clustering/conservative_clusters.json"
+    crops_base_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/crops"
+    output_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/conservative_visual_inspection"
     
     try:
         # Create visual inspector

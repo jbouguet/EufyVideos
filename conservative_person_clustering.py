@@ -362,8 +362,8 @@ def main():
     """Run conservative person clustering."""
 
     # Paths
-    embeddings_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/embeddings"
-    output_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/conservative_clustering"
+    embeddings_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/embeddings"
+    output_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/conservative_clustering"
 
     logger.info("=" * 60)
     logger.info("CONSERVATIVE PERSON CLUSTERING")

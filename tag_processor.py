@@ -658,9 +658,9 @@ if __name__ == "__main__":
     # Set extended logging for this module only.
     set_logger_level_and_format(logger, level=logging.DEBUG, extended_format=True)
 
-    root_database: str = "/Users/jbouguet/Documents/EufySecurityVideos/record/"
+    root_database: str = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/"
     out_dir: str = (
-        "/Users/jbouguet/Documents/EufySecurityVideos/stories/tag_processor_test"
+        "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/tag_processor_test"
     )
     video_metadata_file: str = os.path.join(root_database, "videos_in_batches.csv")
     video_database = VideoDatabase(

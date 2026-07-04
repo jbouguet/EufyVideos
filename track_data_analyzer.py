@@ -225,8 +225,8 @@ def main():
     """Run track data analysis."""
     
     # Configuration
-    embeddings_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/embeddings"
-    output_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/track_analysis"
+    embeddings_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/embeddings"
+    output_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/track_analysis"
     
     logger.info("=" * 80)
     logger.info("TRACK DATA STRUCTURE ANALYZER")

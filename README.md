@@ -26,7 +26,7 @@ The visualization components are specifically designed for Plotly 5.24.1. Using 
 
 2. Clone the repository
    ```bash
-   git clone https://github.com/jbouguet/EufyVideos.git
+   git clone https://github.com/GZ5MCM/EufyVideos.git
    ```
 
 3. Create virtual environment: `python -m venv myenv`
@@ -82,7 +82,7 @@ The visualization components are specifically designed for Plotly 5.24.1. Using 
 1. Open VS Code
 2. Press Cmd+Shift+P to open the Command Palette
 3. Type "Git: Clone" and select it
-4. Enter repository URL: https://github.com/jbouguet/EufyVideos.git
+4. Enter repository URL: https://github.com/GZ5MCM/EufyVideos.git
 5. Choose a local folder to clone into (e.g. a folder called "python")
 6. Click "Open" when prompted to open the cloned repository
 7. A new subfolder "EufyVideos" should now contain the code

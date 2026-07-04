@@ -623,9 +623,9 @@ def main():
     """Run cluster labeling tool."""
     
     # Configuration
-    clusters_file = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/enhanced_clustering/enhanced_clusters.json"
-    output_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/cluster_labeling"
-    visual_inspection_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/visual_inspection"
+    clusters_file = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/enhanced_clustering/enhanced_clusters.json"
+    output_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/cluster_labeling"
+    visual_inspection_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/visual_inspection"
     
     try:
         # Create labeling manager

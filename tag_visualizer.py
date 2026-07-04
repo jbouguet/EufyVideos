@@ -476,8 +476,8 @@ if __name__ == "__main__":
     from video_database import VideoDatabase
     from video_filter import VideoFilter, VideoSelector
 
-    root_database: str = "/Users/jbouguet/Documents/EufySecurityVideos/record/"
-    out_dir: str = "/Users/jbouguet/Documents/EufySecurityVideos/stories"
+    root_database: str = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/"
+    out_dir: str = "/Users/GZ5MCM/Documents/EufySecurityVideos/stories"
     video_metadata_file: str = os.path.join(root_database, "videos_in_batches.csv")
     video_database = VideoDatabase(
         video_directories=None, video_metadata_file=video_metadata_file

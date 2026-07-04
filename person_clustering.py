@@ -569,8 +569,8 @@ def main():
     """Run person clustering."""
 
     # Paths
-    embeddings_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/embeddings"
-    output_dir = "/Users/jbouguet/Documents/EufySecurityVideos/record/person_recognition/clustering"
+    embeddings_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/embeddings"
+    output_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/person_recognition/clustering"
 
     logger.info("=" * 60)
     logger.info("PERSON CLUSTERING")
