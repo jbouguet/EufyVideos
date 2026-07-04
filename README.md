@@ -147,7 +147,7 @@ The visualization components are specifically designed for Plotly 5.24.1. Using 
 
 1. Install and configure the git:
    ```bash
-   brew install gh brew install
+   brew install gh
    ```
 2. Setup GitHub login, with instructions: What account do you want to log into? == GitHub.com; What is your preferred protocol for Git operations? == HTTPS; Authenticate Git with your GitHub credentials? == Yes; How would you like to authenticate GitHub CLI? == Login with a web browser
    ```bash
