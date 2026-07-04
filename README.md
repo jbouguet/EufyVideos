@@ -145,19 +145,28 @@ The visualization components are specifically designed for Plotly 5.24.1. Using 
 
 ### 6. Setup the Git workflow
 
-1. Install and configure the git-credential-manager:
+1. Install and configure the git:
    ```bash
-   brew install --cask git-credential-manager
+   brew install gh brew install
    ```
-2. Most simple git workflow:
+2. Setup GitHub login, with instructions: What account do you want to log into? == GitHub.com; What is your preferred protocol for Git operations? == HTTPS; Authenticate Git with your GitHub credentials? == Yes; How would you like to authenticate GitHub CLI? == Login with a web browser
+   ```bash
+   gh auth login
+   ```
+3. Setup user email and name for commits:
+   ```bash
+   git config --global user.email "email address"
+   git config --global user.name "Name" 
+   ```
+4. Most simple git workflow:
    ```bash
    git add .
    git commit -m "message"
    git push origin main
    ```
-3. [cheat-sheet](https://education.github.com/git-cheat-sheet-education.pdf) for the most commonly used git commands.
+5. [cheat-sheet](https://education.github.com/git-cheat-sheet-education.pdf) for the most commonly used git commands.
 
-4. Within VCode, you can use the Source Control panel (Ctrl+Shift+G or click the branching icon in the Activity Bar). Complete documentation available [here](https://code.visualstudio.com/docs/sourcecontrol/overview)
+6. Within VCode, you can use the Source Control panel (Ctrl+Shift+G or click the branching icon in the Activity Bar). Complete documentation available [here](https://code.visualstudio.com/docs/sourcecontrol/overview)
 
 ## Version Compatibility and Common Issues
 
