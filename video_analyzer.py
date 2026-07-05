@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import annotations
 
 import os
 import sys
@@ -116,10 +117,10 @@ class AnalysisConfig:
         config_dict = load_yaml_with_substitution(config_file)
 
         if "directories" in config_dict:
-            logger.debug(f"directories: {config_dict["directories"]}")
+            logger.debug(f"directories: {config_dict['directories']}")
 
         if "subdirs" in config_dict:
-            logger.debug(f"subdirs: {config_dict["subdirs"]}")
+            logger.debug(f"subdirs: {config_dict['subdirs']}")
 
         if "video_database_list" in config_dict:
             for idx, db in enumerate(config_dict["video_database_list"]):
@@ -149,9 +150,9 @@ class AnalysisConfig:
                 logger.debug(f"    - exists: {os.path.exists(tag_file)}")
 
         if "output_directory" in config_dict:
-            logger.debug(f"Output Dir: {config_dict["output_directory"]}")
+            logger.debug(f"Output Dir: {config_dict['output_directory']}")
             logger.debug(
-                f"  directory exists: {os.path.exists(config_dict["output_directory"])}"
+                f"  directory exists: {os.path.exists(config_dict['output_directory'])}"
             )
 
         return cls.from_dict(config_dict)
@@ -176,7 +177,7 @@ class VideoAnalyzer:
         video_analyzer.process_stories()
 
     def load_all_databases(self) -> None:
-        logger.info(f"{colored("Loading Databases", "light_yellow")}")
+        logger.info(f"{colored('Loading Databases', 'light_yellow')}")
         self.videos_database = VideoAnalyzer.load_videos_database(
             self.config.video_database_list
         )
@@ -192,7 +193,7 @@ class VideoAnalyzer:
     @staticmethod
     def load_videos_database(
         video_database_list: Union[VideoDatabase, VideoDatabaseList],
-    ) -> NoReturn | List[VideoMetadata]:
+    ) -> Union[NoReturn, List[VideoMetadata]]:
         corrupted_files: List[str] = []
         videos_database = video_database_list.load_videos(corrupted_files)
         if videos_database is None:
@@ -242,7 +243,7 @@ class VideoAnalyzer:
         num_tagged_frames = tags_stats["num_tagged_frames"]
         num_tags = tags_stats["num_tags"]
 
-        logger.info(f"{colored("Database Statistics:","light_cyan")}")
+        logger.info(f"{colored('Database Statistics:','light_cyan')}")
         logger.info(f"  - {'Number of videos':<23} = {num_videos:,}")
         logger.info(f"  - {'Number of frames':<23} = {num_frames:,}")
         logger.info(f"  - {'Size':<23} = {total_size_mb:,.3f} MB")
@@ -285,7 +286,7 @@ class VideoAnalyzer:
         Dashboard().create_graphs_file(self.videos_database, graphs_filename)
         PlotCreator.create_graphs_file(self.videos_database, scatter_plots_filename)
 
-        logger.info(f"{colored("Output Files:","light_cyan")}")
+        logger.info(f"{colored('Output Files:','light_cyan')}")
         logger.info(f"  - config file:        {config_filename}")
         logger.info(f"  - metadata file:      {video_metadata_file}")
         logger.info(f"  - playlist file:      {playlist_filename}")

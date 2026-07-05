@@ -26,8 +26,9 @@ Example usage:
     dashboard = Dashboard()
     dashboard.create_graphs_file(videos, 'video_analytics.html')
 """
+from __future__ import annotations
 
-from typing import Dict, List, Optional, cast
+from typing import Dict, List, Optional, Union, cast
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -54,7 +55,7 @@ class Dashboard:
     def __init__(
         self,
         metrics: Optional[List[str]] = None,
-        config: Optional[Dict[str, bool | int]] = None,
+        config: Optional[Dict[str, Union[bool, int]]] = None,
     ):
         """Initialize dashboard optionally specifying metrics of interest"""
         if metrics is None:

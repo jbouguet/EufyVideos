@@ -629,6 +629,13 @@ class TagProcessor:
                 raise ValueError(
                     f"Invalid task: {self.tag_processing_config.task}. Must be one of {[dt.value for dt in Task]}"
                 )
+            
+        # if self.tag_processing_config.task == Task.DETECT.value:
+        #     result = self.object_detector.detect_objects(video.full_path, num_frames=num_frames)
+        # elif self.tag_processing_config.task == Task.TRACK.value:
+        #     result = self.object_detector.track_objects(video.full_path, num_frames=num_frames)
+        # else:
+        #     raise ValueError(f"Invalid task: {self.tag_processing_config.task}. Must be one of {[dt.value for dt in Task]}")
         
         execution_time = time.time() - start_time
         fps = num_frames / execution_time if execution_time > 0 else 0

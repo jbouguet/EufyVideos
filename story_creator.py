@@ -342,16 +342,16 @@ class Story:
         num_tags = tags_stats["num_tags"]
 
         # Log statistics
-        logger.info(f"{colored("Selectors:","light_cyan")}")
+        logger.info(f"{colored('Selectors:','light_cyan')}")
         VideoSelector.log(self.selectors)
 
         # Log occupancy status if specified
         if self.occupancy_status is not None:
             logger.info(
-                f"{colored("Occupancy Status:","light_cyan")} {', '.join(self.occupancy_status)}"
+                f"{colored('Occupancy Status:','light_cyan')} {', '.join(self.occupancy_status)}"
             )
 
-        logger.info(f"{colored("Statistics:","light_cyan")}")
+        logger.info(f"{colored('Statistics:','light_cyan')}")
 
         logger.info(f"  - {'Number of videos':<23} = {num_videos:,}")
         logger.info(f"  - {'Number of frames':<23} = {num_frames:,}")
@@ -397,7 +397,7 @@ class Story:
         VideoMetadata.export_videos_to_metadata_file(videos, video_metadata_file)
         VideoMetadata.export_videos_to_playlist_file(videos, playlist_filename)
 
-        logger.info(f"{colored("Output Files:","light_cyan")}")
+        logger.info(f"{colored('Output Files:','light_cyan')}")
         logger.info(f"  - config file:        {config_filename}")
         logger.info(f"  - metadata file:      {video_metadata_file}")
         logger.info(f"  - playlist file:      {playlist_filename}")
@@ -421,7 +421,7 @@ class Story:
             output_directory: Directory to save tag files
         """
 
-        logger.info(f"{colored("Tag processing:","light_cyan")}")
+        logger.info(f"{colored('Tag processing:','light_cyan')}")
 
         tag_filename = os.path.join(
             output_directory,
@@ -487,7 +487,7 @@ class Story:
 
         logger.info("")
         logger.info(
-            f"{colored("Story:", "light_yellow")} {colored(self.name, "light_yellow")}"
+            f"{colored('Story:', 'light_yellow')} {colored(self.name, 'light_yellow')}"
         )
 
         # Select relevant videos

@@ -17,46 +17,48 @@ This project has strict version requirements due to visualization dependencies:
 
 The visualization components are specifically designed for Plotly 5.24.1. Using Plotly 6.x or other versions may result in incorrect graph orientations and styling issues.
 
-## General Setup Instructions
+## Install Homebrew, ffmpeg and python3.12
 
-1. Install ffmpeg (required for video processing):
-   ```bash
-   brew install ffmpeg
-   ```
-
-2. Clone the repository
-   ```bash
-   git clone https://github.com/GZ5MCM/EufyVideos.git
-   ```
-
-3. Create virtual environment: `python -m venv myenv`
-3. Activate virtual environment: `source myenv/bin/activate`
-4. Install required libraries: `python -m pip install -r requirements.txt`
-5. Verify installation:
-   ```python
-   from version_config import verify_environment
-   verify_environment(raise_on_error=True)
-   ```
-
-## Specific Instructions for VS Code Installation and Setup
-
-### 1. Install Python using Homebrew
-
-1. Check if python is already installed:
-   ```bash
-   which -a python3
-   ```
-2. Install Python and ffmpeg using [Homebrew](https://mac.install.guide/python/brew) or other [options](https://mac.install.guide/python/install)
-   ```bash
-   brew install python ffmpeg
-   ```
-3. If Homebrew needs to be installed, follow the instructions in https://brew.sh/:
+1. Install Homebrew (instructions in https://brew.sh/):
    ```bash
    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
    ```
-4. Python should now be installed as /opt/homebrew/bin/python3
 
-### 2. Install VS Code and Set Up Command Line Tool
+2. Install ffmpeg using [Homebrew](https://mac.install.guide/python/brew)
+   ```bash
+   brew uninstall --force ffmpeg
+   brew install homebrew-ffmpeg/ffmpeg/ffmpeg
+   ```
+
+3. Install Python 3.12 as /opt/homebrew/bin/python3.12
+   ```bash
+   brew install python@3.12 
+   ```
+
+## Setup Code Repository
+
+1. From inside a python directory, clone the repository
+   ```bash
+   git clone https://github.com/jbouguet/EufyVideos.git
+   ```
+2. A new subfolder "EufyVideos" should now contain the code
+3. Go inside the "EufyVideos" directory containing the code, and create python virtual environment:
+   ```bash
+   /opt/homebrew/bin/python3.12 -m venv myenv
+   ```
+3. Activate virtual environment:
+   ```bash
+   source myenv/bin/activate
+   ```
+3. Install required libraries:
+   ```bash
+   python -m pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+
+## Setup VSCode
+
+### 1. Install VS Code and Set Up Command Line Tool
 
 1. Install VS Code from https://code.visualstudio.com/
 2. Add VS Code to PATH by either:
@@ -72,49 +74,14 @@ The visualization components are specifically designed for Plotly 5.24.1. Using 
    ```bash
    source ~/.zshrc  # or source ~/.bash_profile
    ```
+3. Open VS Code's integrated terminal (View > Terminal)
 
-3. Verify the installation:
-   ```bash
-   which code
-   ```
-
-### 3. Clone the Repository
-1. Open VS Code
-2. Press Cmd+Shift+P to open the Command Palette
-3. Type "Git: Clone" and select it
-4. Enter repository URL: https://github.com/GZ5MCM/EufyVideos.git
-5. Choose a local folder to clone into (e.g. a folder called "python")
-6. Click "Open" when prompted to open the cloned repository
-7. A new subfolder "EufyVideos" should now contain the code
-8. Set VS Code your default Git editor
-   ```bash
-   git config --global core.editor "code --wait"
-   ```
-
-### 4. Set Up Python Environment
-1. Open VS Code's integrated terminal (View > Terminal)
-2. Create a new virtual environment (/opt/homebrew/bin/python3 may have to be replaced by /usr/bin/python3 or /usr/local/bin/python3 depending on how python was initially installed on the system):
-   ```bash
-   /opt/homebrew/bin/python3 -m venv myenv
-   ```
-3. Activate the virtual environment:
-   ```bash
-   source myenv/bin/activate
-   ```
-4. Upgrade pip:
-   ```bash
-   python -m pip install --upgrade pip
-   ```
-5. Install required packages:
-   ```bash
-   python -m pip install -r requirements.txt
-   ```
-6. Select Python Interpreter:
+4. Select Python Interpreter:
    - Press Cmd+Shift+P
    - Type "Python: Select Interpreter"
    - Choose the interpreter from myenv (should be './myenv/bin/python')
 
-### 5. Install VS Code Extensions and Settings
+### 2. Install VS Code Extensions and Settings
 
 1. Make the extension installation script executable:
    ```bash
@@ -143,7 +110,7 @@ The visualization components are specifically designed for Plotly 5.24.1. Using 
 
 4. Restart VS Code to apply all settings
 
-### 6. Setup the Git workflow
+### 3. Setup the Git workflow
 
 1. Install and configure the git:
    ```bash

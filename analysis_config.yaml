@@ -70,15 +70,15 @@ directories:
 
 # Video database configuration
 video_database_list:
-- force_video_directories_scanning: true
+- force_video_directories_scanning: false
   video_metadata_file: !join [*root_database, "/archive_000.csv"]
   video_directories: *archive_000
 
-- force_video_directories_scanning: true
+- force_video_directories_scanning: false
   video_metadata_file: !join [*root_database, "/archive_001.csv"]
   video_directories: *archive_001
 
-- force_video_directories_scanning: true
+- force_video_directories_scanning: false
   video_metadata_file: !join [*root_database, "/archive_002.csv"]
   video_directories: *archive_002
 
