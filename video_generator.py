@@ -470,7 +470,7 @@ def _create_one_fragment(
 
 
 def _create_fragments(
-    videos: List[VideoMetadata | None],
+    videos: List[Optional[VideoMetadata]],
     input_fragments: InputFragments,
     fragment_directory: str,
     output_width: int,
@@ -519,7 +519,7 @@ def _concatenate_fragments(
     output_file: str,
     target_fps: int,
     vcodec: str = "libx264",
-) -> VideoMetadata | None:
+) -> Optional[VideoMetadata]:
     """Concatenate processed fragments into final output video."""
     import ffmpeg
 
@@ -581,9 +581,9 @@ class VideoGenerator:
 
     def run(
         self,
-        videos: Union[VideoMetadata, List[VideoMetadata | None]] | None,
+        videos: Optional[Union[VideoMetadata, List[Optional[VideoMetadata]]]],
         output_file: str,
-    ) -> VideoMetadata | None:
+    ) -> Optional[VideoMetadata]:
         """
         Generate a composite video from multiple input videos.
 
@@ -598,9 +598,9 @@ class VideoGenerator:
 
     def _create_from_fragments(
         self,
-        videos: Union[VideoMetadata, List[VideoMetadata | None]] | None,
+        videos: Optional[Union[VideoMetadata, List[Optional[VideoMetadata]]]],
         output_file: str,
-    ) -> VideoMetadata | None:
+    ) -> Optional[VideoMetadata]:
         """
         Internal method to create video from fragments.
 
@@ -718,7 +718,7 @@ def robust_average_iqr(data: List[float]) -> Optional[float]:
     return sum(filtered_data) / len(filtered_data)
 
 
-def compute_default_fps(videos: List[VideoMetadata | None]) -> int:
+def compute_default_fps(videos: List[Optional[VideoMetadata]]) -> int:
     """
     Compute default FPS based on input videos.
     """
@@ -733,7 +733,7 @@ def compute_default_fps(videos: List[VideoMetadata | None]) -> int:
 
 
 def compute_default_width(
-    videos: List[VideoMetadata | None],
+    videos: List[Optional[VideoMetadata]],
     normalized_crop_roi: Optional[Tuple[float, float, float, float]] = None,
 ) -> int:
     """
@@ -804,7 +804,7 @@ if __name__ == "__main__":
         # Define video fragments with specific offsets, durations and rois.
         video_fragments_config = [
             {
-                "video_in": "/Volumes/SSK Drive/record041/T8600P1023450AFB_20250923085351.mp4",
+                "video_in": "/Volumes/SSK Drive/record/Batch041/T8600P1023450AFB_20250923085351.mp4",
                 "video_out": "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/video1.mp4",
                 "offset": 8.0,
                 "duration": 14.0,
@@ -958,4 +958,4 @@ if __name__ == "__main__":
     run_example_2()
     run_example_3()
     run_example_4()
-    run_example_5()
+    #run_example_5()
