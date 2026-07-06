@@ -118,6 +118,74 @@ process_stories: true
 
 stories:
 
+  - name: '2026-06-29 - Weird guy coming'
+    skip: true
+    selectors:
+      - date_regex: '2026-06-29'
+        devices: ['Front Yard', 'Corner Junction', 'Walkway', 'Front Door']
+        time_range:
+            start: '13:05:00'
+            end : '13:10:00'
+
+  - name: '2026-05-03 - Greg car in front of garage'
+    skip: true
+    selectors:
+      - date_regex: '2026-05-03'
+        devices: ['Garage']
+        time_range:
+            start: '23:00:00'
+            end : '23:59:59'
+      - date_regex: '2026-05-04'
+        devices: ['Garage']
+        time_range:
+            start: '00:00:00'
+            end : '06:00:00'
+
+  - name: '2026-04-18 - Greg car in front of garage'
+    skip: true
+    selectors:
+      - date_regex: '2026-04-18'
+        devices: ['Garage']
+        time_range:
+            start: '21:48:00'
+            end : '22:07:00'
+
+  - name: '2026-06-19 - Greg Dog in our property'
+    skip: true
+    selectors:
+      - date_regex: '2026-06-19'
+        devices: ['Front Yard', 'Corner Junction', 'Walkway', 'Garage', 'Back Alleyway', 'Front Door']
+        time_range:
+            start: '22:34:00'
+            end : '22:40:00'
+
+  - name: '2026-06-29 - Greg Dog in our property'
+    skip: true
+    selectors:
+      - date_regex: '2026-06-29'
+        devices: ['Front Yard', 'Corner Junction', 'Walkway', 'Garage', 'Back Alleyway', 'Front Door']
+        time_range:
+            start: '20:00:00'
+            end : '20:03:00'
+
+  - name: '2026-06-05 - Greg Dog in our property'
+    skip: true
+    selectors:
+      - date_regex: '2026-06-05'
+        devices: ['Front Yard', 'Corner Junction', 'Walkway', 'Garage', 'Back Alleyway', 'Front Door']
+        time_range:
+            start: '13:00:00'
+            end : '14:00:00'
+
+  - name: '2026-05-05 - Front Yard and Corner Junction - Greg Visiting'
+    skip: true
+    selectors:
+      - date_regex: '2026-05-05'
+        devices: ['Front Yard', 'Corner Junction']
+        time_range:
+            start: '13:35:00'
+            end : '13:40:00'
+
   - name: '2026-04-08 - Back Alleyway - New Person'
     skip: true
     selectors:
