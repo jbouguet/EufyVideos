@@ -1,161 +1,99 @@
 # EufyVideos
 
-Python library providing tools for managing, visualizing, processing and running
-analytics on collections of home security videos captured by a network of Eufy
-security cameras.
+Python library for managing, analyzing, and processing home security video collections from Eufy cameras.
 
-## Version Requirements
+## Requirements
 
-This project has strict version requirements due to visualization dependencies:
+| Dependency | Version |
+|------------|---------|
+| Python | >=3.12, <3.14 (3.12 recommended) |
+| Plotly | ==5.24.1 (Plotly 6.x breaks graph orientations) |
+| Pandas | >=2.2.0, <3.0.0 |
+| ffmpeg | any recent version |
 
-- ffmpeg: Required for video processing
-- Python: >=3.12,<3.14
-- Plotly: ==5.24.1 (strict requirement)
-- Pandas: >=2.2.0,<3.0.0
+## 1. System Setup
 
-### Important Note on Plotly Version
+Install [Homebrew](https://brew.sh/):
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
 
-The visualization components are specifically designed for Plotly 5.24.1. Using Plotly 6.x or other versions may result in incorrect graph orientations and styling issues.
+Install ffmpeg and Python 3.12:
+```bash
+brew install ffmpeg
+brew install python@3.12
+```
 
-## Install Homebrew, ffmpeg and python3.12
+## 2. Project Setup
 
-1. Install Homebrew (instructions in https://brew.sh/):
+Clone the repository and enter the project directory:
+```bash
+git clone https://github.com/jbouguet/EufyVideos.git
+cd EufyVideos
+```
+
+Create and activate a virtual environment:
+```bash
+/opt/homebrew/bin/python3.12 -m venv myenv
+source myenv/bin/activate
+```
+
+Install dependencies:
+```bash
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+Verify the environment:
+```bash
+python -c "from version_config import verify_environment; verify_environment(raise_on_error=True)"
+```
+
+## 3. VS Code Setup
+
+1. Install [VS Code](https://code.visualstudio.com/), then add `code` to PATH: open the Command Palette (`Cmd+Shift+P`), type `shell command`, and select **Shell Command: Install 'code' command in PATH**.
+
+2. Install extensions:
    ```bash
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   chmod +x VSCode/install-extensions.sh && ./VSCode/install-extensions.sh
    ```
 
-2. Install ffmpeg using [Homebrew](https://mac.install.guide/python/brew)
-   ```bash
-   brew uninstall --force ffmpeg
-   brew install homebrew-ffmpeg/ffmpeg/ffmpeg
-   ```
-
-3. Install Python 3.12 as /opt/homebrew/bin/python3.12
-   ```bash
-   brew install python@3.12 
-   ```
-
-## Setup Code Repository
-
-1. From inside a python directory, clone the repository
-   ```bash
-   git clone https://github.com/jbouguet/EufyVideos.git
-   ```
-2. A new subfolder "EufyVideos" should now contain the code
-3. Go inside the "EufyVideos" directory containing the code, and create python virtual environment:
-   ```bash
-   /opt/homebrew/bin/python3.12 -m venv myenv
-   ```
-3. Activate virtual environment:
-   ```bash
-   source myenv/bin/activate
-   ```
-3. Install required libraries:
-   ```bash
-   python -m pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
-
-## Setup VSCode
-
-### 1. Install VS Code and Set Up Command Line Tool
-
-1. Install VS Code from https://code.visualstudio.com/
-2. Add VS Code to PATH by either:
-   - Opening VS Code
-   - Opening Command Palette (Cmd+Shift+P)
-   - Typing "shell command" and selecting "Shell Command: Install 'code' command in PATH"
-
-   Or manually by adding to your shell configuration file (`~/.zshrc` or `~/.bash_profile`):
-   ```bash
-   export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
-   ```
-   Then reload your configuration:
-   ```bash
-   source ~/.zshrc  # or source ~/.bash_profile
-   ```
-3. Open VS Code's integrated terminal (View > Terminal)
-
-4. Select Python Interpreter:
-   - Press Cmd+Shift+P
-   - Type "Python: Select Interpreter"
-   - Choose the interpreter from myenv (should be './myenv/bin/python')
-
-### 2. Install VS Code Extensions and Settings
-
-1. Make the extension installation script executable:
-   ```bash
-   chmod +x VSCode/install-extensions.sh
-   ```
-
-2. Run the installation script:
-   ```bash
-   ./VSCode/install-extensions.sh
-   ```
-   This will install essential extensions including:
-   - Python language support and formatting
-   - AI assistants (Claude, Copilot, Continue)
-   - Jupyter support
-   - Useful utilities and themes
-
-3. Set up VS Code settings by copying the provided configuration:
+3. Copy the workspace settings:
    ```bash
    cp "VSCode/settings.json" "/Users/${USER}/Library/Application Support/Code/User/settings.json"
    ```
-   These settings enable:
-   - Format on save with Black
-   - Python linting
-   - Automatic import organization
-   - Other Python-specific optimizations
 
-4. Restart VS Code to apply all settings
+4. Select the Python interpreter: `Cmd+Shift+P` → **Python: Select Interpreter** → choose `./myenv/bin/python`.
 
-### 3. Setup the Git workflow
+## 4. Git Setup
 
-1. Install and configure the git:
-   ```bash
-   brew install gh
-   ```
-2. Setup GitHub login, with instructions: What account do you want to log into? == GitHub.com; What is your preferred protocol for Git operations? == HTTPS; Authenticate Git with your GitHub credentials? == Yes; How would you like to authenticate GitHub CLI? == Login with a web browser
-   ```bash
-   gh auth login
-   ```
-3. Setup user email and name for commits:
-   ```bash
-   git config --global user.email "email address"
-   git config --global user.name "Name" 
-   ```
-4. Most simple git workflow:
-   ```bash
-   git add .
-   git commit -m "message"
-   git push origin main
-   ```
-5. [cheat-sheet](https://education.github.com/git-cheat-sheet-education.pdf) for the most commonly used git commands.
+```bash
+brew install gh
+gh auth login
+git config --global user.email "your@email.com"
+git config --global user.name "Your Name"
+```
 
-6. Within VCode, you can use the Source Control panel (Ctrl+Shift+G or click the branching icon in the Activity Bar). Complete documentation available [here](https://code.visualstudio.com/docs/sourcecontrol/overview)
+## Quick Start
 
-## Version Compatibility and Common Issues
+All commands run from the `EufyVideos/` directory with the virtual environment active (`source myenv/bin/activate`).
 
-1. Plotly 6.x Compatibility:
-   - The visualization code is not compatible with Plotly 6.x
-   - If you see horizontal instead of vertical bars, check your Plotly version
-   - Solution: `python -m pip install plotly==5.24.1`
+```bash
+# Main analysis pipeline
+python video_analyzer.py --config analysis_config.yaml
 
-2. Python Version:
-   - Python 3.13+ may have type handling differences
-   - Recommended: Use Python 3.12.x
+# Interactive web dashboard (http://localhost:8050)
+python dashboard_interactive.py
 
-3. Pandas Version:
-   - Pandas 2.2.x or higher is required for proper datetime handling
-   - Earlier versions may have date processing issues
+# Static HTML dashboard
+python dashboard.py
 
-4. ffmpeg Issues:
-   - If you encounter "No such file or directory: 'ffprobe'" error, ffmpeg is not installed
-   - Solution: Install ffmpeg using `brew install ffmpeg`
-   - For other video processing issues, ensure ffmpeg is properly installed by running `which ffmpeg` and `which ffprobe`
+# Occupancy model training/inference
+python occupancy.py
+```
 
-5. VS Code Extension Issues:
-   - If extensions fail to install, try installing them manually through VS Code's Extensions panel
-   - For auto-formatting issues, ensure Black is installed in your Python environment: `pip install black`
-   - Check that the Python extension can find your interpreter by running "Python: Select Interpreter" from the Command Palette
+## Troubleshooting
+
+- **`ffprobe` not found**: `brew install ffmpeg`
+- **Wrong Plotly version**: `pip install plotly==5.24.1`
+- **Environment check fails**: re-run the verify command above and fix each reported mismatch

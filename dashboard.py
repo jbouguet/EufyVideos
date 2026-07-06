@@ -26,7 +26,6 @@ Example usage:
     dashboard = Dashboard()
     dashboard.create_graphs_file(videos, 'video_analytics.html')
 """
-from __future__ import annotations
 
 from typing import Dict, List, Optional, Union, cast
 
