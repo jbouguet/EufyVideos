@@ -118,6 +118,58 @@ process_stories: true
 
 stories:
 
+  - name: '2026-07-03 - Backyard Cleanup'
+    skip: true
+    selectors:
+      - date_regex: '2026-07-03'
+        devices: ['Backyard']
+        time_range:
+            start: '16:10:00'
+            end : '17:25:00'
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        offset_in_seconds: 1
+        duration_in_seconds: 5
+      output_video:
+        date_time_label:
+          draw: true
+
+  - name: '2026-07-05 - Corner Junction Cleanup'
+    skip: true
+    selectors:
+      - date_regex: '2026-07-05'
+        devices: ['Corner Junction']
+        time_range:
+            start: '16:00:00'
+            end : '20:30:00'
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        offset_in_seconds: 1
+        duration_in_seconds: 5
+        normalized_crop_roi: [0, 0, 1, 0.5]
+      output_video:
+        date_time_label:
+          draw: true
+
+  - name: '2026-07-05 - Front Yard Cleanup'
+    skip: true
+    selectors:
+      - date_regex: '2026-07-05'
+        devices: ['Front Yard']
+        time_range:
+            start: '16:00:00'
+            end : '20:30:00'
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        offset_in_seconds: 1
+        duration_in_seconds: 5
+      output_video:
+        date_time_label:
+          draw: true
+
   - name: '2026-06-29 - Weird guy coming'
     skip: true
     selectors:
