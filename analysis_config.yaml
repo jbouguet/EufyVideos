@@ -70,6 +70,7 @@ directories:
     - !join [*root_database, "/Batch051"]
     - !join [*root_database, "/Batch052"]
     - !join [*root_database, "/Batch053"]
+    - !join [*root_database, "/Batch054"]
 
   # Daily video archive
   backup: &backup
