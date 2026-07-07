@@ -9,6 +9,7 @@ directories:
   #root_database_archive: &root_database "/Volumes/Eufy Videos/record"
   #root_database_archive: &root_database "/Volumes/Seagate Hub/EufySecurityVideos/EufyVideos/record"
 
+  # 2024 video archive
   archive_000: &archive_000
     - !join [*root_database_archive, "/Batch001"]
     - !join [*root_database_archive, "/Batch002"]
@@ -37,6 +38,7 @@ directories:
     - !join [*root_database_archive, "/Batch025"]
     - !join [*root_database_archive, "/Batch026"]
 
+  # 2025 video archive
   archive_001: &archive_001
     - !join [*root_database_archive, "/Batch027"]
     - !join [*root_database_archive, "/Batch028"]
@@ -59,6 +61,7 @@ directories:
     - !join [*root_database_archive, "/Batch045"]
     - !join [*root_database_archive, "/Batch046"]
 
+  # 2026 video archive
   archive_002: &archive_002
     - !join [*root_database, "/Batch047"]
     - !join [*root_database, "/Batch048"]
@@ -67,6 +70,10 @@ directories:
     - !join [*root_database, "/Batch051"]
     - !join [*root_database, "/Batch052"]
     - !join [*root_database, "/Batch053"]
+
+  # Daily video archive
+  backup: &backup
+    - !join [*root_database, "/backup"]
 
 # Video database configuration
 video_database_list:
@@ -84,7 +91,7 @@ video_database_list:
 
 - force_video_directories_scanning: true
   video_metadata_file: !join [*root_database, "/backup.csv"]
-  video_directories: !join [*root_database, "/backup"]
+  video_directories: *backup
 
 # Tag database files
 tags_database: &tags_dir !join [*root_database, "/tags_database"]
@@ -118,9 +125,19 @@ process_stories: true
 
 stories:
 
-  - name: '2026-07-03 - Backyard Cleanup'
+  - name: '2026-07-03 to 2026-07-05 - Backyard and Front Yard Cleanup'
     skip: true
     selectors:
+      - date_regex: '2026-07-05'
+        devices: ['Front Yard', 'Corner Junction']
+        time_range:
+            start: '16:00:00'
+            end : '20:30:00'
+      - date_regex: '2026-07-05'
+        devices: ['Corner Junction']
+        time_range:
+            start: '16:00:00'
+            end : '20:30:00'
       - date_regex: '2026-07-03'
         devices: ['Backyard']
         time_range:
@@ -131,42 +148,9 @@ stories:
       input_fragments:
         offset_in_seconds: 1
         duration_in_seconds: 5
+        enforce_16_9_aspect_ratio: true
       output_video:
-        date_time_label:
-          draw: true
-
-  - name: '2026-07-05 - Corner Junction Cleanup'
-    skip: true
-    selectors:
-      - date_regex: '2026-07-05'
-        devices: ['Corner Junction']
-        time_range:
-            start: '16:00:00'
-            end : '20:30:00'
-    video_generation: true
-    video_generation_config:
-      input_fragments:
-        offset_in_seconds: 1
-        duration_in_seconds: 5
-        normalized_crop_roi: [0, 0, 1, 0.5]
-      output_video:
-        date_time_label:
-          draw: true
-
-  - name: '2026-07-05 - Front Yard Cleanup'
-    skip: true
-    selectors:
-      - date_regex: '2026-07-05'
-        devices: ['Front Yard']
-        time_range:
-            start: '16:00:00'
-            end : '20:30:00'
-    video_generation: true
-    video_generation_config:
-      input_fragments:
-        offset_in_seconds: 1
-        duration_in_seconds: 5
-      output_video:
+        width: 1280
         date_time_label:
           draw: true
 
@@ -178,10 +162,23 @@ stories:
         time_range:
             start: '13:05:00'
             end : '13:10:00'
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 1280
+        date_time_label:
+          draw: true
 
-  - name: '2026-05-03 - Greg car in front of garage'
+  - name: '2026-04-18 to 2026-05-04 - Greg car in front of garage'
     skip: true
     selectors:
+      - date_regex: '2026-04-18'
+        devices: ['Garage']
+        time_range:
+            start: '21:48:00'
+            end : '22:07:00'
       - date_regex: '2026-05-03'
         devices: ['Garage']
         time_range:
@@ -192,42 +189,41 @@ stories:
         time_range:
             start: '00:00:00'
             end : '06:00:00'
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 1280
+        date_time_label:
+          draw: true
 
-  - name: '2026-04-18 - Greg car in front of garage'
-    skip: true
-    selectors:
-      - date_regex: '2026-04-18'
-        devices: ['Garage']
-        time_range:
-            start: '21:48:00'
-            end : '22:07:00'
-
-  - name: '2026-06-19 - Greg Dog in our property'
-    skip: true
-    selectors:
-      - date_regex: '2026-06-19'
-        devices: ['Front Yard', 'Corner Junction', 'Walkway', 'Garage', 'Back Alleyway', 'Front Door']
-        time_range:
-            start: '22:34:00'
-            end : '22:40:00'
-
-  - name: '2026-06-29 - Greg Dog in our property'
-    skip: true
-    selectors:
-      - date_regex: '2026-06-29'
-        devices: ['Front Yard', 'Corner Junction', 'Walkway', 'Garage', 'Back Alleyway', 'Front Door']
-        time_range:
-            start: '20:00:00'
-            end : '20:03:00'
-
-  - name: '2026-06-05 - Greg Dog in our property'
+  - name: '2026-06-05 to 2026-06-29 - Greg Dogs in our property'
     skip: true
     selectors:
       - date_regex: '2026-06-05'
-        devices: ['Front Yard', 'Corner Junction', 'Walkway', 'Garage', 'Back Alleyway', 'Front Door']
+        devices: ['Front Yard', 'Corner Junction', 'Walkway']
         time_range:
             start: '13:00:00'
             end : '14:00:00'
+      - date_regex: '2026-06-19'
+        devices: ['Front Yard', 'Corner Junction', 'Walkway']
+        time_range:
+            start: '22:34:00'
+            end : '22:40:00'
+      - date_regex: '2026-06-29'
+        devices: ['Front Yard', 'Corner Junction', 'Walkway']
+        time_range:
+            start: '20:00:00'
+            end : '20:03:00'
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 1280
+        date_time_label:
+          draw: true
 
   - name: '2026-05-05 - Front Yard and Corner Junction - Greg Visiting'
     skip: true
@@ -237,6 +233,14 @@ stories:
         time_range:
             start: '13:35:00'
             end : '13:40:00'
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 1280
+        date_time_label:
+          draw: true
 
   - name: '2026-04-08 - Back Alleyway - New Person'
     skip: true
