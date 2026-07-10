@@ -126,6 +126,28 @@ process_stories: true
 
 stories:
 
+  - name: 'Summer 2026'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2026-07-03'
+          end: '2026-07-10'
+
+  - name: '2026-07-08 - Greg Flash Light'
+    skip: false
+    selectors:
+      - date_regex: '2026-07-08'
+        devices: ['Back Alleyway']  
+        time_range:
+            start: '20:50:00'
+            end : '21:15:00'  
+
+  - name: '2026-07-08 - Backyard'
+    skip: true
+    selectors:
+      - date_regex: '2026-07-08'
+        devices: ['Backyard']    
+
   - name: '2026-07-03 to 2026-07-05 - Backyard and Front Yard Cleanup'
     skip: true
     selectors:

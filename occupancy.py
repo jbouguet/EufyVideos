@@ -201,7 +201,7 @@ class Occupancy:
         ("2026-03-05", "2026-03-23", OccupancyStatus.NOT_OCCUPIED),
         ("2026-03-24", "2026-04-12", OccupancyStatus.OCCUPIED),
         ("2026-04-13", "2026-07-02", OccupancyStatus.NOT_OCCUPIED),
-        ("2026-07-03", "2026-07-04", OccupancyStatus.OCCUPIED),
+        ("2026-07-03", "2026-07-10", OccupancyStatus.OCCUPIED),
     ]
 
     def __init__(
