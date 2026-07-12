@@ -14,7 +14,7 @@ from tag_processor import VideoTags
 from termcolor import colored
 from video_database import VideoDatabase, VideoDatabaseList
 from video_metadata import VideoMetadata
-from video_scatter_plots_creator import PlotCreator
+#from video_scatter_plots_creator import PlotCreator
 from yaml_utils import save_to_yaml
 
 logger = create_logger(__name__)
@@ -258,22 +258,21 @@ class VideoAnalyzer:
         os.makedirs(self.config.output_directory, exist_ok=True)
 
         config_filename: str = os.path.join(
-            self.config.output_directory, f"{Config.CONFIG}"
+            self.config.output_directory, f"videos{Config.CONFIG}"
         )
         video_metadata_file: str = os.path.join(
-            self.config.output_directory, Config.METADATA
+            self.config.output_directory, f"videos{Config.METADATA}"
         )
         playlist_filename: str = os.path.join(
-            self.config.output_directory, f"{Config.PLAYLIST}"
+            self.config.output_directory, f"videos{Config.PLAYLIST}"
         )
         graphs_filename: str = os.path.join(
-            self.config.output_directory,
-            f"{Config.GRAPHS}",
+            self.config.output_directory, f"videos{Config.GRAPHS}",
         )
-        scatter_plots_filename: str = os.path.join(
-            self.config.output_directory,
-            f"{Config.SCATTER_PLOTS}",
-        )
+        #scatter_plots_filename: str = os.path.join(
+        #    self.config.output_directory,
+        #    f"_videos{Config.SCATTER_PLOTS}",
+        #)
 
         self.config.to_file(config_filename)
         VideoMetadata.export_videos_to_metadata_file(
@@ -283,14 +282,14 @@ class VideoAnalyzer:
             self.videos_database, playlist_filename
         )
         Dashboard().create_graphs_file(self.videos_database, graphs_filename)
-        PlotCreator.create_graphs_file(self.videos_database, scatter_plots_filename)
+        #PlotCreator.create_graphs_file(self.videos_database, scatter_plots_filename)
 
         logger.info(f"{colored('Output Files:','light_cyan')}")
         logger.info(f"  - config file:        {config_filename}")
         logger.info(f"  - metadata file:      {video_metadata_file}")
         logger.info(f"  - playlist file:      {playlist_filename}")
         logger.info(f"  - graphs file:        {graphs_filename}")
-        logger.info(f"  - scatter plots file: {scatter_plots_filename}")
+        #logger.info(f"  - scatter plots file: {scatter_plots_filename}")
 
     def process_stories(self) -> None:
         if self.config.process_stories and self.config.stories:

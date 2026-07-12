@@ -50,7 +50,7 @@ from tag_visualizer import TagVisualizer, TagVisualizerConfig
 from video_filter import VideoFilter, VideoSelector
 from video_generator import VideoGenerationConfig, VideoGenerator
 from video_metadata import VideoMetadata
-from video_scatter_plots_creator import PlotCreator
+#from video_scatter_plots_creator import PlotCreator
 from yaml_utils import save_to_yaml, set_exclude_from_dict
 
 logger = create_logger(__name__)
@@ -389,9 +389,9 @@ class Story:
             output_directory, f"{self.name}{Config.PLAYLIST}"
         )
         graphs_filename = os.path.join(output_directory, f"{self.name}{Config.GRAPHS}")
-        scatter_plots_filename = os.path.join(
-            output_directory, f"{self.name}{Config.SCATTER_PLOTS}"
-        )
+        #scatter_plots_filename = os.path.join(
+        #    output_directory, f"{self.name}{Config.SCATTER_PLOTS}"
+        #)
         # Generate and save files
         self.to_file(config_filename)
         VideoMetadata.export_videos_to_metadata_file(videos, video_metadata_file)
@@ -404,9 +404,9 @@ class Story:
 
         if len(videos) > 0:
             Dashboard().create_graphs_file(videos, graphs_filename)
-            PlotCreator.create_graphs_file(videos, scatter_plots_filename)
+            #PlotCreator.create_graphs_file(videos, scatter_plots_filename)
             logger.info(f"  - graphs file:        {graphs_filename}")
-            logger.info(f"  - scatter plots file: {scatter_plots_filename}")
+            #logger.info(f"  - scatter plots file: {scatter_plots_filename}")
 
     def process_new_tags(
         self, videos: List[VideoMetadata], output_directory: str

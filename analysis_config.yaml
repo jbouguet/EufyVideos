@@ -71,6 +71,7 @@ directories:
     - !join [*root_database, "/Batch052"]
     - !join [*root_database, "/Batch053"]
     - !join [*root_database, "/Batch054"]
+    - !join [*root_database, "/Batch055"]
 
   # Daily video archive
   backup: &backup
@@ -125,6 +126,27 @@ output_directory: *stories_output
 process_stories: true
 
 stories:
+  - name: '2026-07-10 - Greg Dogs scares Fence guy and JY'
+    skip: false
+    selectors:
+      - date_regex: '2026-07-10'
+        devices: ['Front Yard', 'Corner Junction', 'Garage', 'Back Gate', 'Back Alleyway']
+        time_range:
+            start: '12:32:00'
+            end : '12:38:00'
+      - date_regex: '2026-07-10'
+        devices: ['Front Yard', 'Corner Junction', 'Back Alleyway']
+        time_range:
+            start: '17:55:00'
+            end : '18:04:00'
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 1280
+        date_time_label:
+          draw: true
 
   - name: 'Summer 2026'
     skip: true
@@ -134,7 +156,7 @@ stories:
           end: '2026-07-10'
 
   - name: '2026-07-08 - Greg Flash Light'
-    skip: false
+    skip: true
     selectors:
       - date_regex: '2026-07-08'
         devices: ['Back Alleyway']  

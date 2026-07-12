@@ -160,11 +160,11 @@ class Config:
         ]
 
     # File naming conventions
-    METADATA = "_videos.csv"
-    PLAYLIST = "_videos.m3u"
-    GRAPHS = "_videos.html"
-    CONFIG = "_videos.yaml"
-    MOVIE = "_video.mp4"
+    METADATA = ".csv"
+    PLAYLIST = ".m3u"
+    GRAPHS = ".html"
+    CONFIG = ".yaml"
+    MOVIE = ".mp4"
     FRAGMENTS = "_video_fragments"
     TAGS = "_tags.json"
     MOVIE_TAGS = "_tags.mp4"
