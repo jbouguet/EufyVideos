@@ -126,8 +126,36 @@ output_directory: *stories_output
 process_stories: true
 
 stories:
+
+  - name: '2026-07-08 - Greg Flash Light'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2026-07-08'
+          end: '2026-07-08'
+        devices: ['Back Alleyway']
+        time_range:
+            start: '21:00:00'
+            end : '23:59:59'
+      - date_range:
+          start: '2026-07-09'
+          end: '2026-07-11'
+        devices: ['Back Alleyway']
+        time_range:
+            start: '21:00:00'
+            end : '05:00:00'
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        offset_in_seconds: 0
+        duration_in_seconds: 10
+        normalized_crop_roi: [0.15,0,0.4,0.45]
+      output_video:
+        date_time_label:
+          draw: true
+
   - name: '2026-07-10 - Greg Dogs scares Fence guy and JY'
-    skip: false
+    skip: true
     selectors:
       - date_regex: '2026-07-10'
         devices: ['Front Yard', 'Corner Junction', 'Garage', 'Back Gate', 'Back Alleyway']
@@ -153,7 +181,7 @@ stories:
     selectors:
       - date_range:
           start: '2026-07-03'
-          end: '2026-07-10'
+          end: '2026-07-11'
 
   - name: '2026-07-08 - Greg Flash Light'
     skip: true
