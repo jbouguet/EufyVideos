@@ -127,6 +127,25 @@ process_stories: true
 
 stories:
 
+  - name: '2026-07-12 - Greg Plays with Drone'
+    skip: false
+    selectors:
+      - date_range:
+          start: '2026-07-12'
+          end: '2026-07-12'
+        devices: ['Garage', 'Back Gate']
+        time_range:
+            start: '15:05:00'
+            end : '15:21:00'
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 1280
+        date_time_label:
+          draw: true
+
   - name: '2026-07-08 - Greg Flash Light'
     skip: true
     selectors:
@@ -143,6 +162,13 @@ stories:
         devices: ['Back Alleyway']
         time_range:
             start: '21:00:00'
+            end : '05:00:00'
+      - date_range:
+          start: '2026-07-12'
+          end: '2026-07-12'
+        devices: ['Back Alleyway']
+        time_range:
+            start: '00:00:00'
             end : '05:00:00'
     video_generation: true
     video_generation_config:
