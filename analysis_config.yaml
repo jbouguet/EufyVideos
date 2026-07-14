@@ -127,6 +127,48 @@ process_stories: true
 
 stories:
 
+  - name: 'Summer 2026'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2026-07-03'
+          end: '2026-07-13'
+
+  - name: '2026-07-13 - Greg Dogs in our front yard'
+    skip: true
+    selectors:
+      - date_regex: '2026-07-13'
+        devices: ['Front Yard', 'Corner Junction']
+        time_range:
+            start: '12:05:00'
+            end : '12:12:00'
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 1280
+        date_time_label:
+          draw: true
+
+  - name: '2026-07-12 - Greg Driving Dogs Insane with Drone'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2026-07-12'
+          end: '2026-07-12'
+        devices: ['Back Alleyway']
+        time_range:
+            start: '13:10:00'
+            end : '13:20:00'
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        normalized_crop_roi: [0.0, 0.1, 0.29, 0.66]
+      output_video:
+        date_time_label:
+          draw: true
+  
   - name: '2026-07-12 - Greg Plays with Drone'
     skip: true
     selectors:
@@ -201,13 +243,6 @@ stories:
         width: 1280
         date_time_label:
           draw: true
-
-  - name: 'Summer 2026'
-    skip: true
-    selectors:
-      - date_range:
-          start: '2026-07-03'
-          end: '2026-07-11'
 
   - name: '2026-07-08 - Greg Flash Light'
     skip: true
@@ -793,7 +828,6 @@ stories:
         width: 1600
         date_time_label:
           draw: true
-
 
   - name: 'Front Yard FPs - 2025-04-19'
     skip: true
