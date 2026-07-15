@@ -128,6 +128,40 @@ process_stories: true
 
 stories:
 
+  - name: '2026-07-13 - Garage Gate Build'
+    skip: true
+    selectors:
+      - date_regex: '2026-07-12'
+        devices: ['Backyard']
+        time_range:
+            start: '19:19:00'
+            end : '19:56:00'
+      - date_regex: '2026-07-12'
+        devices: ['Garage']
+        time_range:
+            start: '19:54:00'
+            end : '19:56:00'
+      - date_regex: '2026-07-13'
+        devices: ['Backyard']
+        time_range:
+            start: '17:35:00'
+            end : '18:52:00'
+      - date_regex: '2026-07-13'
+        devices: ['Garage']
+        time_range:
+            start: '18:52:50'
+            end : '18:56:50'
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        enforce_16_9_aspect_ratio: true
+        offset_in_seconds: 0
+        duration_in_seconds: 5
+      output_video:
+        width: 1280
+        date_time_label:
+          draw: true
+
   - name: '2026-07-14 - Greg yelling insanities'
     skip: true
     selectors:
@@ -169,7 +203,7 @@ stories:
     selectors:
       - date_range:
           start: '2026-07-03'
-          end: '2026-07-13'
+          end: '2026-07-15'
 
   - name: '2026-07-13 - Greg Dogs in our front yard'
     skip: true
