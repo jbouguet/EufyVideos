@@ -1,19 +1,71 @@
-# Base directory definitions
+# =============================================================================
+# analysis_config.yaml -- programmatic interface to the EufyVideos pipeline
+# =============================================================================
+#
+# This file is read by `video_analyzer.py` and drives the whole pipeline:
+#
+#   1. `directories` + `video_database_list` describe where the raw .mp4
+#      archives live on disk and assemble them into one master video
+#      database (one metadata row per video, cached to a CSV per archive).
+#   2. `tag_database_files` optionally preloads existing YOLO detection/
+#      tracking results ("tags") and attaches them to the matching videos,
+#      so stories can reuse tags without re-running detection.
+#   3. `stories` is the real interface: each story is a QUERY -- a set of
+#      `selectors` that carve a slice out of the master database (by date,
+#      time, device, filename, duration, weekday, occupancy...) -- plus a
+#      set of ACTIONS to run against that slice:
+#        - tag_processing:       run detection/tracking, write a
+#                                 `*_tags.json` file for the slice
+#        - tag_video_generation: render a video with detection boxes/
+#                                 tracks drawn over the slice
+#        - video_generation:     render a trimmed/cropped/composite
+#                                 highlight video from the slice
+#      A story with no action enabled is just a saved query, useful for
+#      inspecting a slice in the dashboards without generating anything.
+#
+# In short: raw videos in, and every "view" or "highlight reel" wanted out
+# of the database is one more story below -- no Python code changes needed.
+#
+# Run with:
+#   python video_analyzer.py --config analysis_config.yaml [--debug]
+#
+# YAML mechanics used throughout this file:
+#   - `&name` defines an anchor (a reusable value); `*name` references it.
+#   - `!join [a, b, ...]` is a custom tag (JoinPathsLoader in
+#     video_analyzer.py) that concatenates path components with
+#     os.path.join, so anchors can be composed into full paths without
+#     repeating the root directory everywhere.
+#
+# Top-level keys actually read by the loader (AnalysisConfig.from_dict):
+#   video_database_list (required), output_directory (required),
+#   tag_database_files, process_stories, stories.
+# `directories` and `person_recognition` below are NOT read directly by the
+# loader -- they only exist to define anchors that get referenced (via
+# !join / *name) from video_database_list, tag_database_files, and from
+# individual stories' tag_processing_config.
+# =============================================================================
+
+# Anchors for directory roots and archive paths (see note above: this
+# section is not read directly by the loader).
 directories:
-  # Local raw video storage directory used to only store recent videos.
+  # Local raw video storage: holds only the most recent videos.
   root_database_local: &root_database_local "/Users/GZ5MCM/Documents/EufySecurityVideos/record"
 
-  # Output stories are stored locally.
+  # Generated story outputs (highlight videos, tag videos) are written here.
   stories_output: &stories_output "/Users/GZ5MCM/Documents/EufySecurityVideos/stories"
 
-  # Remote raw video storage directory used to store the entire database of historical video (including reecnt vidoes also stored locally).
+  # Remote raw video storage: the full historical archive (recent videos are
+  # also duplicated locally, see root_database_local). Exactly one of these
+  # three should be uncommented, matching whichever drive is mounted.
   root_database_remote: &root_database_remote "/Volumes/SSK Drive/record"
   #root_database_remote: &root_database_remote "/Volumes/Eufy Videos/record"
   #root_database_remote: &root_database_remote "/Volumes/Seagate Hub/EufySecurityVideos/EufyVideos/record"
 
-  # The complete raw video database is split in archives, each covering approximately a year of video collection
-  # Every archive is a set of directories (batches) containing raw .mp4 fideo files.
-  # The last archive, called backup, containes the most recent videos prior to be elevated to a batch once a minimum numnber of videos is reached  (typically 2000)
+  # The full raw video database is split into archives, each covering
+  # roughly one year of collection. Each archive is a list of batch
+  # directories of raw .mp4 files. `backup` holds the newest videos,
+  # pending promotion into a proper batch once enough accumulate
+  # (typically ~2000).
 
   # 2024 video archive
   archive_000: &archive_000
@@ -84,14 +136,19 @@ directories:
   backup: &backup
     - !join [*root_database_local, "/backup"]
 
-# Master Video Database Configuration.
-# Individual archive can be chosen to be included and a re-scan of the content of an archive can be forced by setting
-# force_video_directories_scanning to true if a new batch of videos was recently added to it. If no new videos are added
-# to an archive, it is preferable to keep the default state of this flag to false, to favor loading of the video meta file
-# if it exists. This is particularly important for large archives whose content do not change frequently and would take
-# significant time to scan. After an archive chnage, a single scan is sufficient to generate an updated metadata file.
-# The 'backup' video set is the only exception to this rule. Since it is supposed to be kept 'small' (until promoted to
-# a stable batch), it is recommended to keep force_video_directories_scanning to true for it. 
+# Master video database configuration: each entry loads one archive into
+# the combined videos_database.
+#   video_metadata_file: CSV cache of previously scanned metadata.
+#   video_directories:   the batch directories that make up this archive.
+#   force_video_directories_scanning:
+#     false (default) -> load from video_metadata_file when it exists,
+#       skipping a full directory scan. Preferred for large, stable
+#       archives, since scanning them is slow and their content rarely
+#       changes.
+#     true  -> always rescan video_directories and refresh the CSV cache.
+#       Set this once after adding new batches to an archive, then flip it
+#       back to false. `backup` is the standing exception: it is kept
+#       small and changes daily, so leave it true permanently.
 video_database_list:
 - force_video_directories_scanning: false
   video_metadata_file: !join [*root_database_local, "/archive_000.csv"]
@@ -106,7 +163,13 @@ video_database_list:
   video_metadata_file: !join [*root_database_local, "/backup.csv"]
   video_directories: *backup
 
-# Tag database files.
+# Global tag database: pre-computed detection/tracking results (see
+# tag_processing below) loaded once at startup and attached to their
+# matching videos in videos_database, so any story can consult tags
+# without re-running detection. `person_recognition_tags.json` is the
+# active, merged production set. The commented-out entries are per-fps
+# experiments used to tune num_frames_per_second; they were produced by
+# the stories bracketed by "TAGS DATABASE - START/END" further below.
 tags_database: &tags_dir !join [*root_database_local, "/tags_database"]
 tag_database_files:
 - !join [*tags_dir, "/person_recognition_tags.json"]
@@ -126,15 +189,111 @@ tag_database_files:
 # - !join [*tags_dir, "/2024-11-18 - Backyard Planning_Yolo11x_Track_0.15fps_tags.json"]
 # - !join [*tags_dir, "/T8600P102338033E_20240930085536-T8600P1024260D5E_20241119181809_Yolo11x_Track_0.15fps_tags.json"]
 
-# Person Recognition Database Configuration
+# Person recognition database: shared paths for the person-identification
+# pipeline (crops, CLIP/ReID embeddings, known-identity labels). Referenced
+# via anchors from stories that set enable_person_recognition under
+# tag_processing_config.
 person_recognition:
   database_file: &person_db_file !join [*root_database_local, "/person_recognition/persons.json"]
   embeddings_dir: &embeddings_dir !join [*root_database_local, "/person_recognition/embeddings"]
   crops_dir: &crops_dir !join [*root_database_local, "/person_recognition/crops"]
 
 
-output_directory: *stories_output
-process_stories: true
+output_directory: *stories_output  # where all story outputs are written
+process_stories: true              # master switch; false skips every story regardless of its own `skip` flag
+
+# =============================================================================
+# STORIES -- the query language
+# =============================================================================
+# Each list item is one Story. Most entries below have `skip: true` and are
+# kept as a running log / library of past queries and highlight reels --
+# treat them as examples, not as things that re-run by default. To add a
+# new story, copy the closest example and set `skip: false`.
+#
+# --- selection ---------------------------------------------------------
+#   name (str, required unless skip: true)
+#       Unique label; used to build output filenames.
+#   skip (bool, default false)
+#       If true, the story is not processed at all.
+#   selectors (list of selector blocks; default: match every video)
+#       A video is selected if it matches ANY one selector in the list (OR
+#       across list items); within a single selector, ALL given fields must
+#       match (AND across fields). Selector fields:
+#         devices:        list of device names (see devices.csv)
+#         filenames:      exact video filenames
+#         date_range:     {start, end} 'YYYY-MM-DD', inclusive; either side
+#                         may be omitted for an open-ended range
+#         date_regex:     regex matched against the video's date string --
+#                         use instead of/alongside date_range (both AND'd)
+#                         for non-contiguous dates ("2024-07-04|2024-05-17")
+#                         or recurring patterns ('[0-9]{4}-[0-9]{2}-(1[579])')
+#         time_range:     {start, end} 'HH:MM:SS'. If start > end the range
+#                         wraps past midnight (e.g. 17:00:00 -> 08:00:00
+#                         matches overnight). Either side alone is a simple
+#                         one-sided bound.
+#         duration_range: {min, max} seconds, either side optional
+#         weekdays:       list of lowercase weekday names
+#   occupancy_status (list, default: no filter)
+#       Further restricts the already-selected videos to dates whose
+#       computed occupancy is in this list: 'OCCUPIED', 'NOT_OCCUPIED',
+#       'UNKNOWN' (see occupancy.py).
+#
+# --- actions -------------------------------------------------------------
+#   tag_processing (bool, default false)
+#       Run detection/tracking (tag_processing_config) on the selected
+#       videos and write a `*_tags.json` file for this story. If false and
+#       a tags file already exists on disk for this story, it is loaded
+#       instead of being recomputed.
+#   tag_processing_config:
+#       model:        detector -- any "Yolo10"/"Yolo11" size (n/s/m/l/x),
+#                     optionally suffixed "_Optimized" for batched GPU
+#                     inference (e.g. "Yolo11x", "Yolo11n_Optimized"); also
+#                     "Florence-2"
+#       task:         "Detect" (per frame) or "Track" (adds a persistent
+#                     track_id across frames)
+#       num_frames_per_second: sampling rate for tagging (not playback fps)
+#       conf_threshold:        minimum detection confidence [0-1]
+#       batch_size:            batch size for "_Optimized" models
+#       enable_gpu:            GPU (MPS) acceleration for non-optimized models
+#       enable_person_recognition, person_database_file,
+#       person_embeddings_file, person_crops_dir, person_crop_size,
+#       person_min_confidence, person_min_bbox_area, max_crops_per_track,
+#       embedding_device, embedding_dim, clip_weight, reid_weight,
+#       similarity_threshold, auto_label_confidence, enable_auto_labeling:
+#                     person-recognition tuning (CLIP + ReID embeddings,
+#                     identity matching/auto-labeling)
+#
+#   tag_video_generation (bool, default false)
+#       Render a video with detection boxes/tracks drawn over the selected
+#       videos, using the tags produced/loaded above.
+#   tag_video_generation_config:
+#       output_size:              {width, height} of the rendered video
+#       use_color_from_track_id: color each track distinctly (default true)
+#
+#   video_generation (bool, default false)
+#       Render a trimmed/cropped/composite highlight video from the
+#       selected videos (independent of tagging).
+#   video_generation_config:
+#     input_fragments (per-source-video trim/crop, applied before any
+#                      output_video settings):
+#       offset_in_seconds:         seconds to skip at the start of each clip
+#       duration_in_seconds:       clip length in seconds (default: to the
+#                                  end of the video, so fragment lengths
+#                                  then vary per source video)
+#       enforce_16_9_aspect_ratio: force 16:9 by cropping top/bottom or
+#                                  sides first -- needed when combining
+#                                  devices with different native aspect
+#                                  ratios into one composite
+#       normalized_crop_roi:       [left, top, right, bottom] in [0,1],
+#                                  applied after 16:9 enforcement
+#     output_video:
+#       width:   output width in pixels, height keeps aspect ratio
+#                (default: widest input video)
+#       vcodec:  'h264' (default) or 'h265'/'hevc'
+#       date_time_label:
+#         draw:  overlay a burned-in "YYYY-MM-DD HH:MM:SS" label
+#         fontsize, left_margin, top_margin, border_width: label styling
+# =============================================================================
 
 stories:
 
@@ -1311,6 +1470,9 @@ stories:
           draw: true
 
   # TAGS DATABASE - START
+  # These stories generated the per-fps experiment tag files listed
+  # (commented out) under tag_database_files above, used to tune
+  # num_frames_per_second for detection quality vs. runtime cost.
 
   - name: '2024-11-18 - Backyard Planning - 5 videos'
     skip: true
