@@ -85,11 +85,13 @@ directories:
     - !join [*root_database_local, "/backup"]
 
 # Master Video Database Configuration.
-# Individual archive can be chosen to be included and a re-scan of the content of the batch video directories can be forced
-# if a new batch of videos was recently included (usually applicable to the last archive). It is preferable to keep the
-# default state of this flag to false, to favor loading of the video meta file if it exists. This is particularly important
-# for large archives that do not mutate frequently. A single scan is sufficient to generate a re-usable metadata file.
-# It is recommended to force_video_directories_scanning to true for the last 'backup' video set, since it is kept small. 
+# Individual archive can be chosen to be included and a re-scan of the content of an archive can be forced by setting
+# force_video_directories_scanning to true if a new batch of videos was recently added to it. If no new videos are added
+# to an archive, it is preferable to keep the default state of this flag to false, to favor loading of the video meta file
+# if it exists. This is particularly important for large archives whose content do not change frequently and would take
+# significant time to scan. After an archive chnage, a single scan is sufficient to generate an updated metadata file.
+# The 'backup' video set is the only exception to this rule. Since it is supposed to be kept 'small' (until promoted to
+# a stable batch), it is recommended to keep force_video_directories_scanning to true for it. 
 video_database_list:
 - force_video_directories_scanning: false
   video_metadata_file: !join [*root_database_local, "/archive_000.csv"]
