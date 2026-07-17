@@ -245,10 +245,10 @@ process_stories: true              # master switch; false skips every story rega
 #       a tags file already exists on disk for this story, it is loaded
 #       instead of being recomputed.
 #   tag_processing_config:
-#       model:        detector -- any "Yolo10"/"Yolo11" size (n/s/m/l/x),
+#       model:        detector -- any "Yolo10"/"Yolo11"/"Yolo26" size (n/s/m/l/x),
 #                     optionally suffixed "_Optimized" for batched GPU
-#                     inference (e.g. "Yolo11x", "Yolo11n_Optimized"); also
-#                     "Florence-2"
+#                     inference (e.g. "Yolo11x", "Yolo11n_Optimized",
+#                     "Yolo26x"); also "Florence-2"
 #       task:         "Detect" (per frame) or "Track" (adds a persistent
 #                     track_id across frames)
 #       num_frames_per_second: sampling rate for tagging (not playback fps)
@@ -297,6 +297,47 @@ process_stories: true              # master switch; false skips every story rega
 
 stories:
 
+  - name: '2026-07-16'
+    skip: true
+    selectors:
+      - date_regex: '2026-07-16'
+
+  - name: '2026-07-03 - Backyard Cleaning'
+    skip: true
+    selectors:
+      - date_range:
+          start: '2026-07-03'
+          end: '2026-07-03'
+        time_range:
+          start: '16:23:00'
+          end: '17:10:00'
+        devices: ['Backyard']
+    tag_processing: false
+    tag_processing_config:
+      model: "Yolo26x_Optimized" #"Yolo26x"
+      task: "Track"
+      num_frames_per_second: 5
+      conf_threshold: 0.2
+    tag_video_generation: false
+    tag_video_generation_config:
+      output_size:
+        width: 1600
+        height: 900
+
+  - name: '2026-07-16 - Stolen Trash Can'
+    skip: true
+    selectors:
+      - date_regex: '2026-07-16'
+        devices: ['Garage']
+        time_range:
+            start: '13:28:00'
+            end : '13:59:00'
+
+  - name: 'Summer 2026'
+    skip: true
+    selectors:
+      - date_regex: "2026-(0[7-8])-[0-9]{2}" # Any day in July and August 2026
+
   - name: '2026-07-13 - Garage Gate Build'
     skip: true
     selectors:
@@ -320,6 +361,11 @@ stories:
         time_range:
             start: '18:52:50'
             end : '18:56:50'
+      - date_regex: '2026-07-16'
+        devices: ['Garage', 'Backyard']
+        time_range:
+            start: '17:15:00'
+            end : '18:25:30'
     video_generation: true
     video_generation_config:
       input_fragments:
@@ -366,13 +412,6 @@ stories:
       - date_range:
           start: '2026-07-13'
           end: '2026-07-13'
-
-  - name: 'Summer 2026'
-    skip: true
-    selectors:
-      - date_range:
-          start: '2026-07-03'
-          end: '2026-07-15'
 
   - name: '2026-07-13 - Greg Dogs in our front yard'
     skip: true

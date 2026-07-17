@@ -270,8 +270,7 @@ class VideoAnalyzer:
             self.config.output_directory, f"videos{Config.GRAPHS}",
         )
         #scatter_plots_filename: str = os.path.join(
-        #    self.config.output_directory,
-        #    f"_videos{Config.SCATTER_PLOTS}",
+        #    self.config.output_directory, f"_videos{Config.SCATTER_PLOTS}",
         #)
 
         self.config.to_file(config_filename)

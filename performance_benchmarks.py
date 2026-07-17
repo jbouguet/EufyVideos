@@ -217,35 +217,41 @@ class PerformanceBenchmark:
         
         return results
 
-    def benchmark_different_models(self, 
-                                  video_path: str, 
-                                  num_frames: int = 50) -> Dict[str, BenchmarkResult]:
+    def benchmark_different_models(self,
+                                  video_path: str,
+                                  num_frames: int = 50,
+                                  models: Optional[List[str]] = None,
+                                  task: str = "detect") -> Dict[str, BenchmarkResult]:
         """
-        Benchmark different YOLO model sizes.
-        
+        Benchmark different YOLO models (sizes and/or versions).
+
         Args:
             video_path: Path to test video
             num_frames: Number of frames to process
-            
+            models: List of YOLO model filenames to compare (e.g. ["yolo11n.pt",
+                "yolo26n.pt"]). Defaults to the YOLO11 size sweep.
+            task: 'detect' or 'track'
+
         Returns:
             Dictionary mapping model name to benchmark results
         """
-        models = ["yolo11n.pt", "yolo11s.pt", "yolo11m.pt", "yolo11l.pt", "yolo11x.pt"]
+        if models is None:
+            models = ["yolo11n.pt", "yolo11s.pt", "yolo11m.pt", "yolo11l.pt", "yolo11x.pt"]
         results = {}
-        
-        logger.info(f"Benchmarking different model sizes: {models}")
-        
+
+        logger.info(f"Benchmarking different models: {models}")
+
         for model_name in models:
             logger.info(f"Testing model: {model_name}")
             try:
                 detector = OptimizedYoloObjectDetector(model_name=model_name)
-                result = self.benchmark_detector(detector, video_path, num_frames)
+                result = self.benchmark_detector(detector, video_path, num_frames, task=task)
                 results[model_name] = result
-                
+
             except Exception as e:
                 logger.error(f"Failed to test model {model_name}: {e}")
                 continue
-        
+
         return results
 
     def _log_comparison(self, original: BenchmarkResult, optimized: BenchmarkResult):
@@ -316,24 +322,27 @@ def main():
     parser.add_argument("--compare", action="store_true", help="Compare original vs optimized")
     parser.add_argument("--optimize-batch", action="store_true", help="Find optimal batch size")
     parser.add_argument("--test-models", action="store_true", help="Test different model sizes")
+    parser.add_argument("--models", help="Comma-separated list of model filenames to compare "
+                                          "with --test-models (e.g. yolo11n.pt,yolo26n.pt)")
     parser.add_argument("--output", help="Output file for results")
-    
+
     args = parser.parse_args()
-    
+
     if not os.path.exists(args.video):
         logger.error(f"Video file not found: {args.video}")
         return
-    
+
     benchmark = PerformanceBenchmark()
-    
+
     if args.compare:
         benchmark.compare_detectors(args.video, args.frames)
-    
+
     if args.optimize_batch:
         benchmark.optimize_batch_size(args.video, args.frames)
-    
+
     if args.test_models:
-        benchmark.benchmark_different_models(args.video, args.frames)
+        models = args.models.split(",") if args.models else None
+        benchmark.benchmark_different_models(args.video, args.frames, models=models)
     
     # Generate and print report
     report = benchmark.generate_report()

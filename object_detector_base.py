@@ -98,6 +98,26 @@ class ObjectDetectorFactory:
                 return YoloObjectDetector(
                     model_name="yolo11x.pt", conf_threshold=conf_threshold, enable_gpu=enable_gpu
                 )
+            case Model.YOLO26N.value:
+                return YoloObjectDetector(
+                    model_name="yolo26n.pt", conf_threshold=conf_threshold, enable_gpu=enable_gpu
+                )
+            case Model.YOLO26S.value:
+                return YoloObjectDetector(
+                    model_name="yolo26s.pt", conf_threshold=conf_threshold, enable_gpu=enable_gpu
+                )
+            case Model.YOLO26M.value:
+                return YoloObjectDetector(
+                    model_name="yolo26m.pt", conf_threshold=conf_threshold, enable_gpu=enable_gpu
+                )
+            case Model.YOLO26L.value:
+                return YoloObjectDetector(
+                    model_name="yolo26l.pt", conf_threshold=conf_threshold, enable_gpu=enable_gpu
+                )
+            case Model.YOLO26X.value:
+                return YoloObjectDetector(
+                    model_name="yolo26x.pt", conf_threshold=conf_threshold, enable_gpu=enable_gpu
+                )
 
             # Optimized YOLO detectors with GPU acceleration and batch processing
             case Model.YOLO10N_OPTIMIZED.value:
@@ -157,6 +177,36 @@ class ObjectDetectorFactory:
             case Model.YOLO11X_OPTIMIZED.value:
                 return OptimizedYoloObjectDetector(
                     model_name="yolo11x.pt",
+                    conf_threshold=conf_threshold,
+                    batch_size=batch_size,
+                )
+            case Model.YOLO26N_OPTIMIZED.value:
+                return OptimizedYoloObjectDetector(
+                    model_name="yolo26n.pt",
+                    conf_threshold=conf_threshold,
+                    batch_size=batch_size,
+                )
+            case Model.YOLO26S_OPTIMIZED.value:
+                return OptimizedYoloObjectDetector(
+                    model_name="yolo26s.pt",
+                    conf_threshold=conf_threshold,
+                    batch_size=batch_size,
+                )
+            case Model.YOLO26M_OPTIMIZED.value:
+                return OptimizedYoloObjectDetector(
+                    model_name="yolo26m.pt",
+                    conf_threshold=conf_threshold,
+                    batch_size=batch_size,
+                )
+            case Model.YOLO26L_OPTIMIZED.value:
+                return OptimizedYoloObjectDetector(
+                    model_name="yolo26l.pt",
+                    conf_threshold=conf_threshold,
+                    batch_size=batch_size,
+                )
+            case Model.YOLO26X_OPTIMIZED.value:
+                return OptimizedYoloObjectDetector(
+                    model_name="yolo26x.pt",
                     conf_threshold=conf_threshold,
                     batch_size=batch_size,
                 )

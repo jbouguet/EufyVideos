@@ -38,8 +38,10 @@ class Model(Enum):
     - FLORENCE2: Microsoft's Florence-2 vision model
     - YOLO10*: Various sizes of YOLO v10 models (N=Nano to X=Extra Large)
     - YOLO11*: Various sizes of YOLO v11 models (N=Nano to X=Extra Large)
+    - YOLO26*: Various sizes of YOLO v26 models (N=Nano to X=Extra Large)
     - YOLO10*_OPTIMIZED: GPU-accelerated of YOLO v10 models with batch processing
     - YOLO11*_OPTIMIZED: GPU-accelerated of YOLO v11 models with batch processing
+    - YOLO26*_OPTIMIZED: GPU-accelerated of YOLO v26 models with batch processing
     - TENSORFLOW: Google's TensorFlow-based EfficientDet model [no longer supported]
 
     """
@@ -56,6 +58,11 @@ class Model(Enum):
     YOLO11M = "Yolo11m"
     YOLO11L = "Yolo11l"
     YOLO11X = "Yolo11x"
+    YOLO26N = "Yolo26n"
+    YOLO26S = "Yolo26s"
+    YOLO26M = "Yolo26m"
+    YOLO26L = "Yolo26l"
+    YOLO26X = "Yolo26x"
 
     # Optimized versions with GPU acceleration and batch processing
     YOLO10N_OPTIMIZED = "Yolo10n_Optimized"
@@ -68,6 +75,11 @@ class Model(Enum):
     YOLO11M_OPTIMIZED = "Yolo11m_Optimized"
     YOLO11L_OPTIMIZED = "Yolo11l_Optimized"
     YOLO11X_OPTIMIZED = "Yolo11x_Optimized"
+    YOLO26N_OPTIMIZED = "Yolo26n_Optimized"
+    YOLO26S_OPTIMIZED = "Yolo26s_Optimized"
+    YOLO26M_OPTIMIZED = "Yolo26m_Optimized"
+    YOLO26L_OPTIMIZED = "Yolo26l_Optimized"
+    YOLO26X_OPTIMIZED = "Yolo26x_Optimized"
 
 
 class Task(Enum):

@@ -416,10 +416,12 @@ class OptimizedYoloObjectDetector(ObjectDetector):
                                         "x2": int(x2),
                                         "y2": int(y2),
                                     },
-                                    "track_id": track_id,
-                                    "is_new_track": is_new_track,
                                 }
-                                
+
+                                if track_id is not None:
+                                    detection["track_id"] = track_id
+                                    detection["is_new_track"] = is_new_track
+
                                 all_tracks.append(detection)
                 
                 pbar.update(1)
