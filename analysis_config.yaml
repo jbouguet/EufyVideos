@@ -296,6 +296,23 @@ process_stories: true              # master switch; false skips every story rega
 # =============================================================================
 
 stories:
+  - name: '2026-07-14 - Greg yelling insanities'
+    skip: true
+    selectors:
+      - date_regex: '2026-07-14'
+        time_range:
+            start: '14:55:00'
+            end : '14:57:00'
+      - date_regex: '2026-07-17'
+        time_range:
+            start: '00:20:00'
+            end : '00:22:00'
+    video_generation: true
+    video_generation_config:
+      output_video:
+        width: 1280
+        date_time_label:
+          draw: true
 
   - name: '2026-07-16'
     skip: true
@@ -372,20 +389,6 @@ stories:
         enforce_16_9_aspect_ratio: true
         offset_in_seconds: 0
         duration_in_seconds: 5
-      output_video:
-        width: 1280
-        date_time_label:
-          draw: true
-
-  - name: '2026-07-14 - Greg yelling insanities'
-    skip: true
-    selectors:
-      - date_regex: '2026-07-14'
-        time_range:
-            start: '14:55:00'
-            end : '14:57:00'
-    video_generation: true
-    video_generation_config:
       output_video:
         width: 1280
         date_time_label:
