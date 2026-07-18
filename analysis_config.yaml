@@ -131,6 +131,7 @@ directories:
     - !join [*root_database_local, "/Batch054"]
     - !join [*root_database_local, "/Batch055"]
     - !join [*root_database_local, "/Batch056"]
+    - !join [*root_database_local, "/Batch057"]
 
   # Daily video archive
   backup: &backup
@@ -296,6 +297,24 @@ process_stories: true              # master switch; false skips every story rega
 # =============================================================================
 
 stories:
+  - name: '2026-07-17 - Greg and Elena fighting'
+    skip: false
+    selectors:
+      - date_regex: '2026-07-17'
+        time_range:
+            start: '21:43:00'
+            end : '21:57:00'
+      - date_regex: '2026-07-17'
+        time_range:
+            start: '22:39:00'
+            end : '23:59:59'
+    video_generation: true
+    video_generation_config:
+      output_video:
+        width: 1280
+        date_time_label:
+          draw: true
+
   - name: '2026-07-14 - Greg yelling insanities'
     skip: true
     selectors:
@@ -307,7 +326,7 @@ stories:
         time_range:
             start: '00:20:00'
             end : '00:22:00'
-    video_generation: true
+    video_generation: false
     video_generation_config:
       output_video:
         width: 1280
