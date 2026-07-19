@@ -28,6 +28,17 @@ einops>=0.6.0
 timm>=0.9.0
 google-cloud-videointelligence>=2.11.0
 
+# Audio enhancement (voice isolation / background noise removal)
+# NOTE: deepfilternet/deepfilterlib must be installed separately with --no-deps
+# rather than via this file directly -- their packaging metadata pins
+# numpy<2.0, which conflicts with the numpy>=2.5 this project otherwise
+# requires (scipy/opencv), even though they run correctly against numpy 2.x in
+# practice. See CLAUDE.md "Audio Enhancement Setup" for the full install
+# sequence (also requires a Rust toolchain to build the native extension).
+deepfilternet==0.5.6
+deepfilterlib==0.5.6
+torchcodec>=0.15.0
+
 # Development and testing tools
 packaging>=23.0
 pytest>=7.0.0

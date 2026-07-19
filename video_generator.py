@@ -154,13 +154,29 @@ class OutputVideo:
         width: Target width for the output video (height auto-calculated)
         date_time_label: Configuration for datetime label rendering
         vcodec: Video codec to use ('h264' or 'h265')
+        enhance_audio: If True, run the final audio track through DeepFilterNet
+            (see audio_enhancer.py) to isolate speech and remove background
+            noise. Requires the optional DeepFilterNet dependency; see
+            CLAUDE.md "Audio Enhancement Setup". Video stream is unaffected.
+        audio_atten_lim_db: Caps how much noise DeepFilterNet may remove, in dB.
+            None (default) applies unlimited suppression, which can sound
+            over-processed. Lower values (e.g. 6-12) blend back more of the
+            original signal for a more conservative result; higher values
+            (30+) converge back to unlimited suppression. Only used when
+            enhance_audio is True.
+        audio_post_filter: Enable DeepFilterNet's post-filter, an extra pass
+            that further reduces residual noise at a small cost to speech
+            quality -- i.e. it makes enhancement more aggressive, not less.
+            Only used when enhance_audio is True.
 
     Example:
         ```python
         output = OutputVideo(
             width=1920,
             date_time_label=DateTimeLabel(),
-            vcodec="h264"
+            vcodec="h264",
+            enhance_audio=True,
+            audio_atten_lim_db=12.0,
         )
         ```
     """
@@ -170,6 +186,9 @@ class OutputVideo:
         default_factory=DateTimeLabel, metadata={"exclude_from_dict": True}
     )
     vcodec: str = field(default="h264")  # Default to h264, never None
+    enhance_audio: bool = False
+    audio_atten_lim_db: Optional[float] = None
+    audio_post_filter: bool = False
 
     def __post_init__(self):
         """Ensure vcodec is a valid string."""
@@ -193,6 +212,9 @@ class OutputVideo:
                 date_time_label_dict=output_video_dict.get("date_time_label", {})
             ),
             vcodec=str(output_video_dict.get("vcodec", "h264")),
+            enhance_audio=output_video_dict.get("enhance_audio", False),
+            audio_atten_lim_db=output_video_dict.get("audio_atten_lim_db"),
+            audio_post_filter=output_video_dict.get("audio_post_filter", False),
         )
 
 
@@ -270,10 +292,7 @@ def _extract_video_and_audio_streams(
     # Process audio stream if available
     audio_stream = None
     try:
-        audio_stream = (
-            input_stream["a"]
-            .filter("asetpts", "PTS-STARTPTS")
-            .filter("aresample", 48000)
+        audio_stream = (input_stream["a"].filter("asetpts", "PTS-STARTPTS").filter("aresample", 48000)
         )
     except (AttributeError, TypeError) as e:
         logger.warning(
@@ -651,8 +670,58 @@ class VideoGenerator:
             target_fps=target_fps,
             vcodec=vcodec,
         )
+
+        if video is not None and self.config.output_video.enhance_audio:
+            video = _enhance_audio_track(
+                video=video,
+                fragment_directory=fragment_directory,
+                atten_lim_db=self.config.output_video.audio_atten_lim_db,
+                post_filter=self.config.output_video.audio_post_filter,
+            )
+
         delete_fragment_directory(directory=fragment_directory)
         return video
+
+
+def _enhance_audio_track(
+    video: VideoMetadata,
+    fragment_directory: str,
+    atten_lim_db: Optional[float] = None,
+    post_filter: bool = False,
+) -> VideoMetadata:
+    """
+    Replace video's audio track in place with a DeepFilterNet-enhanced version
+    that isolates speech and removes background noise. The video stream is
+    untouched. Falls back to the original, unenhanced video (with a logged
+    error) if enhancement fails, e.g. because DeepFilterNet is not installed.
+    """
+    import shutil
+
+    from audio_enhancer import AudioEnhancementConfig, AudioEnhancer
+
+    enhanced_file = os.path.join(
+        fragment_directory, f"enhanced_audio_{uuid.uuid4().hex[:8]}.mp4"
+    )
+    try:
+        enhancer = AudioEnhancer(
+            AudioEnhancementConfig(atten_lim_db=atten_lim_db, post_filter=post_filter)
+        )
+        result = enhancer.enhance_video(
+            input_video_file=video.full_path, output_video_file=enhanced_file
+        )
+    except Exception as e:
+        logger.error(f"Audio enhancement failed for {video.full_path}: {str(e)}")
+        return video
+
+    if result is None:
+        logger.warning(
+            f"Audio enhancement produced no output for {video.full_path} "
+            "(no audio stream?); keeping original audio"
+        )
+        return video
+
+    shutil.move(enhanced_file, video.full_path)
+    return VideoMetadata(full_path=video.full_path)
 
 
 def delete_fragment_directory(directory: str) -> None:

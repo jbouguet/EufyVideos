@@ -294,6 +294,24 @@ process_stories: true              # master switch; false skips every story rega
 #       date_time_label:
 #         draw:  overlay a burned-in "YYYY-MM-DD HH:MM:SS" label
 #         fontsize, left_margin, top_margin, border_width: label styling
+#       enhance_audio: run the final audio track through DeepFilterNet to
+#                      isolate speech and remove background noise (default:
+#                      false). Requires the optional DeepFilterNet dependency;
+#                      see CLAUDE.md "Audio Enhancement Setup". Video stream
+#                      is unaffected; falls back to the original audio (with
+#                      a logged error) if the dependency isn't installed.
+#       audio_atten_lim_db: caps how much noise DeepFilterNet may remove, in
+#                      dB (default: none, i.e. unlimited suppression, which
+#                      can sound over-processed). Lower values (e.g. 6-12)
+#                      blend back more of the original signal for a gentler,
+#                      more conservative result; higher values (30+) converge
+#                      back to unlimited suppression. Only used when
+#                      enhance_audio is true.
+#       audio_post_filter: enable DeepFilterNet's post-filter, an extra pass
+#                      that further reduces residual noise at a small cost to
+#                      speech quality -- i.e. it makes enhancement MORE
+#                      aggressive, not less (default: false). Only used when
+#                      enhance_audio is true.
 # =============================================================================
 
 stories:
@@ -314,6 +332,8 @@ stories:
         width: 1280
         date_time_label:
           draw: true
+        enhance_audio: true
+        audio_atten_lim_db: 6.0  # moderate start: cap suppression to keep most of the signal
 
   - name: '2026-07-14 - Greg yelling insanities'
     skip: true

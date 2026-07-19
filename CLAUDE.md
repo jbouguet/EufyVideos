@@ -15,6 +15,26 @@ Python library for managing, analyzing, and processing home security video colle
 - Install deps: `pip install -r requirements.txt`
 - Verify: `python -c "from version_config import verify_environment; verify_environment(raise_on_error=True)"`
 
+### Audio Enhancement Setup (DeepFilterNet)
+
+Optional dependency used by `audio_enhancer.py` to isolate human speech and remove background noise from video audio tracks. Requires a separate install sequence — a plain `pip install -r requirements.txt` will not set this up correctly:
+
+```bash
+# 1. Install a Rust toolchain (one-time; needed to build DeepFilterNet's native extension)
+brew install rust
+
+# 2. Install DeepFilterNet without letting pip touch this project's numpy/torch versions.
+#    Its packaging metadata pins numpy<2.0, which conflicts with the numpy>=2.5 this
+#    project otherwise requires (scipy/opencv), even though it runs correctly against
+#    numpy 2.x in practice.
+pip install --no-deps deepfilternet deepfilterlib
+
+# 3. Install torchcodec, the backend torchaudio's load()/save() now require.
+pip install torchcodec
+```
+
+`audio_enhancer.py` also patches around two torchaudio APIs that DeepFilterNet 0.5.6 still targets but that were removed from modern torchaudio (`torchaudio.backend.common.AudioMetaData`, `torchaudio.info`). The patch is applied automatically on first use and is a no-op if those APIs are already present (e.g. with an older torchaudio).
+
 ## Running Tests
 
 ```bash
@@ -83,7 +103,7 @@ analysis_config.yaml
 
 **Visualization**: `video_data_aggregator.py` (temporal aggregation into daily/hourly DataFrames), `video_graph_creator.py` / `video_scatter_plots_creator.py` (Plotly graphs), `dashboard.py` (static HTML), `dashboard_interactive.py` (Dash web app)
 
-**Video Generation**: `video_generator.py` (`VideoGenerator` with `InputFragments`/`OutputVideo` configs for trimming, cropping, scaling, timestamp overlay), `story_creator.py` (`Story` class orchestrating the full workflow from YAML config)
+**Video Generation**: `video_generator.py` (`VideoGenerator` with `InputFragments`/`OutputVideo` configs for trimming, cropping, scaling, timestamp overlay), `story_creator.py` (`Story` class orchestrating the full workflow from YAML config), `audio_enhancer.py` (`AudioEnhancer` — optional DeepFilterNet-based post-process that takes a `VideoGenerator` output mp4 and produces a copy with the audio track denoised/voice-isolated; video stream is untouched)
 
 **Occupancy**: `occupancy.py` — three modes: `CALENDAR` (manual), `HEURISTIC` (activity thresholds), `ML_MODEL` (Decision Tree trained on daily activity features, saved as `occupancy_model.pkl`)
 
