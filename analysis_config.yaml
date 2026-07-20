@@ -315,10 +315,15 @@ process_stories: true              # master switch; false skips every story rega
 # =============================================================================
 
 stories:
-  - name: '2026-07-17 - Greg and Elena fighting'
-    skip: false
+  - name: 'Summer 2026'
+    skip: true
     selectors:
-      - date_regex: '2026-07-17'
+      - date_regex: "2026-(0[7-8])-[0-9]{2}" # Any day in July and August 2026
+
+  - name: '2026-07-17 - Greg and Elena fighting'
+    skip: true
+    selectors:
+      - date_regsex: '2026-07-17'
         time_range:
             start: '21:43:00'
             end : '21:57:00'
@@ -388,11 +393,6 @@ stories:
         time_range:
             start: '13:28:00'
             end : '13:59:00'
-
-  - name: 'Summer 2026'
-    skip: true
-    selectors:
-      - date_regex: "2026-(0[7-8])-[0-9]{2}" # Any day in July and August 2026
 
   - name: '2026-07-13 - Garage Gate Build'
     skip: true

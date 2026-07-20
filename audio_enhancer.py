@@ -297,9 +297,9 @@ if __name__ == "__main__":
             "human speech and suppressing background noise."
         )
         input_video = (
-            "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/video_merged_sc.mp4"
+            "/Users/GZ5MCM/Documents/EufySecurityVideos/record/Batch057/T8600P1024260D5E_20260717215348.mp4"
         )
-        output_video = "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/video_merged_sc_enhanced.mp4"
+        output_video = "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/T8600P1024260D5E_20260717215348_enhanced.mp4"
 
         enhancer = AudioEnhancer(AudioEnhancementConfig(atten_lim_db=20.0))
         result = enhancer.enhance_video(
@@ -307,4 +307,52 @@ if __name__ == "__main__":
         )
         logger.info(f"Enhanced video written to: {result}")
 
-    run_example_1()
+    def run_example_2():
+        logger.info(
+            "EXAMPLE 2: Enhance a batch of videos across a range of atten_lim_db "
+            "values, from minimal to maximal noise suppression, to compare results. "
+            "The DeepFilterNet model is loaded once and each video's audio is "
+            "extracted once, then reused across atten_lim_db values, since "
+            "neither depends on that parameter."
+        )
+        input_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/record/Batch057/"
+        output_dir = "/Users/GZ5MCM/Documents/EufySecurityVideos/stories"
+        input_videos = [
+            "T8600P1023450AFB_20260717215240.mp4",
+            "T8600P1024260D5E_20260717215348.mp4",
+            "T8600P1023450AFB_20260717215451.mp4",
+        ]
+        atten_lim_db_values = [0.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 40.0, 50.0]
+
+        enhancer = AudioEnhancer(AudioEnhancementConfig())
+        enhancer._load_model()
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            for input_video_name in input_videos:
+                input_video = os.path.join(input_dir, input_video_name)
+                video_basename, _ = os.path.splitext(input_video_name)
+
+                raw_audio_file = os.path.join(tmp_dir, f"{video_basename}_raw.wav")
+                if not enhancer._extract_audio(input_video, raw_audio_file):
+                    logger.error(f"No audio stream found in {input_video}")
+                    continue
+
+                for atten_lim_db in atten_lim_db_values:
+                    enhancer.config.atten_lim_db = atten_lim_db
+                    enhanced_audio_file = os.path.join(
+                        tmp_dir, f"{video_basename}_atten{int(atten_lim_db)}db.wav"
+                    )
+                    enhancer.enhance_audio_file(raw_audio_file, enhanced_audio_file)
+
+                    output_video = os.path.join(
+                        output_dir,
+                        f"{video_basename}_atten{int(atten_lim_db)}db.mp4",
+                    )
+                    enhancer._mux_video_with_audio(
+                        video_file=input_video,
+                        audio_file=enhanced_audio_file,
+                        output_file=output_video,
+                    )
+                    logger.info(f"Enhanced video written to: {output_video}")
+
+    run_example_2()
