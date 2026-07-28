@@ -133,6 +133,7 @@ directories:
     - !join [*root_database_local, "/Batch056"]
     - !join [*root_database_local, "/Batch057"]
     - !join [*root_database_local, "/Batch058"]
+    - !join [*root_database_local, "/Batch059"]
 
   # Daily video archive
   backup: &backup
