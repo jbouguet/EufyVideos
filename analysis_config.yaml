@@ -134,6 +134,8 @@ directories:
     - !join [*root_database_local, "/Batch057"]
     - !join [*root_database_local, "/Batch058"]
     - !join [*root_database_local, "/Batch059"]
+    - !join [*root_database_local, "/Batch060"]
+    - !join [*root_database_local, "/Batch061"]
 
   # Daily video archive
   backup: &backup
@@ -322,14 +324,100 @@ stories:
     selectors:
       - date_regex: "2026-(0[7-8])-[0-9]{2}" # Any day in July and August 2026
 
-  - name: '2026-07-25 - Audi Wash'
+  - name: '2026-08-02 - Wolly Gate Detector Installation'
     skip: true
     selectors:
-      - date_regex: '2026-07-25'
+      - date_regex: '2026-08-02'
+        devices: ['Garage', 'Backyard']
         time_range:
-          start: '09:13:00'
-          end: '10:50:00'
-        devices: ['Garage', 'Back Gate', 'Backyard']
+          start: '18:08:00'
+          end: '19:24:00'
+
+  - name: '2026-08-01 - Side Gate and Back Door unlocked'
+    skip: true
+    selectors:
+      - date_regex: '2026-08-01'
+        devices: ['Garage', 'Backyard']
+        time_range:
+          start: '14:01:00'
+          end: '14:07:00'
+      - date_regex: '2026-08-01'
+        devices: ['Backyard', 'Garage']
+        time_range:
+          start: '22:20:00'
+          end: '23:59:59'
+    video_generation: true
+    video_generation_config:
+      input_fragments:
+        enforce_16_9_aspect_ratio: true
+      output_video:
+        width: 640
+        date_time_label:
+          draw: true
+
+  - name: '2026-07-30 - Green Bin Replacement'
+    skip: true
+    selectors:
+      - date_regex: '2026-07-30'
+        devices: ['Garage']
+        time_range:
+          start: '10:19:00'
+          end: '10:21:00'
+      - date_regex: '2026-07-30'
+        devices: ['Garage']
+        time_range:
+          start: '16:39:00'
+          end: '16:41:00'
+      - date_regex: '2026-07-30'
+        devices: ['Garage']
+        time_range:
+          start: '16:56:00'
+          end: '16:57:00'
+      - date_regex: '2026-07-30'
+        devices: ['Backyard']
+        time_range:
+          start: '16:56:00'
+          end: '16:57:00'
+      - date_regex: '2026-07-30'
+        devices: ['Backyard']
+        time_range:
+          start: '17:45:00'
+          end: '18:00:00'
+
+  - name: '2026-07-30 - Recycling Bin Misplacement'
+    skip: true
+    selectors:
+      - date_regex: '2026-07-30'
+        devices: ['Garage']
+        time_range:
+          start: '14:38:00'
+          end: '14:45:00'
+
+  - name: '2026-07-30 - Police taking photo of Greg trash'
+    skip: true
+    selectors:
+      - date_regex: '2026-07-30'
+        devices: ['Garage']
+        time_range:
+          start: '16:42:00'
+          end: '16:45:00'
+
+  - name: '2026-07-30'
+    skip: true
+    selectors:
+      - date_regex: '2026-07-30'
+
+  - name: '2026-07-30 - Garage'
+    skip: true
+    selectors:
+      - date_regex: '2026-07-30'
+        devices: ['Garage']
+
+  - name: '2026-07-29 - Front Yard'
+    skip: true
+    selectors:
+      - date_regex: '2026-07-29'
+        devices: ['Front Yard']
 
   - name: '2026-07-22 - Garage Door Replacement'
     skip: true
@@ -349,6 +437,29 @@ stories:
           start: '09:12:00'
           end: '12:53:00'
         devices: ['Backyard']
+      - date_regex: '2026-07-28'
+        time_range:
+          start: '10:18:00'
+          end: '12:53:00'
+        devices: ['Backyard']
+
+  - name: '2026-07-25 - Audi Wash'
+    skip: true
+    selectors:
+      - date_regex: '2026-07-25'
+        time_range:
+          start: '09:13:00'
+          end: '10:50:00'
+        devices: ['Garage', 'Back Gate', 'Backyard']
+
+  - name: '2026-07-27 - New Fence'
+    skip: true
+    selectors:
+      - date_regex: '2026-07-27'
+        time_range:
+          start: '08:00:00'
+          end: '21:00:00'
+        devices: ['Front Yard', 'Corner Junction', 'Walkway', 'Front Door']
 
   - name: '2026-07-23'
     skip: true
