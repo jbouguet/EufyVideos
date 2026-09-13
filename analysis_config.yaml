@@ -325,6 +325,19 @@ process_stories: true              # master switch; false skips every story rega
 # =============================================================================
 
 stories:
+  - name: '2026-08-xx or 2026-09-xx'
+    skip: false
+    selectors:
+      - date_regex: "2026-0[8-9]-[0-9]{2}" # Any day in August or September 2026
+  - name: '2026-09-12 - New Lock - Vinyle Cover - Car Wash'
+    skip: false
+    selectors:
+      - date_regex: "2026-09-12"
+  - name: '2026-09-10 - Front Yard Trigger on Vehicles'
+    skip: false
+    selectors:
+      - date_regex: "2026-09-10"
+        devices: ['Front Yard']
   - name: '2026-09-07 - New Wolly Prostitute'
     skip: true
     selectors:
@@ -338,17 +351,6 @@ stories:
         time_range:
             start: '00:00:00'
             end : '05:35:00'
-    video_generation: false
-    video_generation_config:
-      input_fragments:
-        normalized_crop_roi: [0.0, 0.1, 0.29, 0.66]
-      output_video:
-        date_time_label:
-          draw: true
-  - name: '2026-08-xx or 2026-09-xx'
-    skip: false
-    selectors:
-      - date_regex: "2026-0[8-9]-[0-9]{2}" # Any day in August or September 2026
   - name: '2026-08-19 - Greg Almost-Arrest'
     skip: true
     selectors:
