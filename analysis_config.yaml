@@ -143,6 +143,8 @@ directories:
     - !join [*root_database_local, "/Batch066"]
     - !join [*root_database_local, "/Batch067"]
     - !join [*root_database_local, "/Batch068"]
+    - !join [*root_database_local, "/Batch069"]
+    - !join [*root_database_local, "/Batch070"]
 
   # Daily video archive
   backup: &backup
@@ -330,6 +332,42 @@ stories:
     skip: false
     selectors:
       - date_regex: "2026-0[8-9]-[0-9]{2}" # Any day in August or September 2026
+      - date_regex: "2026-10-[0-9]{2}" # Any day in October 2026
+  - name: '2026-09-22 - Back Alleyway'
+    skip: false
+    selectors:
+      - date_regex: "2026-09-22" 
+        devices: ['Back Alleyway']
+  - name: 'Font Yard at 16:40'
+    skip: true
+    selectors:
+      - time_range:
+          start: '16:40:00'
+          end: '16:44:59'
+        devices: ['Front Yard']
+  - name: 'Backyard at 10:15'
+    skip: true
+    selectors:
+      - time_range:
+          start: '10:15:00'
+          end: '10:19:59'
+        devices: ['Backyard']
+  - name: '2026-09-21 - Greg car towed'
+    skip: true
+    selectors:
+      - date_regex: "2026-09-21"
+        time_range:
+          start: '08:20:00'
+          end: '08:40:00'
+        devices: ['Front Yard']
+  - name: '2026-09-20 - Crepe Party With Indy Neighbors'
+    skip: true
+    selectors:
+      - date_regex: "2026-09-20"
+        time_range:
+          start: '12:00:00'
+          end: '17:00:00'
+        devices: ['Front Yard','Corner Junction', 'Walkway', 'Front Door', 'Gateway', 'Backyard']
   - name: '2026-09-16 - Wolly cat stuck in backyard and freed'
     skip: true
     selectors:
