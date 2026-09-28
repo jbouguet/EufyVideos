@@ -532,5 +532,9 @@ class Story:
                     f"(each cropped from offset to end of original video)."
                 )
             video_generator = VideoGenerator(self.video_generation_config)
-            video_generator.run(videos, video_file)
-            logger.info(f"Video saved to {video_file}")
+            logger.info("Input videos used for video generation:")
+            for input_video in videos:
+                logger.info(input_video)
+            video_generated = video_generator.run(videos, video_file)
+            logger.info(f"Video saved to {video_file} with properties:")
+            logger.info(video_generated)

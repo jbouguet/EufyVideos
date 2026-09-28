@@ -145,6 +145,7 @@ directories:
     - !join [*root_database_local, "/Batch068"]
     - !join [*root_database_local, "/Batch069"]
     - !join [*root_database_local, "/Batch070"]
+    - !join [*root_database_local, "/Batch071"]
 
   # Daily video archive
   backup: &backup
@@ -333,8 +334,73 @@ stories:
     selectors:
       - date_regex: "2026-0[8-9]-[0-9]{2}" # Any day in August or September 2026
       - date_regex: "2026-10-[0-9]{2}" # Any day in October 2026
-  - name: '2026-09-22 - Back Alleyway'
+  - name: '2026-09-27 - Jeanne calls 911 on Greg'
     skip: false
+    selectors:
+      - date_regex: "2026-09-27" 
+        time_range:
+          start: '17:40:00'
+          end: '17:50:00'
+  - name: '2026-09-27 - Greg plants treee'
+    skip: false
+    selectors:
+      - date_regex: "2026-09-27" 
+        time_range:
+          start: '16:31:00'
+          end: '16:35:00'
+        devices: ['Back Alleyway']
+  - name: '2026-09-24 - Sexy Rosie with stray dog and Greg water cleaning'
+    skip: false
+    selectors:
+      - date_regex: "2026-09-24" 
+        time_range:
+          start: '15:59:00'
+          end: '19:00:00'
+        devices: ['Back Alleyway']
+  - name: '2026-09-22 - Nasty Trash'
+    skip: false
+    selectors:
+      - date_regex: "2026-09-22" 
+        time_range:
+          start: '08:27:40'
+          end: '08:28:00'
+        devices: ['Back Alleyway']
+      - date_regex: "2026-09-22" 
+        time_range:
+          start: '17:52:57'
+          end: '17:53:00'
+        devices: ['Back Alleyway']
+    video_generation: false
+    video_generation_config:
+      input_fragments:
+        normalized_crop_roi: [0.0, 0.1, 0.29, 0.66]
+      output_video:
+        width: 668
+        date_time_label:
+          draw: true
+  - name: '2026-09-22 - Rosie and Black Widow cleaning'
+    skip: false
+    selectors:
+      - date_regex: "2026-09-22" 
+        time_range:
+          start: '08:27:00'
+          end: '09:30:00'
+        devices: ['Back Alleyway']
+      - date_regex: "2026-09-22" 
+        time_range:
+          start: '17:41:00'
+          end: '17:53:00'
+        devices: ['Back Alleyway']
+  - name: '2026-09-22 - Black Widow Rosie and Greg with Kevin the dog'
+    skip: true
+    selectors:
+      - date_regex: "2026-09-22"
+        time_range:
+          start: '17:54:00'
+          end: '18:15:00'
+        devices: ['Back Alleyway']
+  - name: '2026-09-22 - Back Alleyway'
+    skip: true
     selectors:
       - date_regex: "2026-09-22" 
         devices: ['Back Alleyway']

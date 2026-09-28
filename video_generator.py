@@ -969,38 +969,52 @@ if __name__ == "__main__":
         logger.info(video_h265_meta)
 
     def run_example_5():
-        logger.info("*** EXAMPLE 5: Generate drug deal video composite.")
+        logger.info("*** EXAMPLE 5: Generate trash exchange video composite.")
 
-        # Define video fragments with specific offsets, durations and rois.
+        video1_hevc: str = (
+            "/Users/GZ5MCM/Documents/EufySecurityVideos/record/Batch070/T8600P1023450AFB_20260922082740.mp4"
+        )
+        video2_hevc: str = (
+            "/Users/GZ5MCM/Documents/EufySecurityVideos/record/Batch070/T8600P1023450AFB_20260922175257.mp4"
+        )
+
+        # Try to re-encode the input videos
+        video1_h264: str = (
+            "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/T8600P1023450AFB_20260922082740_h264.mp4"
+        )
+        video2_h264: str = (
+            "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/T8600P1023450AFB_20260922175257_h264.mp4"
+        )
+        logger.info(VideoGenerator().run(VideoMetadata(full_path=video1_hevc), video1_h264))
+        logger.info(VideoGenerator().run(VideoMetadata(full_path=video2_hevc), video2_h264))
+
+        # Commit a common output width and roi for all fragments
+        roi = [0.0, 0.1, 0.29, 0.66]
+        width = 668
+
+        # Define video fragments with specific temporal offsets, durations, width and rois.
         video_fragments_config = [
             {
-                "video_in": "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_1.mp4",
-                "video_out": "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/fragments/f1.mp4",
+                "video_in": video1_hevc,
+                "video_out": "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/f1.mp4",
                 "offset": 0.0,
-                "duration": 120.0,
+                "duration": 6.0,
+                "roi": roi,
+                "width": width,
             },
             {
-                "video_in": "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_2.mp4",
-                "video_out": "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/fragments/f2.mp4",
-                "offset": 0.0,
-                "duration": 5.0,
-            },
-            {
-                "video_in": "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_3.mp4",
-                "video_out": "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/fragments/f3.mp4",
-                "offset": 0.0,
-                "duration": 120.0,
-            },
-            {
-                "video_in": "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_4.mp4",
-                "video_out": "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/fragments/f4.mp4",
-                "offset": 0.0,
-                "duration": 65.0,
+                "video_in": video2_hevc,
+                "video_out": "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/f2.mp4",
+                "offset": 7.0,
+                "duration": 21.0,
+                "roi": roi,
+                "width": width,
+
             },
         ]
         # The final concatenated videos is then created from the list of video fragments.
         video_merged_mc: str = (
-            "/Users/GZ5MCM/Documents/EufySecurityVideos/record/downloaded_videos/drug_video_merged.mp4"
+            "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/nasty_trash.mp4"
         )
 
         # Individual video fragments are first created with different configurations.
@@ -1010,7 +1024,10 @@ if __name__ == "__main__":
                     input_fragments=InputFragments(
                         offset_in_seconds=config["offset"],
                         duration_in_seconds=config["duration"],
-                    )
+                        normalized_crop_roi=config["roi"],
+                    ),
+                    output_video=OutputVideo(
+                        width=config["width"])
                 )
             ).run(
                 VideoMetadata(full_path=config["video_in"]),
@@ -1018,13 +1035,45 @@ if __name__ == "__main__":
             )
             for config in video_fragments_config
         ]
+        for input_video in video_fragments:
+            logger.info(input_video)
         video_mc = VideoGenerator().run(video_fragments, video_merged_mc)
-        logger.info("Merged video:")
+        logger.info("Output video:")
         logger.info(video_mc)
 
+
+        # Compare with default video generation without custom temporal cropping
+        input_videos : List[VideoMetadata | None] = [
+            VideoMetadata(full_path=video1_hevc),
+            VideoMetadata(full_path=video2_hevc)]
+        logger.info("Input videos:")
+        for input_video in input_videos:
+            logger.info(input_video)
+
+        video_merged_mc2: str = (
+            "/Users/GZ5MCM/Documents/EufySecurityVideos/stories/nasty_trash2.mp4"
+        )
+        video_mc2 = VideoGenerator(
+            VideoGenerationConfig(
+                input_fragments=InputFragments(
+                    normalized_crop_roi=roi,
+                ),
+                output_video=OutputVideo(width=width, date_time_label=DateTimeLabel(draw=True))
+            )
+        ).run(input_videos,
+              video_merged_mc2
+        )
+        logger.info("Ouput video:")
+        logger.info(video_mc2)
+
+
+        
+
+
+
     # Execute test examples
-    run_example_1()
-    run_example_2()
-    run_example_3()
-    run_example_4()
-    #run_example_5()
+    #run_example_1()
+    #run_example_2()
+    #run_example_3()
+    #run_example_4()
+    run_example_5()
