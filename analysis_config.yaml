@@ -336,8 +336,16 @@ stories:
     selectors:
       - date_regex: "2026-0[8-9]-[0-9]{2}" # Any day in August or September 2026
       - date_regex: "2026-10-[0-9]{2}" # Any day in October 2026
-  - name: '2026-10-05 - Black Widow becuase of opened door'
+  - name: '2026-10-06 - Caveman turns into werewolf'
     skip: false
+    selectors:
+      - date_regex: "2026-10-06" 
+        time_range:
+          start: '00:00:00'
+          end: '01:25:00'
+        devices: ['Back Alleyway','Backyard']
+  - name: '2026-10-05 - Black Widow becuase of opened door'
+    skip: true
     selectors:
       - date_regex: "2026-10-05" 
         time_range:
@@ -345,7 +353,7 @@ stories:
           end: '17:50:00'
         devices: ['Back Alleyway','Backyard']
   - name: '2026-10-05 - Cat escapes'
-    skip: false
+    skip: true
     selectors:
       - date_regex: "2026-10-05" 
         time_range:
@@ -353,7 +361,7 @@ stories:
           end: '12:20:00'
         devices: ['Front Yard']
   - name: '2026-10-04 - Cat stuck in front yard'
-    skip: false
+    skip: true
     selectors:
       - date_regex: "2026-10-04" 
         time_range:
@@ -361,7 +369,7 @@ stories:
           end: '20:15:00'
         devices: ['Front Yard', 'Walkway', 'Corner Junction']
   - name: '2026-10-01 - Caveman and Rockman and Rosie and Black Widow'
-    skip: false
+    skip: true
     selectors:
       - date_regex: "2026-10-01" 
         time_range:
@@ -553,6 +561,13 @@ stories:
         time_range:
             start: '00:00:00'
             end : '05:35:00'
+  - name: '2026-09-02 - Arrival at Indy'
+    skip: true
+    selectors:
+      - date_regex: "2026-09-02" 
+        time_range:
+          start: '21:05:00'
+          end: '21:35:00'
   - name: '2026-08-19 - Greg Almost-Arrest'
     skip: true
     selectors:
